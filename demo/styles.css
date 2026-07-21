@@ -1,0 +1,244 @@
+/* ===== הגלריה: ניהול הזמנות, פרוטוטייפ ===== */
+:root{
+  --bg:#f6f5f2;
+  --card:#ffffff;
+  --ink:#23272e;
+  --muted:#5c6470;
+  --line:#e3e0da;
+  --accent:#3c6e57;
+  --accent-dark:#2c523f;
+  --accent-soft:#eaf1ed;
+  --warn:#a24b3a;
+  --warn-soft:#f6ebe8;
+  --gold:#b08843;
+  --gold-soft:#f6efe1;
+  --radius:12px;
+  --shadow:0 1px 3px rgba(35,39,46,.06), 0 4px 14px rgba(35,39,46,.05);
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+html{-webkit-text-size-adjust:100%;}
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:"Arial Hebrew","Segoe UI",system-ui,Arial,sans-serif;
+  line-height:1.6;
+  direction:rtl;
+  font-size:17px;
+  -webkit-tap-highlight-color:transparent;
+}
+
+/* ===== סרגל עליון ===== */
+.topbar{
+  position:sticky;top:0;z-index:20;
+  display:flex;align-items:center;justify-content:space-between;
+  gap:14px;
+  padding:12px 22px;
+  padding-top:calc(12px + env(safe-area-inset-top));
+  background:var(--card);
+  border-bottom:1px solid var(--line);
+  box-shadow:var(--shadow);
+}
+.brand{display:flex;align-items:center;gap:12px;}
+.logo{
+  display:flex;align-items:center;justify-content:center;
+  width:42px;height:42px;flex:none;
+  background:var(--accent-soft);color:var(--accent);
+  border-radius:11px;font-size:1.3rem;
+}
+.brand-text{display:flex;flex-direction:column;line-height:1.2;}
+.brand-text strong{font-size:1.15rem;}
+.brand-text span{font-size:.82rem;color:var(--muted);}
+.offline-pill{
+  font-size:.8rem;font-weight:600;color:var(--accent-dark);
+  background:var(--accent-soft);
+  padding:6px 12px;border-radius:999px;white-space:nowrap;
+}
+
+/* ===== מבנה כללי ===== */
+#app{max-width:960px;margin:0 auto;padding:20px 18px 60px;}
+.view{animation:fade .22s ease;}
+@keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+h1{font-size:1.5rem;margin:0;}
+
+/* ===== כפתורים ===== */
+.btn{
+  font-family:inherit;font-size:1rem;font-weight:600;
+  min-height:48px;padding:12px 20px;
+  border:1px solid transparent;border-radius:11px;
+  cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  transition:transform .05s ease, background .15s ease, box-shadow .15s ease;
+}
+.btn:active{transform:scale(.97);}
+.btn-primary{background:var(--accent);color:#fff;box-shadow:var(--shadow);}
+.btn-primary:hover{background:var(--accent-dark);}
+.btn-ghost{background:transparent;color:var(--muted);border-color:var(--line);}
+.btn-ghost:hover{background:#fff;color:var(--ink);}
+.btn-block{width:100%;}
+
+/* ===== רשימה: כותרת וכלים ===== */
+.list-head{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:14px;margin-bottom:18px;flex-wrap:wrap;
+}
+.btn-new{font-size:1.05rem;padding:13px 24px;}
+.list-tools{margin-bottom:20px;display:flex;flex-direction:column;gap:12px;}
+.search{
+  width:100%;min-height:50px;
+  font-family:inherit;font-size:1.02rem;
+  padding:12px 16px;
+  border:1px solid var(--line);border-radius:11px;
+  background:var(--card);color:var(--ink);
+}
+.search:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+.filter-chips{display:flex;gap:8px;flex-wrap:wrap;}
+.chip{
+  font-family:inherit;font-size:.95rem;font-weight:600;
+  min-height:44px;padding:8px 18px;
+  border:1px solid var(--line);border-radius:999px;
+  background:var(--card);color:var(--muted);cursor:pointer;
+  transition:all .12s ease;
+}
+.chip:active{transform:scale(.96);}
+.chip.is-active{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+/* ===== כרטיסי הזמנה ===== */
+.orders-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;}
+.order-card{
+  background:var(--card);border:1px solid var(--line);
+  border-radius:var(--radius);padding:16px 18px;
+  box-shadow:var(--shadow);cursor:pointer;
+  display:flex;flex-direction:column;gap:10px;
+  transition:transform .06s ease, box-shadow .15s ease;
+  border-inline-start:5px solid var(--line);
+}
+.order-card:active{transform:scale(.99);}
+.order-card:hover{box-shadow:0 3px 8px rgba(35,39,46,.10),0 8px 22px rgba(35,39,46,.07);}
+.order-card.flag-yellow{border-inline-start-color:var(--gold);}
+.order-card.flag-red{border-inline-start-color:var(--warn);}
+.oc-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;}
+.oc-num{font-size:.82rem;color:var(--muted);font-weight:600;direction:ltr;}
+.oc-name{font-size:1.18rem;font-weight:700;margin:0;}
+.oc-desc{color:var(--muted);font-size:.95rem;margin:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.oc-bottom{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:2px;}
+
+/* ===== תגיות סטטוס ===== */
+.status-tag{
+  display:inline-block;font-size:.82rem;font-weight:700;
+  padding:4px 13px;border-radius:999px;white-space:nowrap;
+}
+.status-חדש{background:var(--accent-soft);color:var(--accent-dark);}
+.status-בעבודה{background:var(--gold-soft);color:#8a6a2f;}
+.status-מוכן{background:#e6f0ea;color:#1f5b3d;border:1px solid #bfe0cd;}
+.status-נמסר{background:#eef0ee;color:var(--muted);}
+
+/* ===== דגלי זמן (כלל 10 ימים) ===== */
+.time-flag{font-size:.82rem;font-weight:600;color:var(--muted);white-space:nowrap;}
+.time-flag.yellow{color:#8a6a2f;}
+.time-flag.red{color:var(--warn);font-weight:700;}
+.time-flag .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-inline-start:5px;vertical-align:middle;}
+.time-flag.yellow .dot{background:var(--gold);}
+.time-flag.red .dot{background:var(--warn);}
+
+/* ===== מצב ריק ===== */
+.empty-state{text-align:center;color:var(--muted);padding:50px 20px;font-size:1.05rem;}
+
+/* ===== טופס ===== */
+.form-head{display:flex;align-items:center;gap:14px;margin-bottom:20px;}
+.form-head h1{font-size:1.4rem;}
+.order-form{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:22px 20px;box-shadow:var(--shadow);}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.field{display:flex;flex-direction:column;gap:6px;}
+.field-wide{grid-column:1 / -1;}
+.field label,.field-label{font-size:.92rem;font-weight:600;color:var(--ink);}
+.field input,.field textarea{
+  font-family:inherit;font-size:1.02rem;
+  min-height:50px;padding:11px 14px;
+  border:1px solid var(--line);border-radius:10px;
+  background:#fcfcfb;color:var(--ink);width:100%;
+}
+.field textarea{min-height:auto;resize:vertical;line-height:1.5;}
+.field input:focus,.field textarea:focus{
+  outline:none;border-color:var(--accent);background:#fff;
+  box-shadow:0 0 0 3px var(--accent-soft);
+}
+.checks{display:flex;gap:10px;flex-wrap:wrap;}
+.check{
+  display:inline-flex;align-items:center;gap:8px;
+  min-height:48px;padding:8px 16px;
+  border:1px solid var(--line);border-radius:10px;background:#fcfcfb;
+  cursor:pointer;font-size:1rem;user-select:none;
+}
+.check input{width:20px;height:20px;accent-color:var(--accent);margin:0;}
+.check:has(input:checked){background:var(--accent-soft);border-color:var(--accent);}
+.balance-out{
+  display:flex;align-items:center;
+  min-height:50px;padding:11px 14px;
+  font-size:1.25rem;font-weight:700;color:var(--accent-dark);
+  background:var(--accent-soft);border-radius:10px;
+}
+.status-picker,.status-picker-detail{display:flex;gap:8px;flex-wrap:wrap;}
+.status-opt{
+  font-family:inherit;font-size:.98rem;font-weight:600;
+  min-height:48px;padding:10px 20px;
+  border:1px solid var(--line);border-radius:10px;
+  background:#fcfcfb;color:var(--muted);cursor:pointer;
+}
+.status-opt:active{transform:scale(.97);}
+.status-opt.is-active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.form-actions{display:flex;gap:12px;justify-content:flex-start;margin-top:24px;}
+.form-actions .btn{min-width:130px;}
+
+/* ===== תצוגת הזמנה בודדת ===== */
+.detail-body{display:flex;flex-direction:column;gap:16px;}
+.detail-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:20px;box-shadow:var(--shadow);}
+.detail-card.head-card{border-top:5px solid var(--accent);}
+.detail-card.head-card.flag-yellow{border-top-color:var(--gold);}
+.detail-card.head-card.flag-red{border-top-color:var(--warn);}
+.dc-title{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:6px;}
+.dc-title h2{margin:0;font-size:1.5rem;}
+.dc-num{font-size:.85rem;color:var(--muted);direction:ltr;}
+.dc-meta{display:flex;gap:10px 18px;flex-wrap:wrap;align-items:center;color:var(--muted);font-size:.92rem;margin-top:8px;}
+.card-label{font-size:.82rem;font-weight:700;color:var(--accent);text-transform:none;margin:0 0 12px;
+  padding-bottom:8px;border-bottom:1px solid var(--line);}
+.detail-rows{display:grid;grid-template-columns:1fr 1fr;gap:12px 20px;}
+.drow{display:flex;flex-direction:column;gap:2px;}
+.drow.wide{grid-column:1 / -1;}
+.drow .k{font-size:.82rem;color:var(--muted);}
+.drow .v{font-size:1.06rem;font-weight:600;}
+.money-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:4px;}
+.money-box{flex:1 1 120px;background:#fcfcfb;border:1px solid var(--line);border-radius:10px;padding:12px 14px;text-align:center;}
+.money-box .k{font-size:.8rem;color:var(--muted);display:block;margin-bottom:3px;}
+.money-box .v{font-size:1.25rem;font-weight:700;}
+.money-box.balance{background:var(--accent-soft);border-color:#cfe0d6;}
+.money-box.balance .v{color:var(--accent-dark);}
+.detail-actions{display:flex;flex-direction:column;gap:12px;}
+.btn-wa{background:#25a35a;color:#fff;box-shadow:var(--shadow);font-size:1.05rem;}
+.btn-wa:hover{background:#1e8c4c;}
+.btn-wa .ico{font-size:1.15rem;}
+.btn-ready{background:var(--gold);color:#fff;box-shadow:var(--shadow);font-size:1.05rem;}
+.btn-ready:hover{background:#9a7638;}
+
+/* ===== הודעת אישור צפה ===== */
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  background:var(--ink);color:#fff;
+  padding:13px 26px;border-radius:999px;font-weight:600;font-size:1rem;
+  box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:50;
+  animation:toastIn .25s ease;
+}
+@keyframes toastIn{from{opacity:0;transform:translate(-50%,10px);}to{opacity:1;transform:translate(-50%,0);}}
+
+/* ===== מסך צר (טאבלט לאורך / טלפון) ===== */
+@media (max-width:640px){
+  body{font-size:16px;}
+  .form-grid{grid-template-columns:1fr;}
+  .detail-rows{grid-template-columns:1fr;}
+  .orders-grid{grid-template-columns:1fr;}
+  .list-head h1{font-size:1.3rem;}
+  #app{padding:16px 14px 50px;}
+}
