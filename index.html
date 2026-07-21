@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>אפיון מערכת: הגלריה | ניהול חנות מסגרות</title>
+<style>
+  :root{
+    --bg:#f6f5f2;
+    --card:#ffffff;
+    --ink:#23272e;
+    --muted:#5c6470;
+    --line:#e3e0da;
+    --accent:#3c6e57;
+    --accent-soft:#eaf1ed;
+    --warn:#a24b3a;
+    --warn-soft:#f6ebe8;
+    --gold:#b08843;
+    --gold-soft:#f6efe1;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"Segoe UI","Helvetica Neue",Arial,system-ui,sans-serif;
+    line-height:1.7;
+    text-align:right;
+    direction:rtl;
+    font-size:16px;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:32px 22px 80px;}
+  header.doc{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:34px 30px;
+    margin-bottom:28px;
+    border-top:5px solid var(--accent);
+  }
+  header.doc .eyebrow{
+    color:var(--accent);
+    font-weight:700;
+    letter-spacing:.5px;
+    font-size:.85rem;
+    margin:0 0 8px;
+  }
+  header.doc h1{
+    margin:0 0 6px;
+    font-size:2rem;
+    line-height:1.25;
+  }
+  header.doc .sub{color:var(--muted);font-size:1.05rem;margin:0;}
+  .meta{
+    display:flex;flex-wrap:wrap;gap:10px 26px;
+    margin-top:18px;padding-top:16px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:.9rem;
+  }
+  .meta b{color:var(--ink);font-weight:600;}
+  section{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:26px 28px;
+    margin-bottom:22px;
+  }
+  h2{
+    font-size:1.4rem;
+    margin:0 0 16px;
+    padding-bottom:10px;
+    border-bottom:2px solid var(--accent-soft);
+    display:flex;align-items:baseline;gap:10px;
+  }
+  h2 .num{
+    color:var(--accent);
+    font-size:1rem;
+    font-weight:700;
+    background:var(--accent-soft);
+    border-radius:6px;
+    padding:2px 9px;
+    flex:none;
+  }
+  h3{font-size:1.12rem;margin:22px 0 8px;color:var(--accent);}
+  h4{font-size:1rem;margin:16px 0 6px;color:var(--ink);}
+  p{margin:0 0 12px;}
+  ul,ol{margin:0 0 14px;padding-inline-start:22px;}
+  li{margin-bottom:6px;}
+  strong{font-weight:700;}
+  .lead{font-size:1.06rem;color:#333;}
+  table{
+    width:100%;border-collapse:collapse;margin:14px 0 18px;font-size:.95rem;
+    overflow:hidden;border-radius:8px;
+  }
+  th,td{
+    text-align:right;padding:10px 12px;border:1px solid var(--line);
+    vertical-align:top;
+  }
+  th{background:var(--accent-soft);color:#2c4c3e;font-weight:700;}
+  tbody tr:nth-child(even){background:#faf9f7;}
+  .callout{
+    border-radius:8px;padding:16px 18px;margin:16px 0;
+    border-inline-start:4px solid var(--accent);
+    background:var(--accent-soft);
+  }
+  .callout.warn{border-inline-start-color:var(--warn);background:var(--warn-soft);}
+  .callout.gold{border-inline-start-color:var(--gold);background:var(--gold-soft);}
+  .callout p:last-child{margin-bottom:0;}
+  .callout .t{font-weight:700;display:block;margin-bottom:4px;}
+  .pill{
+    display:inline-block;font-size:.78rem;font-weight:700;
+    padding:2px 10px;border-radius:999px;white-space:nowrap;
+  }
+  .pill.free{background:var(--accent-soft);color:#2c4c3e;}
+  .pill.paid{background:var(--warn-soft);color:var(--warn);}
+  .pill.ai{background:var(--gold-soft);color:#8a6a2f;}
+  .flow{
+    display:flex;flex-wrap:wrap;align-items:stretch;gap:12px;
+    margin:18px 0;justify-content:center;
+  }
+  .flow .node{
+    flex:1 1 210px;min-width:190px;
+    background:#fff;border:1.5px solid var(--line);border-radius:10px;
+    padding:14px 16px;text-align:center;
+  }
+  .flow .node.cloud{border-color:var(--accent);background:var(--accent-soft);}
+  .flow .node .cap{font-weight:700;margin-bottom:4px;}
+  .flow .node .desc{font-size:.85rem;color:var(--muted);}
+  .flow .arrow{
+    align-self:center;font-size:1.5rem;color:var(--accent);
+    flex:none;padding:0 2px;
+  }
+  .phase{
+    border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin-bottom:12px;
+    border-inline-start:4px solid var(--accent);
+  }
+  .phase.now{border-inline-start-color:var(--gold);background:var(--gold-soft);}
+  .phase .ttl{font-weight:700;margin-bottom:4px;}
+  .phase .tag{font-size:.78rem;color:var(--muted);}
+  .risk{margin-bottom:14px;}
+  .risk .rh{font-weight:700;color:var(--warn);}
+  .fields-grid{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+    gap:8px;margin:12px 0;
+  }
+  .fields-grid .f{
+    background:#faf9f7;border:1px solid var(--line);border-radius:7px;
+    padding:9px 12px;font-size:.92rem;
+  }
+  .fields-grid .f b{display:block;color:var(--ink);}
+  .fields-grid .f span{color:var(--muted);font-size:.82rem;}
+  code{
+    background:#eef0ee;border-radius:4px;padding:1px 6px;
+    font-family:"SF Mono",Consolas,monospace;font-size:.9em;direction:ltr;display:inline-block;
+  }
+  .toc{columns:2;column-gap:30px;}
+  .toc a{color:var(--accent);text-decoration:none;}
+  .toc a:hover{text-decoration:underline;}
+  .toc li{margin-bottom:5px;}
+  footer.doc{
+    text-align:center;color:var(--muted);font-size:.85rem;
+    margin-top:30px;padding-top:18px;border-top:1px solid var(--line);
+  }
+  @media (max-width:560px){
+    .toc{columns:1;}
+    header.doc h1{font-size:1.6rem;}
+    .flow .arrow{transform:rotate(90deg);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="doc">
+  <p class="eyebrow">מסמך אפיון מוצר (PRD) · Phase 0</p>
+  <h1>הגלריה: מערכת לניהול חנות מסגרות</h1>
+  <p class="sub">אפליקציית ניהול עסק לחנות המסגרות "הגלריה", כפר סבא. אפיון מלא, החלטות ארכיטקטורה, מודולים ושלבי פיתוח.</p>
+  <div class="meta">
+    <span><b>לקוח:</b> הגלריה, חנות מסגרות</span>
+    <span><b>מיקום:</b> רוטשילד 64, כפר סבא</span>
+    <span><b>תאריך:</b> 21.07.2026</span>
+    <span><b>סטטוס:</b> אפיון (Phase 0)</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="num">תוכן</span> ניווט המסמך</h2>
+  <ul class="toc">
+    <li><a href="#s1">1. תקציר מנהלים</a></li>
+    <li><a href="#s2">2. סקירת העסק</a></li>
+    <li><a href="#s3">3. חזון ועקרונות מנחים</a></li>
+    <li><a href="#s4">4. פלטפורמה וארכיטקטורה</a></li>
+    <li><a href="#s5">5. מודול 1: ניהול הזמנות</a></li>
+    <li><a href="#s6">6. מודול 2: ניהול מלאי</a></li>
+    <li><a href="#s7">7. מודול 3: תיעדוף ותזכורות</a></li>
+    <li><a href="#s8">8. חינם מול AI</a></li>
+    <li><a href="#s9">9. מודל נתונים</a></li>
+    <li><a href="#s10">10. שלבי פיתוח</a></li>
+    <li><a href="#s11">11. סיכונים ו-pre-mortem</a></li>
+    <li><a href="#s12">12. שאלות פתוחות</a></li>
+  </ul>
+</section>
+
+<section id="s1">
+  <h2><span class="num">1</span> תקציר מנהלים</h2>
+  <p class="lead">"הגלריה" היא חנות מסגור תמונות בכפר סבא, שמנוהלת היום באופן ידני לחלוטין: פנקסי הזמנות בכתב יד, מעקב מלאי בראש, ותיעדוף לפי תחושה. המערכת המוצעת ממירה את התהליך הזה לאפליקציה אחת שרצה על שני טאבלטים בחנות ומסתנכרנת ביניהם.</p>
+  <p>המערכת פותרת שלושה כאבים מרכזיים: <strong>(1)</strong> הזמנות ידניות שצריך לרשום פעמיים ולהעלות פיזית מהחנות לסדנה, <strong>(2)</strong> מלאי פרופילי עץ שאין עליו שליטה ולא יודעים מה נגמר, ו-<strong>(3)</strong> ריבוי עבודות במקביל בלי תזכורות, שגורם לעבודות "ליפול בין הכיסאות".</p>
+  <p>הפתרון נבנה כ-<strong>אפליקציית ווב מתקדמת (PWA) בגישת offline-first</strong>, מותקנת על מסך הבית של הטאבלט, עם backend חינמי לסנכרון. עלות תשתית: <strong>אפס</strong>. המערכת בנויה סביב עיקרון של אוטומציה מקסימלית וכמעט ללא AI, כך ש-95% ומעלה מהערך מושג בחינם ובאופן אוטומטי.</p>
+</section>
+
+<section id="s2">
+  <h2><span class="num">2</span> סקירת העסק</h2>
+  <ul>
+    <li><strong>העסק:</strong> "הגלריה": חנות מסגור תמונות. עיסוק עיקרי: מסגור. עיסוקים נלווים: אוצרות תמונות ועוד.</li>
+    <li><strong>כתובת:</strong> רוטשילד 64, כפר סבא. טלפון חנות: 09-7674829.</li>
+    <li><strong>בעלים:</strong> בעל עסק יחיד שמנהל היום את הכל ידנית, מפנקסי הזמנות בכתב יד (פנקס כפל-עותק, ורוד ולבן).</li>
+  </ul>
+
+  <h3>מבנה פיזי: שתי קומות</h3>
+  <table>
+    <thead>
+      <tr><th>קומה</th><th>תפקיד</th><th>מה קורה שם</th><th>מכשיר</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>תחתונה (כניסה)</strong></td>
+        <td>החנות / הדלפק</td>
+        <td>קבלת לקוחות, פתיחת הזמנות, גביית תשלום, תצוגת מסגרות</td>
+        <td>טאבלט 1</td>
+      </tr>
+      <tr>
+        <td><strong>עליונה (Workshop)</strong></td>
+        <td>הסדנה</td>
+        <td>ביצוע העבודה, חומרי גלם, מכונות, מאות פרופילי עץ</td>
+        <td>טאבלט 2</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>המצב הידני הנוכחי</h3>
+  <p>כל הזמנה נרשמת בכתב יד בפנקס בקומה התחתונה, מועתקת לדף ניהול הזמנות, ואז הבעלים <strong>עולה פיזית עם הרשימה</strong> לקומה העליונה כדי לדעת מה לבצע. אין מעקב מלאי מסודר (שלושת הספקים מבולגנים ולא מספקים דוחות), ואין מנגנון תזכורות. התוצאה: כפל רישום, חוסר סנכרון בין הקומות, ועבודות שנתקעות.</p>
+</section>
+
+<section id="s3">
+  <h2><span class="num">3</span> חזון ועקרונות מנחים</h2>
+  <p>מערכת אחת פשוטה שמנהלת את כל מחזור החיים של עבודה: מרגע שהלקוח נכנס לחנות, דרך הביצוע בסדנה, ועד המסירה. ארבעה עקרונות מנחים שכל החלטה במסמך נגזרת מהם:</p>
+  <table>
+    <thead>
+      <tr><th>עיקרון</th><th>מה זה אומר בפועל</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>אוטומציה מקסימלית</strong></td><td>כל דבר שאפשר לחשב, לסנכרן, להזכיר או להפיק אוטומטית, ייעשה אוטומטית. המשתמש מזין נתון אחד, המערכת עושה את השאר.</td></tr>
+      <tr><td><strong>חינמי</strong></td><td>עלות תשתית שוטפת של אפס. בלי דמי חנות אפליקציות, בלי מנוי חודשי, בלי רישיונות. מרכיב בתשלום נבחן רק אם אין דרך חינמית בכלל.</td></tr>
+      <tr><td><strong>מינימום AI</strong></td><td>AI נכנס רק כשפונקציה מחייבת אותו ואי אפשר להשיג אותה אחרת. ברירת המחדל היא לוגיקה פשוטה, לא מודל.</td></tr>
+      <tr><td><strong>Offline-first</strong></td><td>המערכת עובדת גם בלי אינטרנט. חנות לא נעצרת כי הרשת נפלה. הסנכרון קורה מעצמו כשהחיבור חוזר.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="s4">
+  <h2><span class="num">4</span> החלטת פלטפורמה וארכיטקטורה</h2>
+
+  <h3>הפלטפורמה: PWA (אפליקציית ווב מתקדמת)</h3>
+  <p>המערכת נבנית כ-<strong>PWA</strong>: אתר שמתנהג כמו אפליקציה. הוא מותקן על מסך הבית של הטאבלט עם אייקון משלו, נפתח במסך מלא בלי שורת דפדפן, ומרגיש זהה לאפליקציה רגילה. זו הבחירה הנכונה למקרה הזה:</p>
+  <table>
+    <thead>
+      <tr><th>יתרון</th><th>המשמעות עבור הגלריה</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>חינם לגמרי</td><td>בלי 99$ לשנה של Apple, בלי דמי חנות Google, בלי צורך במחשב Mac כדי לבנות.</td></tr>
+      <tr><td>מכשיר-אגנוסטי</td><td>אותה מערכת בדיוק רצה על iPad, על טאבלט אנדרואיד, על פלאפון ועל מחשב. לא צריך להחליט מראש.</td></tr>
+      <tr><td>בלי חנות אפליקציות</td><td>עדכון = לרענן. אין תהליך אישור של Apple/Google, אין המתנה, אין דחיות.</td></tr>
+      <tr><td>סנכרון מובנה</td><td>אותו חשבון על שני הטאבלטים = אותם נתונים, בזמן אמת.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>סוגיית האופליין (offline-first): הלב של הארכיטקטורה</h3>
+  <div class="callout">
+    <span class="t">הבעלים לא תלוי באינטרנט כדי לקבל הזמנות.</span>
+    <p>קוד האפליקציה מותקן <strong>מקומית על הטאבלט</strong> (באמצעות Service Worker). כשלקוח נכנס והבעלים פותח הזמנה, גם אם באותו רגע אין אינטרנט בכלל, ההזמנה נרשמת ונשמרת מקומית על המכשיר (במסד נתונים מקומי, IndexedDB). שום דבר לא הולך לאיבוד וההזמנה מוכנה מיד.</p>
+    <p>ברגע שהחיבור לאינטרנט חוזר, <strong>הכל מסתנכרן אוטומטית ברקע</strong> אל הענן, ומשם אל הטאבלט השני. הבעלים לא צריך לעשות כלום ולא צריך לדעת שהיה ניתוק.</p>
+  </div>
+  <p><strong>מה כן דורש אינטרנט?</strong> רק הסנכרון בזמן אמת בין שני הטאבלטים. אם הרשת למטה נופלת, כל טאבלט ממשיך לעבוד באופן עצמאי על העותק המקומי שלו, ושניהם מתאזנים ברגע שמתחברים מחדש. במילים אחרות: אופליין לא עוצר עבודה, הוא רק דוחה את הסנכרון בין הקומות בכמה שניות.</p>
+  <div class="callout gold">
+    <span class="t">העלות ההנדסית: בשקיפות</span>
+    <p>offline-first עם סנכרון הוא קצת יותר עבודה מאפליקציה "רגילה" שמניחה שתמיד יש רשת. צריך לנהל מסד נתונים מקומי, תור סנכרון, ופתרון להתנגשויות. אבל זה עדיין <strong>חינם</strong>, וזו הבחירה הנכונה לחנות פיזית שבה נפילת רשת לא יכולה להשבית את הקופה. משקיעים קצת יותר בבנייה ומקבלים מערכת שלא נופלת.</p>
+  </div>
+
+  <h3>Backend: Firebase Firestore (שכבה חינמית Spark)</h3>
+  <p>האחסון והסנכרון בענן רצים על <strong>Firebase Firestore</strong> של גוגל, בתוכנית החינמית (Spark). זה מספק מסד נתונים, סנכרון בזמן אמת בין המכשירים וגיבוי, בלי עלות ובלי כרטיס אשראי. הנתונים חיים גם מקומית על כל טאבלט וגם בענן, כך שיש שכבת גיבוי טבעית.</p>
+  <p><strong>למה Firestore ולא Supabase:</strong> התוכנית החינמית של Supabase מקפיאה פרויקט אחרי 7 ימים ללא פעילות, מה שעלול להשבית סנכרון אחרי חופשה. Firestore בתוכנית Spark <strong>לא נרדם לעולם</strong>, המכסה החינמית (50,000 קריאות ו-20,000 כתיבות ביום) רחוקה שנות אור מהצריכה של חנות מסגרות, וחריגה רק חוסמת ולא מחייבת בכסף. בנוסף, מנגנון האופליין והסנכרון המובנה של Firestore מתאים בדיוק לארכיטקטורת שני הטאבלטים שלנו.</p>
+
+  <h3>תרשים זרימת סנכרון</h3>
+  <div class="flow">
+    <div class="node">
+      <div class="cap">טאבלט 1: החנות (למטה)</div>
+      <div class="desc">פתיחת הזמנה, תשלום. נשמר מקומית (IndexedDB) גם באופליין.</div>
+    </div>
+    <div class="arrow">⇄</div>
+    <div class="node cloud">
+      <div class="cap">☁ ענן: Firebase Firestore</div>
+      <div class="desc">אחסון מרכזי + סנכרון + גיבוי. חינם.</div>
+    </div>
+    <div class="arrow">⇄</div>
+    <div class="node">
+      <div class="cap">טאבלט 2: הסדנה (למעלה)</div>
+      <div class="desc">רואה את ההזמנה החדשה מיד, מנהל את הביצוע.</div>
+    </div>
+  </div>
+  <p style="text-align:center;color:var(--muted);font-size:.9rem;">כל טאבלט עובד גם כשהחץ מנותק. הסנכרון מתעדכן אוטומטית ברגע שהחיבור חוזר.</p>
+</section>
+
+<section id="s5">
+  <h2><span class="num">5</span> מודול 1: ניהול הזמנות</h2>
+  <p><span class="pill free">MVP · עדיפות ראשונה</span></p>
+  <p>הלב של המערכת ומחליף ישיר לפנקס. כל התהליך הידני של רישום כפול והעלאה פיזית של הרשימה לקומה העליונה מומר לזרימה דיגיטלית מסונכרנת.</p>
+
+  <h3>טופס הזמנה דיגיטלי (בטאבלט התחתון)</h3>
+  <p>השדות נגזרו מפנקס ההזמנות הקיים:</p>
+  <div class="fields-grid">
+    <div class="f"><b>שם לקוח</b><span>חובה</span></div>
+    <div class="f"><b>טלפון</b><span>חובה · משמש לוואטסאפ</span></div>
+    <div class="f"><b>תאריך הזמנה</b><span>נקבע אוטומטית</span></div>
+    <div class="f"><b>תיאור התמונה</b><span>מה ממסגרים</span></div>
+    <div class="f"><b>סוג/תיאור מסגרת</b><span>בחירה מהמלאי</span></div>
+    <div class="f"><b>מידות</b><span>גובה × רוחב · מזין את חישוב המלאי</span></div>
+    <div class="f"><b>זכוכית</b><span>כן/לא · סוג</span></div>
+    <div class="f"><b>גב (backing)</b><span>כן/לא</span></div>
+    <div class="f"><b>פספרטו</b><span>כן/לא · צבע</span></div>
+    <div class="f"><b>מחיר כולל</b><span>מספרי</span></div>
+    <div class="f"><b>מקדמה ששולמה</b><span>מספרי</span></div>
+    <div class="f"><b>יתרה לתשלום</b><span>מחושב אוטומטית: מחיר פחות מקדמה</span></div>
+  </div>
+
+  <h3>יכולות המודול</h3>
+  <ul>
+    <li><strong>רשימת ניהול הזמנות</strong> עם סטטוסים: חדשה ← בעבודה ← מוכנה ← נמסרה.</li>
+    <li><strong>סנכרון מיידי לטאבלט העליון:</strong> ברגע שנפתחת הזמנה למטה, היא מופיעה בסדנה למעלה. אין יותר עלייה פיזית עם דף.</li>
+    <li><strong>עותק ללקוח:</strong> הפקת עותק דיגיטלי (קישור/הודעה) או להדפסה, במקום הפנקס הכפול הוורוד-לבן.</li>
+    <li><strong>קבלה בעת תשלום:</strong> ברגע שהלקוח משלם, מופקת קבלה. המעמד המשפטי של הקבלה (חשבונית מס רשמית מול עותק פשוט) פתוח בשאלות למטה.</li>
+  </ul>
+  <div class="callout">
+    <span class="t">חישוב יתרה אוטומטי</span>
+    <p>הבעלים מזין מחיר ומקדמה, המערכת מחשבת את היתרה לתשלום. זו דוגמה מייצגת לעיקרון האוטומציה: נתון אחד פחות, שדה מחושב במקום.</p>
+  </div>
+</section>
+
+<section id="s6">
+  <h2><span class="num">6</span> מודול 2: ניהול מלאי</h2>
+  <p><span class="pill free">חינמי · אוטומטי · בלי AI</span></p>
+  <p>הבעיה: שלושת הספקים מבולגנים ולא מספקים דוחות מלאי. הפתרון: הבעלים עושה סדר <strong>בצד שלו</strong>. בקומה העליונה מאוחסנים מאות פרופילי עץ בסוגים וצבעים שונים, והמערכת עוקבת אחריהם.</p>
+
+  <h3>חישוב צריכה אוטומטי</h3>
+  <div class="callout">
+    <span class="t">איך זה עובד</span>
+    <p>הבעלים כבר מזין את המידות בהזמנה. המסגרת מקיפה את התמונה, אז צריכת אורך הפרופיל = היקף המלבן. עבור מסגרת <strong>6×9</strong>:</p>
+    <p style="text-align:center;font-size:1.05rem;"><code>(6 + 9) × 2 = 30</code> יחידות אורך</p>
+    <p>המערכת מנכה אוטומטית 30 יחידות מהפרופיל שנבחר, בכל עבודה, בלי הזנה נוספת. אותו נתון מידות שכבר הוזן משרת גם את ההזמנה וגם את המלאי.</p>
+  </div>
+
+  <h3>יכולות המודול</h3>
+  <ul>
+    <li><strong>מעקב מלאי</strong> לכל פרופיל: כמה יחידות אורך נותרו, לפי סוג/צבע/ספק.</li>
+    <li><strong>ניכוי אוטומטי</strong> מהמלאי בכל עבודה, לפי חישוב הצריכה.</li>
+    <li><strong>תובנות לאורך זמן:</strong> באילו פרופילים משתמשים יותר, מה זז לאט, מה מלאי מת שכדאי להפסיק להזמין.</li>
+    <li><strong>צפי הזמנה (forecast):</strong> המלצה על כמות להזמנה.</li>
+    <li><strong>רשימת הזמנה לספק</strong> לפי מק"ט, בפורמט שהספק מבין (מק"טים כמו <code>4322-20</code>, <code>5322-225</code>, <code>4805-40</code> + כמויות, כפי שמופיע בהזמנות הקיימות).</li>
+  </ul>
+  <div class="callout gold">
+    <span class="t">חשוב: הצפי הזה הוא סטטיסטיקה פשוטה, לא AI</span>
+    <p>"צפי הזמנה" נשמע כמו משהו שדורש בינה מלאכותית, אבל הוא לא. זה ממוצע צריכה לאורך זמן פלוס סף מלאי מינימלי: אם פרופיל יורד מתחת לסף, המערכת ממליצה להזמין, בכמות שמכסה את הצריכה הממוצעת. חישוב אריתמטי פשוט, חינמי לגמרי, בלי מודל ובלי API.</p>
+  </div>
+</section>
+
+<section id="s7">
+  <h2><span class="num">7</span> מודול 3: תיעדוף ותזכורות</h2>
+  <p><span class="pill free">חינמי · אוטומטי</span> <span class="pill paid">וואטסאפ אוטומטי מלא = בתשלום</span></p>
+  <p>הבעיה: הרבה עבודות במקביל, מתחילים אחת ועוברים לשנייה, ודברים נתקעים. הבעלים מתחייב ללקוחות לזמן אספקה של <strong>כ-10 ימים</strong>. המערכת שומרת על ההתחייבות במקומו.</p>
+
+  <h3>כלל 10 הימים</h3>
+  <table>
+    <thead>
+      <tr><th>מתי</th><th>מה המערכת עושה</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>יום 8-9</strong> והעבודה עוד לא הסתיימה</td><td>תזכורת + תיעדוף: העבודה עולה בראש הרשימה של "מה לעשות קודם".</td></tr>
+      <tr><td><strong>יום 10</strong> ומעלה</td><td>העבודה <strong style="color:var(--warn)">מסומנת באדום</strong>. התראה שצריך לעשות פולואפ ללקוח ("סליחה, מתעכב").</td></tr>
+      <tr><td><strong>העבודה מוכנה</strong></td><td>מוכן לשליחת הודעת "ההזמנה מוכנה" ללקוח בלחיצה.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>הודעת וואטסאפ ללקוח</h3>
+  <p>כשההזמנה מוכנה, המערכת מכינה הודעה גנרית ללקוח, למשל:</p>
+  <div class="callout">
+    <p style="margin:0;">"היי, זה [שם הבעלים], ההזמנה שלך בהגלריה מוכנה ואפשר לבוא לקחת. שעות הפתיחה שלנו: [...]. נשמח לראותך."</p>
+  </div>
+  <p>לגבי אופן השליחה: ראה סעיף "חינם מול AI" למטה. בקצרה: שליחה אוטומטית מלאה דורשת שירות בתשלום, ולכן ברירת המחדל היא קישור <code>wa.me</code> בלחיצה אחת, שפותח את הוואטסאפ עם ההודעה מוכנה, בחינם.</p>
+</section>
+
+<section id="s8">
+  <h2><span class="num">8</span> טבלת חינם מול AI</h2>
+  <p>הפירוק שביקש הלקוח: מה עובד אוטומטית וחינם ברגע ההתקנה, ומה דורש עלות או AI. <strong>המסקנה: מעל 95% מהמערכת חינמי ואוטומטי בלי AI.</strong></p>
+  <table>
+    <thead>
+      <tr><th>פיצ'ר</th><th>סיווג</th><th>הערה</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>טופס הזמנה דיגיטלי</td><td><span class="pill free">חינמי-אוטומטי</span></td><td>לוגיקה בסיסית.</td></tr>
+      <tr><td>סנכרון בין שני הטאבלטים</td><td><span class="pill free">חינמי-אוטומטי</span></td><td>Firebase Firestore (Spark), לא נרדם בחוסר פעילות.</td></tr>
+      <tr><td>עבודה אופליין + סנכרון מאוחר</td><td><span class="pill free">חינמי-אוטומטי</span></td><td>Service Worker + IndexedDB.</td></tr>
+      <tr><td>עותק הזמנה ללקוח</td><td><span class="pill free">חינמי-אוטומטי</span></td><td>הפקה דיגיטלית / הדפסה.</td></tr>
+      <tr><td>חישוב יתרה לתשלום</td><td><span class="pill free">חינמי-אוטומטי</span></td><td>חשבון פשוט.</td></tr>
+      <tr><td>חישוב צריכת מלאי לפי מידות</td><td><span class="pill free">חינמי-אוטומטי</span></td><td>נוסחת היקף.</td></tr>
+      <tr><td>תובנות מלאי + צפי הזמנה</td><td><span class="pill free">חינמי-אוטומטי</span></td><td>סטטיסטיקה: ממוצע + סף. לא AI.</td></tr>
+      <tr><td>רשימת הזמנה לספק לפי מק"ט</td><td><span class="pill free">חינמי-אוטומטי</span></td><td>שליפה מהמלאי.</td></tr>
+      <tr><td>תזכורות + כלל 10 הימים + סימון אדום</td><td><span class="pill free">חינמי-אוטומטי</span></td><td>חישוב תאריכים.</td></tr>
+      <tr><td>הודעת "ההזמנה מוכנה" בקישור wa.me</td><td><span class="pill free">חינמי · לחיצה אחת</span></td><td>עוקף את ה-API בתשלום.</td></tr>
+      <tr><td>שליחת וואטסאפ אוטומטית מלאה (בלי לחיצה)</td><td><span class="pill paid">בתשלום</span></td><td>WhatsApp Business API. עלות מול תועלת.</td></tr>
+      <tr><td>קריאת רשימות ספקים בכתב יד מצילום</td><td><span class="pill ai">AI · אופציונלי · עתיד</span></td><td>OCR / Vision. לא נדרש ל-MVP.</td></tr>
+      <tr><td>הזנת הזמנה בדיבור</td><td><span class="pill ai">AI · אופציונלי · עתיד</span></td><td>Speech-to-text. לא נדרש ל-MVP.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>החריגים: בפירוט</h3>
+  <div class="callout warn">
+    <span class="t">א. וואטסאפ אוטומטי מלא</span>
+    <p>שליחה אוטומטית לגמרי (בלי שהבעלים לוחץ) דורשת <strong>WhatsApp Business API</strong>, שהוא שירות בתשלום. <strong>העקיפה החינמית:</strong> כפתור שיוצר קישור <code>wa.me</code> עם ההודעה מוכנה מראש. הבעלים לוחץ פעם אחת, הוואטסאפ נפתח עם הטקסט מוכן, הוא שולח. אותו ערך, בחינם, מול לחיצה אחת.</p>
+  </div>
+  <div class="callout gold">
+    <span class="t">ב. AI אופציונלי בעתיד</span>
+    <p>שתי יכולות שעשויות להיות נחמדות בהמשך אבל אינן נדרשות ל-MVP: <strong>(1)</strong> צילום רשימת ספק בכתב יד והמרתה אוטומטית לרשומות (OCR/Vision), <strong>(2)</strong> הכתבת הזמנה בקול במקום הקלדה (speech-to-text). שתיהן מוסיפות עלות, ולכן ייבחנו רק אם הבעלים ירצה, ורק אחרי שהמערכת החינמית עובדת.</p>
+  </div>
+</section>
+
+<section id="s9">
+  <h2><span class="num">9</span> מודל נתונים</h2>
+  <p>חמש טבלאות עיקריות. מבנה פשוט ומספיק לכל שלושת המודולים.</p>
+  <table>
+    <thead>
+      <tr><th>טבלה</th><th>מה היא מחזיקה</th><th>שדות מרכזיים</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>orders</strong><br><span style="color:var(--muted);font-size:.85rem">הזמנות</span></td>
+        <td>כל הזמנה מרגע הפתיחה ועד המסירה. הישות המרכזית.</td>
+        <td>מזהה, לקוח, תיאור תמונה, מסגרת, מידות, זכוכית/גב/פספרטו, מחיר, מקדמה, יתרה, תאריך פתיחה, יעד אספקה, סטטוס.</td>
+      </tr>
+      <tr>
+        <td><strong>customers</strong><br><span style="color:var(--muted);font-size:.85rem">לקוחות</span></td>
+        <td>פרטי לקוח. מאפשר היסטוריה ושליחת וואטסאפ.</td>
+        <td>מזהה, שם, טלפון, הערות.</td>
+      </tr>
+      <tr>
+        <td><strong>profiles</strong><br><span style="color:var(--muted);font-size:.85rem">פרופילים / מלאי</span></td>
+        <td>מאות פרופילי העץ בסדנה, כל אחד והמלאי שלו.</td>
+        <td>מזהה, מק"ט, סוג/צבע, ספק, יחידות אורך במלאי, סף מינימום.</td>
+      </tr>
+      <tr>
+        <td><strong>suppliers</strong><br><span style="color:var(--muted);font-size:.85rem">ספקים</span></td>
+        <td>שלושת הספקים. מקשר כל פרופיל לספק ובונה רשימות הזמנה.</td>
+        <td>מזהה, שם, פרטי קשר, פורמט הזמנה.</td>
+      </tr>
+      <tr>
+        <td><strong>usage</strong><br><span style="color:var(--muted);font-size:.85rem">רשומות צריכה</span></td>
+        <td>כל ניכוי מלאי: איזה פרופיל, כמה, לאיזו הזמנה. הבסיס לתובנות ולצפי.</td>
+        <td>מזהה, פרופיל, הזמנה, כמות שנוכתה, תאריך.</td>
+      </tr>
+    </tbody>
+  </table>
+  <p style="color:var(--muted);font-size:.9rem;">הקשרים: הזמנה שייכת ללקוח. רשומת צריכה מקשרת הזמנה לפרופיל. פרופיל שייך לספק.</p>
+</section>
+
+<section id="s10">
+  <h2><span class="num">10</span> שלבי פיתוח (Phases)</h2>
+
+  <div class="phase now">
+    <div class="ttl">Phase 0: אפיון <span class="tag">· הנוכחי</span></div>
+    <p style="margin:0;">המסמך הזה. הגדרת מודולים, ארכיטקטורה, מודל נתונים, סגירת שאלות פתוחות.</p>
+  </div>
+  <div class="phase">
+    <div class="ttl">Phase 1: MVP: מודול הזמנות</div>
+    <p style="margin:0;">טופס הזמנה דיגיטלי + סנכרון בין שני הטאבלטים + עבודת אופליין + עותק ללקוח + קבלה בסיסית. זו הגרסה שכבר מחליפה את הפנקס ומספקת ערך ביום הראשון.</p>
+  </div>
+  <div class="phase">
+    <div class="ttl">Phase 2: ניהול מלאי</div>
+    <p style="margin:0;">מעקב פרופילים, חישוב צריכה אוטומטי, ניכוי מהמלאי, תובנות, צפי הזמנה ורשימת הזמנה לספק.</p>
+  </div>
+  <div class="phase">
+    <div class="ttl">Phase 3: תיעדוף ותזכורות</div>
+    <p style="margin:0;">כלל 10 הימים, סימון אדום, פולואפ, והודעת וואטסאפ מוכנה בלחיצה (wa.me).</p>
+  </div>
+  <div class="phase">
+    <div class="ttl">Phase 4: אינטגרציות</div>
+    <p style="margin:0;">שליחת קבלות אוטומטית לרואה החשבון, ובחינת ה-AI האופציונלי (OCR לרשימות ספקים, הזנה בדיבור) אם וכאשר יידרש.</p>
+  </div>
+
+  <div class="callout warn">
+    <span class="t">נקודה פתוחה שמשפיעה על התכנון</span>
+    <p><strong>קבלות חוקיות</strong> (חשבונית מס מול רשות המסים) הן שאלה פתוחה שתלויה במעמד העוסק שהלקוח צריך לבדוק. אם יידרש תיעוד חשבונאי רשמי, ייתכן שיהיה צורך באינטגרציה לשירות הפקת חשבוניות (חלקם בתשלום). ל-MVP מספיק עותק/קבלה פשוטים, וההכרעה נדחית עד שהלקוח מברר את מעמדו.</p>
+  </div>
+</section>
+
+<section id="s11">
+  <h2><span class="num">11</span> סיכונים ו-pre-mortem</h2>
+  <p>מה עלול להשתבש, ואיך מתמודדים מראש.</p>
+
+  <div class="risk">
+    <p class="rh">1. מורכבות סנכרון offline</p>
+    <p>ניהול מסד נתונים מקומי, תור סנכרון ומיזוג ענן הוא החלק ההנדסי המאתגר. <strong>הפחתה:</strong> להישען על מנגנון האופליין המובנה של Firestore (offline persistence + סנכרון אוטומטי) במקום לבנות מאפס, ולבדוק את זרימת הניתוק-חיבור מוקדם, כבר ב-Phase 1.</p>
+  </div>
+  <div class="risk">
+    <p class="rh">2. קונפליקט עריכה בו-זמנית בשני הטאבלטים</p>
+    <p>אותה הזמנה נערכת למטה ולמעלה באותו רגע. <strong>הפחתה:</strong> מדיניות <strong>last-write-wins</strong> (העדכון האחרון מנצח). במקרה שימוש של אדם אחד שנע בין קומות זה תרחיש נדיר מאוד, ולרוב כל קומה נוגעת בשדות אחרים (החנות בתשלום, הסדנה בסטטוס הביצוע).</p>
+  </div>
+  <div class="risk">
+    <p class="rh">3. התנגדות ועקומת למידה של הבעלים</p>
+    <p>אדם שרגיל שנים לפנקס עלול להירתע ממעבר לדיגיטלי. <strong>הפחתה:</strong> לעצב את טופס ההזמנה שיהיה קרוב ככל האפשר לפנקס המוכר, מסך אחד פשוט, מינימום שדות חובה. להתחיל מ-MVP שנותן ערך מיידי (סנכרון לקומה העליונה, בלי לעלות פיזית), כדי שהתועלת תורגש מהיום הראשון.</p>
+  </div>
+  <div class="risk">
+    <p class="rh">4. דיוק חישוב הצריכה תלוי בהזנת מידות נכונה</p>
+    <p>אם הבעלים מזין מידות שגויות, המלאי יסטה. <strong>הפחתה:</strong> ולידציה בסיסית על שדה המידות (מספרים חיוביים סבירים), הצגת חישוב הצריכה על המסך לפני האישור כדי שהבעלים יראה "ירדו 30 יחידות" ויוכל לתקן, ואפשרות התאמה ידנית של המלאי.</p>
+  </div>
+  <div class="risk">
+    <p class="rh">5. קבלות חוקיות עלולות לדרוש אינטגרציה בתשלום</p>
+    <p>אם מתברר שנדרשת חשבונית מס רשמית, ייתכן שירות חיצוני בעלות, מה שנוגד את עיקרון החינם. <strong>הפחתה:</strong> לברר את מעמד העוסק לפני Phase 4, ולהפריד את מודול ההזמנות (שעובד בחינם) מנושא החשבוניות, כך שהעסק פועל גם בלי ההכרעה הזו.</p>
+  </div>
+</section>
+
+<section id="s12">
+  <h2><span class="num">12</span> שאלות פתוחות</h2>
+  <p>נקודות שדורשות בירור לפני או במהלך הפיתוח. אף אחת מהן לא חוסמת את תחילת Phase 1.</p>
+  <table>
+    <thead>
+      <tr><th>#</th><th>השאלה</th><th>מי מברר</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>הטאבלטים: iPad (אפל) או אנדרואיד? (ה-PWA רץ על שניהם, אבל טוב לדעת מה יש בפועל)</td><td>הלקוח</td></tr>
+      <tr><td>2</td><td>קבלות: נדרשת חשבונית מס חוקית או שמספיק עותק הזמנה? מה מעמד העוסק?</td><td>הלקוח מול רו"ח</td></tr>
+      <tr><td>3</td><td>שמות שלושת הספקים והפורמט המדויק של ההזמנה שלהם</td><td>הלקוח</td></tr>
+      <tr><td>4</td><td>שם הבעלים לחתימת הודעת הוואטסאפ (בהקלטה נשמע "אסף", צריך לאמת)</td><td>לאמת</td></tr>
+      <tr><td>5</td><td>משתמשים: רק הבעלים, או גם עובדים נוספים? (משפיע על הרשאות והתחברות)</td><td>הלקוח</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<footer class="doc">
+  מסמך אפיון פנימי · הגלריה, כפר סבא · Phase 0 · 21.07.2026<br>
+  מסמך זה משקף החלטות שכבר סוכמו (PWA offline-first, Firebase Firestore, מינימום AI) לצד שאלות שנותרו פתוחות לבירור.
+</footer>
+
+</div>
+</body>
+</html>
