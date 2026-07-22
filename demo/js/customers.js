@@ -15,9 +15,10 @@
   var esc = U.esc;
 
   var container = null, listEl = null;
-  var customers = [], orders = [];
+  var customers = [], orders = [], payments = [];
   var openIds = {};
   var state = { term: '' };
+  var pendingFocus = null; // מזהה/שם לקוח שצריך להדגיש ולגלול אליו אחרי render
 
   function mount(el) {
     container = el;
@@ -43,6 +44,7 @@
 
     DB.subscribeOrders(function (o) { orders = o; render(); });
     DB.subscribeCustomers(function (c) { customers = c; render(); });
+    DB.subscribePayments(function (p) { payments = p; render(); });
   }
 
   /* ---------------------------------------------------------- helpers */
@@ -53,9 +55,10 @@
   function totalSpent(list) {
     return list.reduce(function (s, o) { return s + Number(o.price || 0); }, 0);
   }
+  // חוב פתוח = סכום היתרות הנגזרות (מחיר פחות תשלומים) על פני כל ההזמנות
   function openBalance(list) {
     return list.reduce(function (s, o) {
-      return s + (o.status !== 'delivered' ? Number(o.balance || 0) : 0);
+      return s + Math.max(0, U.balanceOf(o, payments));
     }, 0);
   }
   function statusColor(s) {
@@ -98,6 +101,38 @@
     Array.prototype.forEach.call(listEl.querySelectorAll('.row'), function (r) {
       if (openIds[r.getAttribute('data-id')]) r.classList.add('open');
     });
+
+    applyPendingFocus();
+  }
+
+  // הדגשה + גלילה לכרטיס לקוח אחרי מעבר מטאב אחר (Gallery.openCustomer)
+  function applyPendingFocus() {
+    if (!pendingFocus || !listEl) return;
+    var id = pendingFocus;
+    pendingFocus = null;
+    var el = null;
+    Array.prototype.forEach.call(listEl.querySelectorAll('.row'), function (r) {
+      if (r.getAttribute('data-id') === id) el = r;
+    });
+    if (!el) return;
+    (global.requestAnimationFrame || function (f) { setTimeout(f, 16); })(function () {
+      try { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) { el.scrollIntoView(); }
+      el.classList.add('row--focus');
+      setTimeout(function () { el.classList.remove('row--focus'); }, 2200);
+    });
+  }
+
+  function focusCustomer(idOrName) {
+    var c = customers.filter(function (x) { return x.id === idOrName; })[0] ||
+            customers.filter(function (x) { return x.name === idOrName; })[0];
+    if (!c) return;
+    // ניקוי חיפוש כדי שהכרטיס בטוח יופיע
+    state.term = '';
+    var searchEl = container && container.querySelector('[data-search]');
+    if (searchEl) searchEl.value = '';
+    openIds[c.id] = true;
+    pendingFocus = c.id;
+    render();
   }
 
   function emptyState() {
@@ -152,8 +187,9 @@
   function panelHTML(c, list) {
     var lines = list.map(function (o) {
       var color = statusColor(o.status);
-      var bal = (o.status !== 'delivered' && o.balance > 0) ?
-        '<span class="cust-order__bal">יתרה ' + U.fmtMoney(o.balance) + '</span>' :
+      var oBal = U.balanceOf(o, payments);
+      var bal = (oBal > 0) ?
+        '<span class="cust-order__bal">יתרה ' + U.fmtMoney(oBal) + '</span>' :
         '<span class="cust-order__bal paid">שולם</span>';
       return '<button type="button" class="cust-order" data-open-order="' + esc(o.id) + '" ' +
         'title="פתח את פירוט ההזמנה">' +
@@ -253,6 +289,6 @@
     if (willOpen) openIds[id] = true; else delete openIds[id];
   }
 
-  Gallery.Customers = { mount: mount };
+  Gallery.Customers = { mount: mount, focusCustomer: focusCustomer };
 
 })(window);

@@ -50,6 +50,12 @@ button { font-family: inherit; }
   gap: var(--s-3);
   padding: var(--s-2) var(--s-3) var(--s-5);
 }
+.brand__logo {
+  width: 42px; height: 42px; flex: none;
+  border-radius: 10px;
+  object-fit: cover;
+  box-shadow: 0 1px 3px rgba(0,0,0,.18);
+}
 .brand__mark {
   width: 38px; height: 38px; flex: none;
   border-radius: 9px;
@@ -1157,4 +1163,164 @@ button.cust-order:focus-visible { outline: none; box-shadow: var(--focus-ring); 
 
 @media (max-width: 768px) {
   .cust-last b { font-size: var(--fs-md); }
+}
+
+/* =============================================================================
+ * הרחבות v3: שם לקוח לחיץ, מערכת תשלומים, סוף יום, מתג theme
+ * ========================================================================== */
+
+/* ---------- שם לקוח לחיץ (עדין: קו תחתון בהובר + צבע primary) ---------- */
+.link-cust {
+  cursor: pointer;
+  border-bottom: 1px dashed transparent;
+  transition: color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+}
+.link-cust:hover { color: var(--primary); border-bottom-color: var(--primary); }
+.modal__title .link-cust:hover { color: var(--primary); }
+.modal__title .ico { width: 18px; height: 18px; vertical-align: -3px; margin-inline-end: 6px; }
+
+/* ---------- pill קטן (סטטוס תשלום בשורה) ---------- */
+.pill--sm { height: 22px; padding: 0 8px 0 10px; font-size: var(--fs-2xs); }
+.pill--sm .dot { width: 6px; height: 6px; }
+
+/* ---------- rail foot: כלים (סוף יום + theme) ---------- */
+.rail__foot {
+  margin-top: auto;
+  padding: var(--s-3) var(--s-2) var(--s-2);
+  border-top: 1px solid var(--line);
+  display: flex; flex-direction: column; gap: var(--s-2);
+  align-items: stretch;
+}
+.rail__tools { display: flex; flex-direction: column; gap: 6px; }
+.rail__tool {
+  display: flex; align-items: center; gap: var(--s-2);
+  width: 100%; min-height: 40px; padding: 0 var(--s-3);
+  border: 1px solid var(--line); border-radius: var(--r-md);
+  background: var(--bg-surface); color: var(--ink-secondary);
+  font-family: var(--font-ui); font-weight: var(--fw-semibold); font-size: var(--fs-sm);
+  cursor: pointer; text-align: start;
+  transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+.rail__tool:hover { background: var(--bg-surface-alt); border-color: var(--line-strong); }
+.rail__tool:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.rail__tool .ico, .rail__tool-ico .ico { width: 18px; height: 18px; flex: none; }
+.rail__tool-ico { display: inline-flex; }
+.rail__tool[data-endday] { color: var(--st-green-text); }
+.rail__tool[data-endday] .ico { color: var(--st-green); }
+.rail__user-row {
+  display: flex; align-items: center; gap: var(--s-3);
+  padding: var(--s-2) var(--s-2) 0;
+  font-size: var(--fs-sm); color: var(--ink-muted);
+}
+
+/* ---------- הדגשת כרטיס לקוח אחרי מעבר (openCustomer) ---------- */
+.row--focus {
+  box-shadow: 0 0 0 2px var(--primary), var(--e2);
+  animation: custFocus 2.2s var(--ease) 1;
+}
+@keyframes custFocus {
+  0% { box-shadow: 0 0 0 3px var(--primary-ring), var(--e2); }
+  100% { box-shadow: 0 0 0 2px var(--primary), var(--e2); }
+}
+
+/* ---------- OrderDetail: בלוק תשלומים ---------- */
+.od-pay {
+  margin-top: var(--s-4); padding-top: var(--s-4);
+  border-top: 1px solid var(--line);
+}
+.pay-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); margin-bottom: var(--s-2); flex-wrap: wrap; }
+.pay-head__title { font-family: var(--font-display); font-weight: var(--fw-semibold); font-size: var(--fs-md); color: var(--ink); }
+.pay-head__sum { font-size: var(--fs-sm); color: var(--ink-muted); }
+.pay-list { display: flex; flex-direction: column; gap: 6px; }
+.pay-row {
+  display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap;
+  padding: var(--s-2) var(--s-3);
+  background: var(--bg-surface-alt); border: 1px solid var(--line); border-radius: var(--r-sm);
+}
+.pay-row__type { font-weight: var(--fw-semibold); color: var(--ink-secondary); font-size: var(--fs-sm); flex: none; }
+.pay-row__method {
+  font-size: var(--fs-xs); font-weight: var(--fw-semibold);
+  color: var(--ink-muted); background: var(--bg-sunken);
+  padding: 2px 8px; border-radius: var(--r-pill); flex: none;
+}
+.pay-row__date { font-size: var(--fs-xs); color: var(--ink-muted); flex: 1; min-width: 60px; }
+.pay-row__amt { font-family: var(--font-display); font-weight: var(--fw-bold); color: var(--st-green-text); flex: none; font-variant-numeric: tabular-nums; }
+.pay-row__x {
+  flex: none; width: 26px; height: 26px; border: 0; border-radius: var(--r-sm);
+  background: var(--bg-sunken); color: var(--ink-muted);
+  font-size: 17px; line-height: 1; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+.pay-row__x:hover { background: var(--st-red-soft); color: var(--st-red-text); }
+.pay-row__x:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.pay-empty { font-size: var(--fs-sm); color: var(--ink-muted); padding: var(--s-2) 0; }
+
+.pay-form-host { margin-top: var(--s-3); }
+.pay-form {
+  background: var(--bg-surface-alt); border: 1px solid var(--line-frame);
+  border-radius: var(--r-md); padding: var(--s-4);
+  animation: modalIn var(--dur-base) var(--ease-out) both;
+}
+.pay-form__grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--s-3); }
+.pay-form__foot { display: flex; gap: var(--s-2); margin-top: var(--s-3); }
+
+/* ---------- סוף יום ---------- */
+.eod-summary {
+  display: flex; gap: var(--s-4); flex-wrap: wrap;
+  margin-bottom: var(--s-4);
+}
+.eod-total {
+  flex: none; min-width: 160px;
+  background: var(--primary-soft); border-radius: var(--r-lg);
+  padding: var(--s-4); display: flex; flex-direction: column; gap: 2px;
+}
+.eod-total__k { font-size: var(--fs-xs); color: var(--ink-secondary); font-weight: var(--fw-semibold); }
+.eod-total__v { font-family: var(--font-display); font-weight: var(--fw-bold); font-size: var(--fs-2xl); color: var(--primary); line-height: 1.1; font-variant-numeric: tabular-nums; }
+.eod-total__c { font-size: var(--fs-xs); color: var(--ink-muted); }
+.eod-tiles { flex: 1; display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: var(--s-2); align-content: start; }
+.eod-tile {
+  background: var(--bg-surface-alt); border: 1px solid var(--line);
+  border-radius: var(--r-md); padding: var(--s-3);
+}
+.eod-tile.is-empty { opacity: .7; }
+.eod-tile__k { font-size: var(--fs-xs); color: var(--ink-muted); font-weight: var(--fw-semibold); }
+.eod-tile__v { font-family: var(--font-display); font-weight: var(--fw-bold); font-size: var(--fs-lg); color: var(--ink); font-variant-numeric: tabular-nums; }
+.eod-list-head { font-size: var(--fs-2xs); color: var(--ink-muted); font-weight: var(--fw-semibold); margin-bottom: var(--s-2); }
+.eod-list { display: flex; flex-direction: column; gap: 6px; }
+.eod-row {
+  display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap;
+  padding: var(--s-2) var(--s-3);
+  background: var(--bg-surface-alt); border: 1px solid var(--line); border-radius: var(--r-sm);
+}
+.eod-row__who { font-weight: var(--fw-semibold); color: var(--ink); flex: 1; min-width: 120px; }
+.eod-row__num { color: var(--ink-muted); font-weight: var(--fw-regular); }
+.eod-row__type { font-size: var(--fs-xs); color: var(--ink-secondary); flex: none; }
+.eod-row__method {
+  font-size: var(--fs-xs); font-weight: var(--fw-semibold);
+  color: var(--ink-muted); background: var(--bg-sunken);
+  padding: 2px 8px; border-radius: var(--r-pill); flex: none;
+}
+.eod-row__amt { font-family: var(--font-display); font-weight: var(--fw-bold); color: var(--st-green-text); flex: none; font-variant-numeric: tabular-nums; }
+
+.eod-note {
+  display: flex; align-items: flex-start; gap: var(--s-2);
+  background: var(--st-orange-soft); color: var(--st-orange-text);
+  border-radius: var(--r-md); padding: var(--s-3) var(--s-4);
+  font-size: var(--fs-sm); margin-bottom: var(--s-3); line-height: var(--lh-base);
+}
+.eod-note .ico { width: 18px; height: 18px; flex: none; margin-top: 2px; }
+.eod-text {
+  width: 100%; min-height: 220px; resize: vertical;
+  padding: var(--s-3);
+  border: 1px solid var(--line-strong); border-radius: var(--r-sm);
+  background: var(--bg-sunken); color: var(--ink);
+  font-family: var(--font-mono); font-size: var(--fs-sm); line-height: var(--lh-base);
+  direction: rtl;
+}
+.btn.is-ok { background: var(--st-green); color: #fff; box-shadow: none; }
+
+@media (max-width: 520px) {
+  .pay-form__grid { grid-template-columns: 1fr; }
+  .eod-summary { flex-direction: column; }
 }

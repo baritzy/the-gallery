@@ -10,7 +10,7 @@
  *  מבנה הרשומות תואם Firestore (id, createdAt, updatedAt, schemaVersion),
  *  והמזהים כבר נוצרים בצד לקוח עם crypto.randomUUID().
  *
- * קולקשנים: orders, customers, profiles, suppliers, usage, reorderItems.
+ * קולקשנים: orders, customers, profiles, suppliers, usage, reorderItems, payments.
  * ========================================================================== */
 
 (function (global) {
@@ -188,6 +188,18 @@
     saveUsage: function (u) { return save('usage', u); },
     deleteUsage: function (id) { return remove('usage', id); },
     subscribeUsage: function (cb) { return subscribe('usage', cb); },
+
+    // --- payments (תשלומים) ---
+    // רשומה: { id, orderId, customerId, amount, method, type, date, createdAt, updatedAt }
+    // method: מזומן / אשראי / ביט / העברה בנקאית / צ'ק  |  type: מקדמה / תשלום ביניים / תשלום סופי
+    getPayments: function () { return getAll('payments'); },
+    getPayment: function (id) { return getById('payments', id); },
+    getPaymentsByOrder: function (orderId) {
+      return async(readCollection('payments').filter(function (p) { return p.orderId === orderId; }));
+    },
+    savePayment: function (p) { return save('payments', p); },
+    deletePayment: function (id) { return remove('payments', id); },
+    subscribePayments: function (cb) { return subscribe('payments', cb); },
 
     // עוזר: מספר הזמנה רץ אוטומטי (מבוסס על הקיים)
     nextOrderNumber: function () {
@@ -379,6 +391,58 @@
   }
 
   seedIfEmpty();
+
+  /* =========================================================================
+   * SEED תשלומים - נכתב פעם אחת (אם הקולקשן ריק אבל כבר יש הזמנות).
+   * לכל הזמנה עם מקדמה נוצר תשלום "מקדמה". להזמנות שנמסרו עם יתרה נוצר גם
+   * "תשלום סופי" בתאריך המסירה. בנוסף, כמה תשלומים בתאריך היום כדי שמסך
+   * "סוף יום" והתובנות יראו נתונים אמיתיים. יתרה = מחיר פחות סכום התשלומים.
+   * ======================================================================= */
+  function seedPaymentsIfEmpty() {
+    if (readCollection('payments').length > 0) return;
+    var ords = readCollection('orders');
+    if (!ords.length) return;
+
+    var methods = ['מזומן', 'אשראי', 'ביט', 'העברה בנקאית', "צ'ק"];
+    var payments = [];
+    function mkPay(o, amount, method, type, date) {
+      var stamp = new Date().toISOString();
+      return {
+        id: uid(), orderId: o.id, customerId: o.customerId,
+        amount: Math.round(amount), method: method, type: type, date: date,
+        schemaVersion: SCHEMA_VERSION, createdAt: stamp, updatedAt: stamp
+      };
+    }
+
+    ords.forEach(function (o, i) {
+      var dep = Number(o.deposit || 0);
+      if (dep > 0) payments.push(mkPay(o, dep, methods[i % methods.length], 'מקדמה', o.openedAt));
+      if (o.status === 'delivered') {
+        var rem = Number(o.price || 0) - dep;
+        if (rem > 0) payments.push(mkPay(o, rem, methods[(i + 2) % methods.length], 'תשלום סופי', o.deliveredAt || o.openedAt));
+      }
+    });
+
+    // תשלומי היום: מזינים את "סוף יום" ואת התובנות עם מגוון אמצעים.
+    // ראשונה מהמוכנות נגבית במלואה (מזומן), השנייה חלקית (אשראי) כדי שתישאר יתרה
+    // אמיתית לגבייה, ועבודה בעבודה מקבלת תשלום ביניים (ביט).
+    var todayIso = new Date().toISOString();
+    var readies = ords.filter(function (o) { return o.status === 'ready'; });
+    if (readies[0]) {
+      var rem0 = Number(readies[0].price || 0) - Number(readies[0].deposit || 0);
+      if (rem0 > 0) payments.push(mkPay(readies[0], rem0, 'מזומן', 'תשלום סופי', todayIso));
+    }
+    if (readies[1]) {
+      var rem1 = Number(readies[1].price || 0) - Number(readies[1].deposit || 0);
+      if (rem1 > 0) payments.push(mkPay(readies[1], Math.round(rem1 * 0.5), 'אשראי', 'תשלום ביניים', todayIso));
+    }
+    var inWork = ords.filter(function (o) { return o.status === 'in-work'; })[0];
+    if (inWork) payments.push(mkPay(inWork, 100, 'ביט', 'תשלום ביניים', todayIso));
+
+    writeCollection('payments', payments);
+  }
+
+  seedPaymentsIfEmpty();
 
   /* =========================================================================
    * חשיפה גלובלית

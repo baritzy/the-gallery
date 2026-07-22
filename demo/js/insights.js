@@ -16,7 +16,7 @@
   var esc = U.esc;
 
   var container = null, bodyEl = null;
-  var orders = [], profiles = [], suppliers = [], usage = [], customers = [];
+  var orders = [], profiles = [], suppliers = [], usage = [], customers = [], payments = [];
   var loaded = { orders: false, profiles: false };
 
   var LEAD_TIME_DAYS = 14;   // זמן אספקה מספק (ברירת מחדל עד שיוזן לכל ספק)
@@ -42,6 +42,14 @@
     DB.subscribeSuppliers(function (s) { suppliers = s; render(); });
     DB.subscribeUsage(function (u) { usage = u; render(); });
     DB.subscribeCustomers(function (c) { customers = c; render(); });
+    DB.subscribePayments(function (p) { payments = p; render(); });
+  }
+
+  // יתרה נגזרת (מחיר פחות תשלומים) + עזר לשם לקוח לחיץ בבלוק ההמלצות
+  function bal(o) { return U.balanceOf(o, payments); }
+  function custLink(o) {
+    var id = o.customerId || o.customerName;
+    return '<span class="link-cust" data-open-customer="' + esc(id) + '">' + esc(o.customerName) + '</span>';
   }
 
   /* =========================================================================
@@ -103,7 +111,7 @@
 
     var open = openOrders();
     var late = open.filter(function (o) { return U.urgency(o).level === 'late'; }).length;
-    var openBal = open.reduce(function (s, o) { return s + Number(o.balance || 0); }, 0);
+    var openBal = open.reduce(function (s, o) { return s + Math.max(0, bal(o)); }, 0);
     var low = lowProfiles().length;
 
     var tiles = [
@@ -136,15 +144,15 @@
       .sort(function (a, b) { return U.dayNumber(b) - U.dayNumber(a); })
       .slice(0, 2).forEach(function (o) {
         recs.push({ cls: 'late', tab: 'reminders', tabLabel: 'לתזכורות',
-          text: 'טפל בדחיפות ב' + esc(o.customerName) + ': יום ' + U.dayNumber(o) + ', חצתה את ' + SHOP.slaDays + ' הימים' });
+          text: 'טפל בדחיפות ב' + custLink(o) + ': יום ' + U.dayNumber(o) + ', חצתה את ' + SHOP.slaDays + ' הימים' });
       });
 
     // 2. גבייה על עבודות מוכנות לאיסוף
-    openOrders().filter(function (o) { return o.status === 'ready' && Number(o.balance || 0) > 0; })
-      .sort(function (a, b) { return b.balance - a.balance; })
+    openOrders().filter(function (o) { return o.status === 'ready' && bal(o) > 0; })
+      .sort(function (a, b) { return bal(b) - bal(a); })
       .slice(0, 2).forEach(function (o) {
         recs.push({ cls: 'ready', tab: 'reminders', tabLabel: 'לגבייה',
-          text: 'גבה ' + U.fmtMoney(o.balance) + ' מ' + esc(o.customerName) + ': מוכן לאיסוף' });
+          text: 'גבה ' + U.fmtMoney(bal(o)) + ' מ' + custLink(o) + ': מוכן לאיסוף' });
       });
 
     // 3. הזמנת מלאי לפרופילים מתחת לסף (הכי חסרים קודם)
@@ -158,12 +166,12 @@
     // 4. מה להתחיל לעבוד עכשיו (העבודה בעדיפות הגבוהה שאינה כבר באיחור)
     var work = activeWork().filter(function (o) { return U.urgency(o).level !== 'late'; });
     if (work.length) {
-      var maxBal = Math.max.apply(null, [1].concat(work.map(function (o) { return Number(o.balance || 0); })));
+      var maxBal = Math.max.apply(null, [1].concat(work.map(function (o) { return Math.max(0, bal(o)); })));
       var top = work.map(function (o) {
-        return { o: o, score: 0.7 * (U.dayNumber(o) / SHOP.slaDays) + 0.3 * (Number(o.balance || 0) / maxBal) };
+        return { o: o, score: 0.7 * (U.dayNumber(o) / SHOP.slaDays) + 0.3 * (Math.max(0, bal(o)) / maxBal) };
       }).sort(function (a, b) { return b.score - a.score; })[0];
       if (top) recs.push({ cls: 'work', tab: 'orders', tabLabel: 'להזמנות',
-        text: 'התחל לעבוד על ' + esc(top.o.customerName) + ': יום ' + U.dayNumber(top.o) + ' מתוך ' + SHOP.slaDays });
+        text: 'התחל לעבוד על ' + custLink(top.o) + ': יום ' + U.dayNumber(top.o) + ' מתוך ' + SHOP.slaDays });
     }
 
     recs = recs.slice(0, 6);
@@ -306,17 +314,17 @@
       return { status: 'ok', icon: I.check, title: 'מה לעשות קודם',
         body: '<p>אין עבודות פתוחות בסדנה כרגע. הכל מוכן או נמסר.</p>' };
     }
-    var maxBal = Math.max.apply(null, [1].concat(work.map(function (o) { return Number(o.balance || 0); })));
+    var maxBal = Math.max.apply(null, [1].concat(work.map(function (o) { return Math.max(0, bal(o)); })));
     var scored = work.map(function (o) {
       var timeScore = U.dayNumber(o) / SHOP.slaDays;
-      var valScore = Number(o.balance || 0) / maxBal;
+      var valScore = Math.max(0, bal(o)) / maxBal;
       return { o: o, score: 0.7 * timeScore + 0.3 * valScore };
     }).sort(function (a, b) { return b.score - a.score; });
 
     var items = scored.slice(0, 3).map(function (x, i) {
       var o = x.o;
       var lateTag = U.urgency(o).level === 'late' ? ' <span class="ins-tag red">באיחור</span>' : '';
-      return '<li>' + (i + 1) + '. ' + esc(o.customerName) + ' · יום <b>' + U.dayNumber(o) + '</b> · יתרה ' + U.fmtMoney(o.balance) + lateTag + '</li>';
+      return '<li>' + (i + 1) + '. ' + esc(o.customerName) + ' · יום <b>' + U.dayNumber(o) + '</b> · יתרה ' + U.fmtMoney(Math.max(0, bal(o))) + lateTag + '</li>';
     }).join('');
     return { status: 'warn', icon: I.clock,
       title: 'מה לעשות קודם: ' + (work.length === 1 ? '<b>עבודה אחת</b> פתוחה' : '<b>' + work.length + '</b> עבודות פתוחות'),
@@ -393,17 +401,17 @@
   function cardOpenBalance() {
     // C3 - יתרות פתוחות
     var open = openOrders();
-    var total = open.reduce(function (s, o) { return s + Number(o.balance || 0); }, 0);
+    var total = open.reduce(function (s, o) { return s + Math.max(0, bal(o)); }, 0);
     if (total === 0) {
       return { status: 'ok', icon: I.coins, title: 'יתרות פתוחות',
         body: '<p>אין יתרות פתוחות. כל הכסף על העבודות הפעילות נגבה.</p>' };
     }
     var readyBal = open.filter(function (o) { return o.status === 'ready'; })
-      .reduce(function (s, o) { return s + Number(o.balance || 0); }, 0);
-    var top = open.filter(function (o) { return o.balance > 0; })
-      .sort(function (a, b) { return b.balance - a.balance; }).slice(0, 3)
+      .reduce(function (s, o) { return s + Math.max(0, bal(o)); }, 0);
+    var top = open.filter(function (o) { return bal(o) > 0; })
+      .sort(function (a, b) { return bal(b) - bal(a); }).slice(0, 3)
       .map(function (o) {
-        return '<li>' + esc(o.customerName) + ' · <b>' + U.fmtMoney(o.balance) + '</b>' +
+        return '<li>' + esc(o.customerName) + ' · <b>' + U.fmtMoney(bal(o)) + '</b>' +
           (o.status === 'ready' ? ' <span class="ins-tag green">מוכן לאיסוף</span>' : '') + '</li>';
       }).join('');
     return { status: readyBal > 0 ? 'late' : 'warn', icon: I.coins,
@@ -530,6 +538,9 @@
   }
 
   function onClick(e) {
+    var custBtn = e.target.closest('[data-open-customer]');
+    if (custBtn) { e.stopPropagation(); Gallery.openCustomer(custBtn.getAttribute('data-open-customer')); return; }
+
     var cta = e.target.closest('[data-tab]');
     if (cta && Gallery.switchTab) { Gallery.switchTab(cta.getAttribute('data-tab')); }
   }

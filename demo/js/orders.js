@@ -15,6 +15,7 @@
   var container = null;
   var listEl = null;
   var orders = [];
+  var payments = [];   // תשלומים, לחישוב יתרה וסטטוס תשלום נגזרים
   var profiles = [];   // לצורך בורר פרופיל בטופס
   var openIds = {};    // איזה שורות פתוחות
   var state = { term: '', filter: 'all', sort: 'target' };
@@ -63,6 +64,7 @@
 
     DB.subscribeProfiles(function (p) { profiles = p; });
     DB.subscribeOrders(function (o) { orders = o; renderFilters(); renderList(); });
+    DB.subscribePayments(function (p) { payments = p; renderList(); });
   }
 
   /* --------------------------------------------------------------- filters */
@@ -154,17 +156,22 @@
     var chipCls = U.dayChipClass(o);
     var showChip = o.status !== 'delivered';
 
+    var custId = o.customerId || o.customerName;
+    var bal = U.balanceOf(o, payments);
+    var ps = U.paymentStatus(o, payments);
+
     var head =
       '<button class="row__head" aria-expanded="' + !!openIds[o.id] + '" data-toggle>' +
         '<span class="row__id">#' + esc(o.orderNo) + '</span>' +
         '<span class="row__main">' +
-          '<span class="row__name">' + esc(o.customerName) + '</span>' +
+          '<span class="row__name"><span class="link-cust" data-open-customer="' + esc(custId) + '">' + esc(o.customerName) + '</span></span>' +
           '<span class="row__meta">' + esc(o.frameDesc || 'מסגרת') +
             ' · <span class="mono">' + o.width + '×' + o.height + '</span></span>' +
         '</span>' +
         '<span class="row__spacer"></span>' +
         (showChip ? '<span class="chip ' + chipCls + '">' + I.clock + 'יום ' + d + ' / 10</span>' : '') +
-        '<span class="row__balance">' + U.fmtMoney(o.balance) + '</span>' +
+        '<span class="pill pill--sm is-' + ps.color + '" title="סטטוס תשלום"><span class="dot"></span>' + ps.label + '</span>' +
+        '<span class="row__balance">' + U.fmtMoney(bal) + '</span>' +
         pill(o) +
         I.chevron +
       '</button>';
@@ -198,6 +205,10 @@
         label + (on && extra ? ' · ' + esc(extra) : (on ? '' : ': לא')) + '</span>';
     }
 
+    var paid = U.paidFor(o, payments);
+    var bal = U.balanceOf(o, payments);
+    var ps = U.paymentStatus(o, payments);
+
     var grid = '<div class="dgrid">' +
       f('טלפון', '<span class="mono">' + esc(o.phone) + '</span>') +
       f('תיאור התמונה', esc(o.imageDesc || '-')) +
@@ -207,8 +218,9 @@
       f('תאריך פתיחה', U.fmtDate(o.openedAt)) +
       f('יעד אספקה', U.fmtDate(o.deliveryTarget)) +
       f('מחיר כולל', U.fmtMoney(o.price)) +
-      f('מקדמה', U.fmtMoney(o.deposit)) +
-      f('יתרה לתשלום', U.fmtMoney(o.balance), true) +
+      f('שולם עד כה', U.fmtMoney(paid)) +
+      f('סטטוס תשלום', '<span class="pill pill--sm is-' + ps.color + '"><span class="dot"></span>' + ps.label + '</span>') +
+      f('יתרה לתשלום', U.fmtMoney(bal), true) +
       '</div>';
 
     var checks = '<div class="checks">' +
@@ -235,6 +247,7 @@
         '<button class="btn btn--primary btn--sm" data-action="delivered">' + I.check + 'סמן כנמסרה</button>') +
       '<button class="btn btn--wa btn--sm" data-action="wa-ready">' + I.wa + 'ההזמנה מוכנה</button>' +
       '<button class="btn btn--wa btn--sm" data-action="wa-copy">' + I.copy + 'שלח עותק ללקוח</button>' +
+      '<button class="btn btn--secondary btn--sm" data-action="pay">' + I.wallet + 'פירוט ותשלום</button>' +
       '<button class="btn btn--secondary btn--sm" data-action="edit">עריכה</button>' +
       '<button class="btn btn--danger btn--sm" data-action="delete">מחיקה</button>' +
       '</div>';
@@ -251,6 +264,9 @@
 
   /* --------------------------------------------------------------- events */
   function onListClick(e) {
+    var custBtn = e.target.closest('[data-open-customer]');
+    if (custBtn) { e.stopPropagation(); Gallery.openCustomer(custBtn.getAttribute('data-open-customer')); return; }
+
     var toggle = e.target.closest('[data-toggle]');
     var rowEl = e.target.closest('.row');
     if (!rowEl) return;
@@ -292,6 +308,7 @@
     if (!o) return;
     if (action === 'ready') { changeStatus(id, 'ready'); return; }
     if (action === 'delivered') { changeStatus(id, 'delivered'); return; }
+    if (action === 'pay') { Gallery.OrderDetail.open(o); return; }
     if (action === 'wa-ready') { global.open(U.waLink(o.phone, U.msgReady(o)), '_blank'); return; }
     if (action === 'wa-copy') { global.open(U.waLink(o.phone, U.msgCopy(o)), '_blank'); return; }
     if (action === 'edit') { openForm(o); return; }

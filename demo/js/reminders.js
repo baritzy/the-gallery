@@ -84,14 +84,18 @@
         '<button class="btn btn--wa btn--sm" data-id="' + o.id + '" data-action="wa-ready">' + I.wa + 'ההזמנה מוכנה</button>';
     }
 
+    var custId = o.customerId || o.customerName;
+
     return '<div class="rem-card" style="--spine:var(--st-' + color + ')">' +
       '<div class="rem-card__top">' +
-        '<button type="button" class="rem-card__name" data-open-order="' + o.id + '" ' +
-          'title="פתח את פירוט ההזמנה">' + esc(o.customerName) + '</button>' +
+        '<button type="button" class="rem-card__name" data-open-customer="' + esc(custId) + '" ' +
+          'title="מעבר לכרטיס הלקוח">' + esc(o.customerName) + '</button>' +
         '<span class="chip ' + chipCls + '" style="margin-inline-start:auto">' + I.clock + 'יום ' + d + ' / 10</span>' +
       '</div>' +
-      '<div class="rem-card__meta">הזמנה #' + esc(o.orderNo) + ' · ' + esc(o.frameDesc || '') +
-        ' · יעד ' + U.fmtDate(o.deliveryTarget) + '</div>' +
+      '<div class="rem-card__meta">' +
+        '<button type="button" class="rem-card__order" data-open-order="' + o.id + '" ' +
+          'title="פתח את פירוט ההזמנה">הזמנה #' + esc(o.orderNo) + '</button>' +
+        ' · ' + esc(o.frameDesc || '') + ' · יעד ' + U.fmtDate(o.deliveryTarget) + '</div>' +
       '<div class="rem-card__actions">' + actions + '</div>' +
     '</div>';
   }
@@ -103,6 +107,9 @@
   }
 
   function onClick(e) {
+    var custBtn = e.target.closest('[data-open-customer]');
+    if (custBtn) { e.stopPropagation(); Gallery.openCustomer(custBtn.getAttribute('data-open-customer')); return; }
+
     var openBtn = e.target.closest('[data-open-order]');
     if (openBtn) { e.stopPropagation(); Gallery.OrderDetail.open(openBtn.getAttribute('data-open-order')); return; }
 
