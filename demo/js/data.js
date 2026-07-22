@@ -10,7 +10,7 @@
  *  מבנה הרשומות תואם Firestore (id, createdAt, updatedAt, schemaVersion),
  *  והמזהים כבר נוצרים בצד לקוח עם crypto.randomUUID().
  *
- * קולקשנים: orders, customers, profiles, suppliers, usage, reorderItems, payments.
+ * קולקשנים: orders, customers, profiles, suppliers, usage, reorderItems, payments, expenses.
  * ========================================================================== */
 
 (function (global) {
@@ -200,6 +200,15 @@
     savePayment: function (p) { return save('payments', p); },
     deletePayment: function (id) { return remove('payments', id); },
     subscribePayments: function (cb) { return subscribe('payments', cb); },
+
+    // --- expenses (הוצאות) ---
+    // רשומה: { id, amount, category, note, supplierId?, date, createdAt, updatedAt }
+    // category: חומרי גלם / שכירות / ציוד / אחר
+    getExpenses: function () { return getAll('expenses'); },
+    getExpense: function (id) { return getById('expenses', id); },
+    saveExpense: function (e) { return save('expenses', e); },
+    deleteExpense: function (id) { return remove('expenses', id); },
+    subscribeExpenses: function (cb) { return subscribe('expenses', cb); },
 
     // עוזר: מספר הזמנה רץ אוטומטי (מבוסס על הקיים)
     nextOrderNumber: function () {
@@ -443,6 +452,49 @@
   }
 
   seedPaymentsIfEmpty();
+
+  /* =========================================================================
+   * SEED הוצאות - נכתב פעם אחת (אם הקולקשן ריק). מפוזר על פני החודשים האחרונים
+   * (שכירות חודשית, קניות חומרי גלם מספקים, ציוד, אחר) כדי שהרווח וההשוואות
+   * בין תקופות בטאב "כספים" יראו נתונים אמיתיים.
+   * ======================================================================= */
+  function seedExpensesIfEmpty() {
+    if (readCollection('expenses').length > 0) return;
+    var sups = readCollection('suppliers');
+    var s0 = sups[0] ? sups[0].id : null;
+    var s1 = sups[1] ? sups[1].id : null;
+    var s2 = sups[2] ? sups[2].id : null;
+
+    var list = [];
+    function mkExp(amount, category, note, daysBack, supplierId) {
+      var stamp = new Date().toISOString();
+      list.push({
+        id: uid(), amount: Math.round(amount), category: category, note: note,
+        supplierId: supplierId || null, date: iso(daysAgo(daysBack)),
+        schemaVersion: SCHEMA_VERSION, createdAt: stamp, updatedAt: stamp
+      });
+    }
+
+    // שכירות הסדנה, חודש אחר חודש
+    mkExp(3200, 'שכירות', 'שכירות הסדנה', 4,  null);
+    mkExp(3200, 'שכירות', 'שכירות הסדנה', 35, null);
+    mkExp(3200, 'שכירות', 'שכירות הסדנה', 66, null);
+    // קניות חומרי גלם מהספקים
+    mkExp(1450, 'חומרי גלם', 'הזמנת פרופילים', 7,  s0);
+    mkExp(980,  'חומרי גלם', 'זכוכית ופספרטו', 19, s1);
+    mkExp(640,  'חומרי גלם', 'גב קרטון ותליות', 28, s2);
+    mkExp(1720, 'חומרי גלם', 'הזמנת פרופילים', 47, s0);
+    mkExp(1180, 'חומרי גלם', 'זכוכית נטולת בוהק', 71, s1);
+    // ציוד
+    mkExp(540, 'ציוד', 'להבי חיתוך לזווית 45', 14, null);
+    mkExp(890, 'ציוד', 'מהדק פינות חדש', 61, null);
+    // אחר
+    mkExp(210, 'אחר', 'חומרי ניקיון ומשרד', 11, null);
+
+    writeCollection('expenses', list);
+  }
+
+  seedExpensesIfEmpty();
 
   /* =========================================================================
    * חשיפה גלובלית

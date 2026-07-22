@@ -38,7 +38,8 @@
     wallet: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg>',
     sun: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
     moon: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>',
-    printer: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>'
+    printer: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>',
+    finance: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></svg>'
   };
   Gallery.icons = I;
 
@@ -700,6 +701,8 @@
       tip: 'כל הלקוחות וההיסטוריה שלהם. לחיצה על שם לקוח בכל מקום באפליקציה מקפיצה לכאן.' },
     { id: 'reminders', label: 'תזכורות', icon: I.reminders, badge: 'is-primary',
       tip: 'המונה סופר עבודות שדורשות מעקב: באיחור, מתקרבות ליעד או מוכנות לאיסוף. הוא יורד לבד כשמטפלים בהן.' },
+    { id: 'finance',   label: 'כספים',   icon: I.finance,   badge: 'is-primary',
+      tip: 'ארכיון ומעקב פיננסי: הכנסות שנגבו בפועל, הוצאות ורווח לכל תקופה. אפשר לנווט אחורה בזמן.' },
     { id: 'insights',  label: 'תובנות',  icon: I.insights,  badge: 'is-orange',
       tip: 'המונה סופר פרופילים מתחת לסף שכדאי להזמין. הוא יורד לבד כשמחדשים מלאי.' }
   ];
@@ -778,6 +781,7 @@
     Gallery.Inventory.mount(document.querySelector('[data-view="inventory"]'));
     Gallery.Customers.mount(document.querySelector('[data-view="customers"]'));
     Gallery.Reminders.mount(document.querySelector('[data-view="reminders"]'));
+    Gallery.Finance.mount(document.querySelector('[data-view="finance"]'));
     Gallery.Insights.mount(document.querySelector('[data-view="insights"]'));
 
     // badges: הזמנות באיחור + פרופילים מתחת לסף

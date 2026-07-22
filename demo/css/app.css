@@ -1324,3 +1324,143 @@ button.cust-order:focus-visible { outline: none; box-shadow: var(--focus-ring); 
   .pay-form__grid { grid-template-columns: 1fr; }
   .eod-summary { flex-direction: column; }
 }
+
+/* =============================================================================
+ * הרחבת v4: טאב "כספים" (finance) - בורר תקופה, סיכום, אמצעי תשלום, תנועות
+ * ========================================================================== */
+.fin-head-actions { display: flex; gap: var(--s-2); flex-wrap: wrap; }
+
+/* ---------- בורר תקופה + ניווט בזמן ---------- */
+.fin-periodbar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--s-3); flex-wrap: wrap;
+  margin-bottom: var(--s-5);
+}
+.fin-units {
+  display: inline-flex; gap: 4px;
+  background: var(--bg-sunken); border: 1px solid var(--line);
+  border-radius: var(--r-pill); padding: 4px;
+}
+.fin-unit {
+  height: 34px; padding: 0 var(--s-4);
+  border: 0; background: transparent; border-radius: var(--r-pill);
+  font-family: var(--font-ui); font-weight: var(--fw-semibold); font-size: var(--fs-sm);
+  color: var(--ink-secondary); cursor: pointer;
+  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+.fin-unit:hover { color: var(--ink); }
+.fin-unit.is-active { background: var(--primary); color: #fff; box-shadow: var(--e1); }
+.fin-unit:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+.fin-nav { display: flex; align-items: center; gap: var(--s-2); }
+.fin-nav__btn {
+  width: 40px; height: 40px; flex: none;
+  border: 1px solid var(--line-strong); border-radius: var(--r-md);
+  background: var(--bg-surface); color: var(--ink-secondary);
+  cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+  transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+.fin-nav__btn:hover:not(:disabled) { background: var(--bg-surface-alt); color: var(--ink); }
+.fin-nav__btn:disabled { opacity: .4; cursor: not-allowed; }
+.fin-nav__btn:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.fin-nav__btn svg { width: 20px; height: 20px; }
+.fin-nav__label {
+  min-width: 150px; text-align: center;
+  font-family: var(--font-display); font-weight: var(--fw-semibold); font-size: var(--fs-md);
+  color: var(--ink);
+}
+.fin-today {
+  border: 0; background: transparent; color: var(--primary);
+  font-family: var(--font-ui); font-weight: var(--fw-semibold); font-size: var(--fs-sm);
+  cursor: pointer; padding: 6px 8px; border-radius: var(--r-sm);
+}
+.fin-today.is-hidden { visibility: hidden; }
+.fin-today:hover { text-decoration: underline; }
+.fin-today:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+/* ---------- סקשן כללי (אמצעי תשלום / תנועות) ---------- */
+.fin-section {
+  background: var(--bg-surface); border: 1px solid var(--line);
+  border-radius: var(--r-lg); padding: var(--s-5);
+  margin-bottom: var(--s-5); box-shadow: var(--e1);
+}
+.fin-section__head {
+  display: flex; align-items: center; gap: var(--s-2);
+  margin-bottom: var(--s-4);
+  font-family: var(--font-display); font-weight: var(--fw-semibold); font-size: var(--fs-md);
+  color: var(--ink);
+}
+.fin-section__head .ico { width: 18px; height: 18px; flex: none; color: var(--ink-muted); }
+.fin-section__count {
+  margin-inline-start: auto;
+  font-family: var(--font-display); font-weight: var(--fw-bold); font-size: var(--fs-2xs);
+  background: var(--bg-sunken); color: var(--ink-muted);
+  border-radius: var(--r-pill); padding: 2px 9px; min-width: 22px; text-align: center;
+}
+
+/* ---------- פירוט הכנסות לפי אמצעי ---------- */
+.fin-methods {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--s-4) var(--s-5);
+}
+.fin-method { display: flex; flex-direction: column; gap: 6px; }
+.fin-method__top { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-2); }
+.fin-method__name { font-size: var(--fs-sm); font-weight: var(--fw-semibold); color: var(--ink-secondary); }
+.fin-method__val { font-family: var(--font-display); font-weight: var(--fw-bold); font-size: var(--fs-md); color: var(--ink); font-variant-numeric: tabular-nums; }
+.fin-method__track { height: 8px; border-radius: var(--r-pill); background: var(--bg-sunken); overflow: hidden; }
+.fin-method__fill {
+  height: 100%; border-radius: var(--r-pill); background: var(--primary);
+  transform-origin: right center; animation: fillGrow var(--dur-slow) var(--ease-out) both;
+}
+.fin-method__pct { font-size: var(--fs-2xs); color: var(--ink-muted); }
+
+/* ---------- רשימת תנועות ---------- */
+.fin-txns { display: flex; flex-direction: column; gap: 6px; }
+.fin-txn {
+  display: flex; align-items: center; gap: var(--s-3); width: 100%;
+  text-align: start;
+  padding: var(--s-2) var(--s-3);
+  background: var(--bg-surface-alt); border: 1px solid var(--line); border-radius: var(--r-sm);
+  font-family: var(--font-ui); color: inherit;
+}
+button.fin-txn { cursor: pointer; transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease); }
+button.fin-txn:hover:not(:disabled) { background: var(--bg-surface); border-color: var(--line-strong); }
+button.fin-txn:disabled { cursor: default; }
+button.fin-txn:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.fin-txn__badge {
+  flex: none; width: 26px; height: 26px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-weight: var(--fw-bold); font-size: var(--fs-lg); line-height: 1;
+}
+.fin-txn__badge.income { background: var(--st-green-soft); color: var(--st-green-text); }
+.fin-txn__badge.expense { background: var(--st-red-soft); color: var(--st-red-text); }
+.fin-txn__main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.fin-txn__who { font-weight: var(--fw-semibold); color: var(--ink); font-size: var(--fs-sm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fin-txn__who .mono { color: var(--ink-muted); font-weight: var(--fw-regular); }
+.fin-txn__sub { font-size: var(--fs-xs); color: var(--ink-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fin-txn__actions { display: flex; align-items: center; gap: var(--s-2); flex: none; }
+.fin-txn__amt { flex: none; font-family: var(--font-display); font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
+.fin-txn__amt.income { color: var(--st-green-text); }
+.fin-txn__amt.expense { color: var(--st-red-text); }
+.fin-txn__del {
+  flex: none; width: 26px; height: 26px; border: 0; border-radius: var(--r-sm);
+  background: var(--bg-sunken); color: var(--ink-muted);
+  font-size: 17px; line-height: 1; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+.fin-txn__del:hover { background: var(--st-red-soft); color: var(--st-red-text); }
+.fin-txn__del:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+.fin-empty { font-size: var(--fs-sm); color: var(--ink-muted); padding: var(--s-3) 0; }
+
+@media (max-width: 640px) {
+  .fin-periodbar { justify-content: center; }
+  .fin-nav__label { min-width: 120px; }
+}
+
+/* ---------- בר טאבים תחתון: 6 טאבים במסך צר מאוד ---------- */
+@media (max-width: 400px) {
+  .bottombar .nav__item .lbl { font-size: 10px; }
+  .bottombar .nav__item .ico { width: 22px; height: 22px; }
+}
