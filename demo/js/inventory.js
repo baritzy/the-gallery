@@ -48,6 +48,7 @@
     });
 
     bodyEl.addEventListener('click', onClick);
+    bodyEl.addEventListener('change', onChange);
 
     DB.subscribeSuppliers(function (s) { suppliers = s; render(); });
     DB.subscribeUsage(function (u) { usage = u; render(); });
@@ -123,11 +124,23 @@
     });
   }
 
+  // דוגמית עץ / thumbnail תמונה בשורה. small = מצב סגור, large = פאנל.
+  function thumbHTML(p, large) {
+    var cls = 'pthumb' + (large ? ' pthumb--lg' : '');
+    if (p.photo) {
+      return '<span class="' + cls + '"><img src="' + esc(p.photo) + '" alt="תמונת פרופיל ' + esc(p.sku) + '"></span>';
+    }
+    var grad = U.woodSwatch(p);
+    var tag = large ? '<span class="pthumb__tag">📷 לצילום</span>' : '';
+    return '<span class="' + cls + '" style="background-image:' + grad + '">' + tag + '</span>';
+  }
+
   function rowHTML(p) {
     var color = stockColor(p);
     var low = isLow(p);
     return '<div class="row' + (low ? ' low' : '') + '" data-id="' + p.id + '" style="--spine:var(--st-' + color + ')">' +
       '<button class="row__head" aria-expanded="' + !!openIds[p.id] + '" data-toggle>' +
+        thumbHTML(p, false) +
         '<span class="row__id mono">' + esc(p.sku) + '</span>' +
         '<span class="row__main">' +
           '<span class="row__name">' + esc(p.woodType) + ' · ' + esc(p.color) + '</span>' +
@@ -181,7 +194,19 @@
       '<button class="btn btn--primary btn--sm" data-scroll-order>' + I.check + 'לרשימת ההזמנה</button></div>' :
       '<div class="reorder-rec" style="background:var(--st-green-soft)"><span class="txt" style="color:var(--st-green-text)">המלאי מעל הסף. אין צורך בהזמנה כרגע.</span></div>';
 
-    return '<div class="mat">' + grid + draftNote + histHtml + rec + '</div>';
+    var photo = '<div class="pphoto">' +
+      thumbHTML(p, true) +
+      '<div class="pphoto__side">' +
+        '<div class="pphoto__title">תמונת סוג העץ</div>' +
+        '<div class="pphoto__hint">' + (p.photo ? 'תמונה הועלתה. אפשר להחליף בכל רגע.' : 'עדיין דוגמית צבע. צלם את הפרופיל האמיתי כדי לזהות אותו במבט.') + '</div>' +
+        '<label class="btn btn--secondary btn--sm pphoto__btn">' +
+          '<input type="file" accept="image/*" capture="environment" data-photo-input hidden>' +
+          '📷 ' + (p.photo ? 'החלף תמונה' : 'צלם / העלה תמונה') +
+        '</label>' +
+      '</div>' +
+    '</div>';
+
+    return '<div class="mat">' + photo + grid + draftNote + histHtml + rec + '</div>';
   }
 
   /* ------------------------------------------------ רשימת הזמנה לספק */
@@ -229,6 +254,46 @@
       toggle.setAttribute('aria-expanded', String(willOpen));
       if (willOpen) openIds[id] = true; else delete openIds[id];
     }
+  }
+
+  /* --------------------------------------------------- העלאת/צילום תמונה */
+  function onChange(e) {
+    var input = e.target.closest('[data-photo-input]');
+    if (!input || !input.files || !input.files[0]) return;
+    var rowEl = e.target.closest('.row');
+    if (!rowEl) return;
+    var id = rowEl.getAttribute('data-id');
+    resizeImage(input.files[0], 500, function (dataUrl) {
+      var p = profiles.filter(function (x) { return x.id === id; })[0];
+      if (!p) return;
+      openIds[id] = true; // השאר את השורה פתוחה אחרי ההעלאה
+      DB.saveProfile(Object.assign({}, p, { photo: dataUrl }));
+    });
+  }
+
+  // מקטין את התמונה ל-max פיקסלים בצד הארוך דרך canvas, ומחזיר dataURL של JPEG.
+  // כך התמונה לא מפוצצת את localStorage (משקל דמו נמוך, בדיוק כמו בצילום אמיתי).
+  function resizeImage(file, max, cb) {
+    var reader = new FileReader();
+    reader.onload = function (ev) {
+      var img = new Image();
+      img.onload = function () {
+        var w = img.width, h = img.height;
+        var scale = Math.min(1, max / Math.max(w, h));
+        var cw = Math.max(1, Math.round(w * scale));
+        var ch = Math.max(1, Math.round(h * scale));
+        var canvas = document.createElement('canvas');
+        canvas.width = cw; canvas.height = ch;
+        canvas.getContext('2d').drawImage(img, 0, 0, cw, ch);
+        var out;
+        try { out = canvas.toDataURL('image/jpeg', 0.82); }
+        catch (err) { out = ev.target.result; } // נפילה חכמה אם הדפדפן חוסם toDataURL
+        cb(out);
+      };
+      img.onerror = function () { global.alert('לא הצלחתי לקרוא את התמונה. נסה קובץ אחר.'); };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
   }
 
   Gallery.Inventory = { mount: mount };

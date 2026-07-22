@@ -18,6 +18,13 @@
     orders: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg>',
     inventory: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/><path d="M3 8v5"/><path d="M21 8v5"/></svg>',
     reminders: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>',
+    customers: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+    insights: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l3-4 3 2 4-6"/></svg>',
+    contact: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.9.36 1.78.7 2.6a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.48-1.27a2 2 0 0 1 2.11-.45c.82.34 1.7.57 2.6.7A2 2 0 0 1 22 16.92z"/></svg>',
+    lightbulb: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5.76.76 1.23 1.52 1.41 2.5"/></svg>',
+    trendUp: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 6l-9.5 9.5-5-5L1 18"/><path d="M17 6h6v6"/></svg>',
+    trendDown: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 18l-9.5-9.5-5 5L1 6"/><path d="M17 18h6v-6"/></svg>',
+    coins: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.66 3.58 3 8 3s8-1.34 8-3V6"/><path d="M4 12v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"/></svg>',
     search: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>',
     clock: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
     chevron: '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>',
@@ -112,12 +119,32 @@
       .replace(/"/g, '&quot;');
   }
 
+  // צבע דו-שכבתי (placeholder) לגוון עץ הפרופיל: highlight עליון + מעבר גוון-עץ לצל.
+  // משמש כדוגמית מלאי במצב דמו עד שאסף מעלה תמונות אמיתיות.
+  var WOOD_BASE = {
+    'אלון': '#C79A5E', 'אשור': '#D9BE93', 'ליבנה': '#E5D6B4',
+    'אורן': '#E6C583', 'אגוז': '#7A4A2B', 'מייפל': '#E4C7A1'
+  };
+  function woodSwatch(p) {
+    var color = (p && p.color) || '';
+    var hex = WOOD_BASE[(p && p.woodType)] || '#C9A97E';
+    if (/שחור/.test(color)) hex = '#39332D';
+    else if (/לבן|קרם|שנהב|שמנת/.test(color)) hex = '#EDE5D9';
+    else if (/אפור|פחם|סקנדינבי/.test(color)) hex = '#B7B8BE';
+    else if (/מוזהב|זהב|שמפניה/.test(color)) hex = '#E4C476';
+    else if (/כסף|פלטינה/.test(color)) hex = '#D6D9DF';
+    else if (/ברונזה|מוקה|ונגה|כהה/.test(color)) hex = '#6E4A2E';
+    return 'linear-gradient(140deg, rgba(255,255,255,.30), rgba(255,255,255,0) 38%),' +
+           'linear-gradient(140deg, ' + hex + ' 0%, ' + hex + ' 42%, rgba(20,16,12,.42) 100%)';
+  }
+
   Gallery.util = {
     STATUS_LABEL: STATUS_LABEL, STATUS_LIST: STATUS_LIST,
     daysSince: daysSince, dayNumber: dayNumber, urgency: urgency,
     displayColor: displayColor, dayChipClass: dayChipClass, statusVar: statusVar,
     fmtDate: fmtDate, fmtMoney: fmtMoney, consumption: consumption,
-    phoneIntl: phoneIntl, waLink: waLink, msgCopy: msgCopy, msgReady: msgReady, esc: esc
+    phoneIntl: phoneIntl, waLink: waLink, msgCopy: msgCopy, msgReady: msgReady,
+    esc: esc, woodSwatch: woodSwatch
   };
 
   /* =========================================================================
@@ -153,7 +180,9 @@
   var TABS = [
     { id: 'orders',    label: 'הזמנות',  icon: I.orders,    badge: 'is-red' },
     { id: 'inventory', label: 'מלאי',    icon: I.inventory, badge: 'is-orange' },
-    { id: 'reminders', label: 'תזכורות', icon: I.reminders, badge: 'is-primary' }
+    { id: 'customers', label: 'לקוחות',  icon: I.customers, badge: 'is-primary' },
+    { id: 'reminders', label: 'תזכורות', icon: I.reminders, badge: 'is-primary' },
+    { id: 'insights',  label: 'תובנות',  icon: I.insights,  badge: 'is-orange' }
   ];
   var current = 'orders';
 
@@ -195,6 +224,7 @@
       v.classList.toggle('is-active', v.getAttribute('data-view') === id);
     });
   }
+  Gallery.switchTab = switchTab;
 
   function updateBadge(tabId, count, cls) {
     Array.prototype.forEach.call(document.querySelectorAll('[data-badge="' + tabId + '"]'), function (b) {
@@ -211,7 +241,9 @@
     // מרכיב את שלושת המודולים על מיכלי התצוגה שלהם
     Gallery.Orders.mount(document.querySelector('[data-view="orders"]'));
     Gallery.Inventory.mount(document.querySelector('[data-view="inventory"]'));
+    Gallery.Customers.mount(document.querySelector('[data-view="customers"]'));
     Gallery.Reminders.mount(document.querySelector('[data-view="reminders"]'));
+    Gallery.Insights.mount(document.querySelector('[data-view="insights"]'));
 
     // badges: הזמנות באיחור + פרופילים מתחת לסף
     DB.subscribeOrders(function (orders) {
@@ -225,6 +257,7 @@
     DB.subscribeProfiles(function (profiles) {
       var low = profiles.filter(function (p) { return p.stockUnits < p.minThreshold; }).length;
       updateBadge('inventory', low);
+      updateBadge('insights', low); // מונה "צריך להזמין" גם על טאב התובנות
     });
 
     switchTab('orders');

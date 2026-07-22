@@ -16,8 +16,8 @@
 (function (global) {
   'use strict';
 
-  var SCHEMA_VERSION = 1;
-  var NS = 'gallery:v1:'; // קידומת מפתחות ב-localStorage
+  var SCHEMA_VERSION = 2;
+  var NS = 'gallery:v2:'; // קידומת מפתחות ב-localStorage (v2: טלפוני דמו, costPerCm, deliveredAt, ארכיון)
 
   /* ---- קונפיגורציית החנות (לחתימת הודעות וואטסאפ) ---- */
   var SHOP = {
@@ -142,7 +142,14 @@
     // --- orders ---
     getOrders: function () { return getAll('orders'); },
     getOrder: function (id) { return getById('orders', id); },
-    saveOrder: function (o) { return save('orders', o); },
+    saveOrder: function (o) {
+      // חותמת מסירה: נחתמת פעם אחת ברגע המעבר ל"נמסרה" (פותחת חישובי זמן ביצוע ועמידה בזמנים)
+      var rec = o;
+      if (o && o.status === 'delivered' && !o.deliveredAt) {
+        rec = Object.assign({}, o, { deliveredAt: new Date().toISOString() });
+      }
+      return save('orders', rec);
+    },
     deleteOrder: function (id) { return remove('orders', id); },
     subscribeOrders: function (cb) { return subscribe('orders', cb); },
 
@@ -213,11 +220,17 @@
     var suppliers = [supNorth, supGold, supEz];
     writeCollection('suppliers', suppliers);
 
-    /* ---- פרופילים (מלאי) - ~18 פרופילים על פני 3 ספקים ---- */
+    /* ---- פרופילים (מלאי) - ~18 פרופילים על פני 3 ספקים ----
+       costPerCm = עלות דמו לס"מ אורך (₪). מאפשר לכרטיס הרווחיות להציג משהו.
+       ערכים לפי סוג העץ, לסימון בלבד עד שאסף יזין עלויות אמיתיות. */
+    var COST_PER_CM = {
+      'אלון': 1.4, 'אשור': 1.1, 'ליבנה': 0.9, 'אורן': 0.8, 'אגוז': 2.1, 'מייפל': 1.6
+    };
     function prof(sku, wood, color, sup, stock, min) {
       return {
         id: uid(), sku: sku, woodType: wood, color: color, supplierId: sup,
         stockUnits: stock, minThreshold: min, unit: 'ס"מ אורך',
+        costPerCm: COST_PER_CM[wood] || 1.0, photo: null,
         schemaVersion: SCHEMA_VERSION, createdAt: nowIso, updatedAt: nowIso
       };
     }
@@ -252,10 +265,22 @@
     var usage = [];
     var orderNo = 1000;
 
+    var customerSeq = 0;
+    function pad4(n) { return ('0000' + n).slice(-4); }
+
+    // כל הטלפונים הם מספרי דמו בטוחים בפורמט 050-000-00NN.
+    // גם אם לוחצים שלח בוואטסאפ, ההודעה לא תגיע לאיש אמיתי. טלפון החנות (09-7674829) לא נוגעים בו.
     function makeOrder(cfg) {
       orderNo += 1;
-      var cust = { id: uid(), name: cfg.name, phone: cfg.phone, notes: '', schemaVersion: SCHEMA_VERSION, createdAt: nowIso, updatedAt: nowIso };
-      customers.push(cust);
+      var cust = cfg.customer;
+      if (!cust) {
+        customerSeq += 1;
+        cust = {
+          id: uid(), name: cfg.name, phone: '050-000-' + pad4(customerSeq), notes: '',
+          schemaVersion: SCHEMA_VERSION, createdAt: nowIso, updatedAt: nowIso
+        };
+        customers.push(cust);
+      }
       var openD = daysAgo(cfg.openedDaysAgo);
       var target = plusDays(openD, SHOP.slaDays);
       var price = cfg.price, deposit = cfg.deposit;
@@ -263,8 +288,8 @@
         id: uid(),
         orderNo: String(orderNo),
         customerId: cust.id,
-        customerName: cfg.name,
-        phone: cfg.phone,
+        customerName: cust.name,
+        phone: cust.phone,
         imageDesc: cfg.imageDesc,
         frameDesc: cfg.frameDesc,
         profileSku: cfg.profileSku || '',
@@ -285,6 +310,11 @@
         createdAt: iso(openD),
         updatedAt: nowIso
       };
+      // חותמת מסירה להזמנות ארכיון (מזינה זמן ביצוע ועמידה בזמנים לתובנות)
+      if (cfg.status === 'delivered') {
+        var tri = cfg.turnaround != null ? cfg.turnaround : SHOP.slaDays - 2;
+        order.deliveredAt = iso(plusDays(openD, tri));
+      }
       orders.push(order);
 
       // רשומת צריכה (רק להזמנות שכבר בעבודה/מוכנות/נמסרו, לצורך היסטוריה)
@@ -304,19 +334,33 @@
           updatedAt: nowIso
         });
       }
-      return order;
+      return { order: order, cust: cust };
     }
 
-    makeOrder({ name: 'דנה כהן',    phone: '0521234567', openedDaysAgo: 6,  status: 'ready',    imageDesc: 'צילום משפחתי בשחור-לבן', frameDesc: 'אלון טבעי בהיר', profileSku: '4322-20',  width: 30, height: 40, glass: true,  glassType: 'מט', backing: true,  passe: true,  passeColor: 'לבן, 5 ס"מ', price: 320, deposit: 200 });
-    makeOrder({ name: 'יוסי לוי',    phone: '0533456789', openedDaysAgo: 9,  status: 'in-work',  imageDesc: 'ציור שמן, נוף גליל',      frameDesc: 'ליבנה מוזהב עתיק', profileSku: '5322-225', width: 50, height: 70, glass: false, backing: true,  passe: false, price: 480, deposit: 200 });
-    makeOrder({ name: 'מרים אברהם',  phone: '0544567890', openedDaysAgo: 12, status: 'in-work',  imageDesc: 'תעודת הוקרה ממוסגרת',    frameDesc: 'אגוז אמריקאי', profileSku: '4805-40',  width: 21, height: 30, glass: true,  glassType: 'רגילה', backing: true,  passe: true,  passeColor: 'שמנת', price: 260, deposit: 100 });
-    makeOrder({ name: 'אבי שרון',    phone: '0525678901', openedDaysAgo: 1,  status: 'new',      imageDesc: 'פוסטר קונצרט',           frameDesc: 'אלון שחור מט', profileSku: '4322-11',  width: 60, height: 90, glass: false, backing: true,  passe: false, price: 540, deposit: 250 });
-    makeOrder({ name: 'נועה פרידמן', phone: '0536789012', openedDaysAgo: 4,  status: 'in-work',  imageDesc: 'איור ילדים בצבעי מים',    frameDesc: 'אורן שמפניה', profileSku: '5322-60',  width: 25, height: 35, glass: true,  glassType: 'נטולת בוהק', backing: true, passe: true, passeColor: 'תכלת', price: 300, deposit: 150 });
-    makeOrder({ name: 'רון גבאי',    phone: '0547890123', openedDaysAgo: 14, status: 'in-work',  imageDesc: 'תמונת חתונה',             frameDesc: 'מייפל טבעי מבריק', profileSku: '4805-77', width: 40, height: 50, glass: true,  glassType: 'מט', backing: true,  passe: true,  passeColor: 'שנהב', price: 420, deposit: 150 });
-    makeOrder({ name: 'טל בן דוד',   phone: '0528901234', openedDaysAgo: 8,  status: 'ready',    imageDesc: 'מפת עולם וינטג׳',         frameDesc: 'אורן ברונזה', profileSku: '5322-33',  width: 70, height: 100, glass: false, backing: true, passe: false, price: 650, deposit: 300 });
-    makeOrder({ name: 'ליאת מזרחי',  phone: '0539012345', openedDaysAgo: 20, status: 'delivered',imageDesc: 'פורטרט שמן',             frameDesc: 'אגוז מוקה', profileSku: '4805-63',  width: 30, height: 30, glass: true,  glassType: 'רגילה', backing: true, passe: true,  passeColor: 'לבן', price: 280, deposit: 280 });
-    makeOrder({ name: 'עדן כרמל',    phone: '0526543210', openedDaysAgo: 8,  status: 'in-work',  imageDesc: 'קולאז׳ תמונות משפחה',    frameDesc: 'אלון לבן מושחל', profileSku: '4322-224', width: 50, height: 50, glass: true, glassType: 'מט', backing: true, passe: true,  passeColor: 'אפור בהיר', price: 390, deposit: 150 });
-    makeOrder({ name: 'שירה גולן',   phone: '0547654321', openedDaysAgo: 2,  status: 'new',      imageDesc: 'תעודת בגרות',            frameDesc: 'אורן פלטינה', profileSku: '5322-14',  width: 21, height: 30, glass: true,  glassType: 'רגילה', backing: true, passe: false, price: 190, deposit: 90 });
+    /* ---- הזמנות פעילות (מופיעות ברשימה, בסדנה ובתזכורות) ---- */
+    var mkDana  = makeOrder({ name: 'דנה כהן',    openedDaysAgo: 6,  status: 'ready',    imageDesc: 'צילום משפחתי בשחור-לבן', frameDesc: 'אלון טבעי בהיר', profileSku: '4322-20',  width: 30, height: 40, glass: true,  glassType: 'מט', backing: true,  passe: true,  passeColor: 'לבן, 5 ס"מ', price: 320, deposit: 200 });
+    var mkYossi = makeOrder({ name: 'יוסי לוי',    openedDaysAgo: 9,  status: 'in-work',  imageDesc: 'ציור שמן, נוף גליל',      frameDesc: 'ליבנה מוזהב עתיק', profileSku: '5322-225', width: 50, height: 70, glass: false, backing: true,  passe: false, price: 480, deposit: 200 });
+    makeOrder({ name: 'מרים אברהם',  openedDaysAgo: 12, status: 'in-work',  imageDesc: 'תעודת הוקרה ממוסגרת',    frameDesc: 'אגוז אמריקאי', profileSku: '4805-40',  width: 21, height: 30, glass: true,  glassType: 'רגילה', backing: true,  passe: true,  passeColor: 'שמנת', price: 260, deposit: 100 });
+    makeOrder({ name: 'אבי שרון',    openedDaysAgo: 1,  status: 'new',      imageDesc: 'פוסטר קונצרט',           frameDesc: 'אלון שחור מט', profileSku: '4322-11',  width: 60, height: 90, glass: false, backing: true,  passe: false, price: 540, deposit: 250 });
+    makeOrder({ name: 'נועה פרידמן', openedDaysAgo: 4,  status: 'in-work',  imageDesc: 'איור ילדים בצבעי מים',    frameDesc: 'אורן שמפניה', profileSku: '5322-60',  width: 25, height: 35, glass: true,  glassType: 'נטולת בוהק', backing: true, passe: true, passeColor: 'תכלת', price: 300, deposit: 150 });
+    makeOrder({ name: 'רון גבאי',    openedDaysAgo: 14, status: 'in-work',  imageDesc: 'תמונת חתונה',             frameDesc: 'מייפל טבעי מבריק', profileSku: '4805-77', width: 40, height: 50, glass: true,  glassType: 'מט', backing: true,  passe: true,  passeColor: 'שנהב', price: 420, deposit: 150 });
+    var mkTal   = makeOrder({ name: 'טל בן דוד',   openedDaysAgo: 8,  status: 'ready',    imageDesc: 'מפת עולם וינטג׳',         frameDesc: 'אורן ברונזה', profileSku: '5322-33',  width: 70, height: 100, glass: false, backing: true, passe: false, price: 650, deposit: 300 });
+    var mkLiat  = makeOrder({ name: 'ליאת מזרחי',  openedDaysAgo: 20, status: 'delivered', turnaround: 8, imageDesc: 'פורטרט שמן',        frameDesc: 'אגוז מוקה', profileSku: '4805-63',  width: 30, height: 30, glass: true,  glassType: 'רגילה', backing: true, passe: true,  passeColor: 'לבן', price: 280, deposit: 280 });
+    makeOrder({ name: 'עדן כרמל',    openedDaysAgo: 8,  status: 'in-work',  imageDesc: 'קולאז׳ תמונות משפחה',    frameDesc: 'אלון לבן מושחל', profileSku: '4322-224', width: 50, height: 50, glass: true, glassType: 'מט', backing: true, passe: true,  passeColor: 'אפור בהיר', price: 390, deposit: 150 });
+    makeOrder({ name: 'שירה גולן',   openedDaysAgo: 2,  status: 'new',      imageDesc: 'תעודת בגרות',            frameDesc: 'אורן פלטינה', profileSku: '5322-14',  width: 21, height: 30, glass: true,  glassType: 'רגילה', backing: true, passe: false, price: 190, deposit: 90 });
+
+    /* ---- ארכיון: הזמנות שנמסרו בעבר. לא מופיעות ברשימה הפעילה,
+       אך נשמרות בטאב "לקוחות" ומזינות היסטוריה לטאב "תובנות"
+       (צריכת מלאי, זמן ביצוע, מגמת הכנסה, לקוחות חוזרים). כולן שולמו במלואן. ---- */
+    makeOrder({ customer: mkDana.cust,  openedDaysAgo: 78, status: 'delivered', turnaround: 8,  imageDesc: 'הדפס בוטני',       frameDesc: 'אלון אגוז כהה', profileSku: '4322-243', width: 40, height: 50, glass: true,  glassType: 'רגילה', backing: true, passe: true,  passeColor: 'שמנת', price: 380, deposit: 380 });
+    makeOrder({ name: 'גדעון אורן',     openedDaysAgo: 66, status: 'delivered', turnaround: 9,  imageDesc: 'תמונת נוף ים',      frameDesc: 'אגוז אמריקאי',  profileSku: '4805-40',  width: 50, height: 60, glass: true,  glassType: 'מט',    backing: true, passe: false, price: 520, deposit: 520 });
+    makeOrder({ customer: mkLiat.cust,  openedDaysAgo: 58, status: 'delivered', turnaround: 12, imageDesc: 'פורטרט משפחתי',    frameDesc: 'אלון אגוז כהה', profileSku: '4322-243', width: 50, height: 60, glass: true,  glassType: 'רגילה', backing: true, passe: true,  passeColor: 'לבן',  price: 300, deposit: 300 });
+    makeOrder({ name: 'רחל דגן',        openedDaysAgo: 50, status: 'delivered', turnaround: 6,  imageDesc: 'פוסטר קולנוע',     frameDesc: 'אלון שחור מט',  profileSku: '4322-11',  width: 60, height: 80, glass: false, backing: true, passe: false, price: 600, deposit: 600 });
+    makeOrder({ customer: mkYossi.cust, openedDaysAgo: 41, status: 'delivered', turnaround: 7,  imageDesc: 'איור בהזמנה',      frameDesc: 'מייפל טבעי מבריק', profileSku: '4805-77', width: 40, height: 50, glass: true, glassType: 'נטולת בוהק', backing: true, passe: true, passeColor: 'שנהב', price: 420, deposit: 420 });
+    makeOrder({ customer: mkDana.cust,  openedDaysAgo: 33, status: 'delivered', turnaround: 8,  imageDesc: 'תעודה ממוסגרת',    frameDesc: 'אלון אגוז כהה', profileSku: '4322-243', width: 40, height: 60, glass: true,  glassType: 'רגילה', backing: true, passe: false, price: 210, deposit: 210 });
+    makeOrder({ name: 'משה עטר',        openedDaysAgo: 24, status: 'delivered', turnaround: 11, imageDesc: 'מפה עתיקה',        frameDesc: 'אגוז אמריקאי',  profileSku: '4805-40',  width: 70, height: 90, glass: false, backing: true, passe: false, price: 700, deposit: 700 });
+    makeOrder({ name: 'ענת בר',         openedDaysAgo: 16, status: 'delivered', turnaround: 7,  imageDesc: 'צילום שחור לבן',   frameDesc: 'אלון שחור מט',  profileSku: '4322-11',  width: 30, height: 40, glass: true,  glassType: 'מט',    backing: true, passe: true,  passeColor: 'אפור', price: 300, deposit: 300 });
+    makeOrder({ customer: mkTal.cust,   openedDaysAgo: 10, status: 'delivered', turnaround: 8,  imageDesc: 'קולאז׳ טיול',      frameDesc: 'אגוז מוקה',     profileSku: '4805-63',  width: 25, height: 35, glass: true,  glassType: 'רגילה', backing: true, passe: false, price: 280, deposit: 280 });
 
     writeCollection('customers', customers);
     writeCollection('orders', orders);
