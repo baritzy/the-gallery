@@ -1,0 +1,111 @@
+/* =============================================================================
+ * tokens.css  -  כל ה-CSS variables של "הגלריה"
+ * מקור מחייב: context/design-system.md (סעיפים 2, 3, 4). אין מקף ארוך.
+ * ========================================================================== */
+
+:root {
+  /* ---- רקעים ומשטחים ---- */
+  --bg-canvas:      #F5F6FA;
+  --bg-surface:     #FFFFFF;
+  --bg-surface-alt: #FAFBFD;
+  --bg-sunken:      #EEF0F5;
+
+  /* ---- טקסט ---- */
+  --ink:            #1E1F33;
+  --ink-secondary:  #4A4C63;
+  --ink-muted:      #676879;
+  --ink-on-color:   #FFFFFF;
+
+  /* ---- קווים והפרדות ---- */
+  --line:           #E6E9F0;
+  --line-strong:    #D0D4E0;
+  --line-frame:     #E4D8CC;
+
+  /* ---- Primary ---- */
+  --primary:        #6161FF;
+  --primary-hover:  #5450E0;
+  --primary-press:  #4A46CC;
+  --primary-soft:   #ECECFF;
+  --primary-ring:   rgba(97, 97, 255, 0.32);
+
+  /* ---- מבטא עץ אגוז ---- */
+  --walnut:         #8A5A3B;
+  --walnut-soft:    #F3E9E0;
+
+  /* ---- STATUS PALETTE ---- */
+  --st-red:         #E2445C;
+  --st-red-soft:    #FCE8EC;
+  --st-red-text:    #C22A44;
+
+  --st-orange:      #FDAB3D;
+  --st-orange-soft: #FFF3E0;
+  --st-orange-text: #A66A00;
+
+  --st-green:       #00C875;
+  --st-green-soft:  #E1F7EE;
+  --st-green-text:  #06794C;
+
+  --st-blue:        #579BFC;
+  --st-blue-soft:   #E9F2FE;
+  --st-blue-text:   #1C6FCB;
+
+  --st-grey:        #A9AEBE;
+  --st-grey-soft:   #EEF0F4;
+  --st-grey-text:   #5E6376;
+
+  /* ---- טיפוגרפיה ---- */
+  --font-ui:      "Assistant", system-ui, "Segoe UI", Arial, sans-serif;
+  --font-display: "Rubik", "Assistant", system-ui, sans-serif;
+  --font-mono:    "IBM Plex Mono", "SF Mono", Consolas, monospace;
+
+  --fs-2xs: 0.6875rem;
+  --fs-xs:  0.75rem;
+  --fs-sm:  0.875rem;
+  --fs-md:  1rem;
+  --fs-lg:  1.125rem;
+  --fs-xl:  1.375rem;
+  --fs-2xl: 1.75rem;
+
+  --fw-regular: 400;
+  --fw-medium:  500;
+  --fw-semibold:600;
+  --fw-bold:    700;
+
+  --lh-tight: 1.25;
+  --lh-base:  1.55;
+  --ls-tight: -0.01em;
+
+  /* ---- Radius ---- */
+  --r-sm:   6px;
+  --r-md:   10px;
+  --r-lg:   14px;
+  --r-pill: 999px;
+
+  /* ---- Elevation ---- */
+  --e0: none;
+  --e1: 0 1px 2px rgba(30, 31, 51, 0.06), 0 1px 3px rgba(30, 31, 51, 0.05);
+  --e2: 0 2px 8px rgba(30, 31, 51, 0.08);
+  --e3: 0 8px 24px rgba(30, 31, 51, 0.12);
+  --e4: 0 16px 40px rgba(30, 31, 51, 0.16);
+  --e-primary: 0 4px 14px rgba(97, 97, 255, 0.28);
+  --focus-ring: 0 0 0 3px var(--primary-ring);
+
+  /* ---- Spacing ---- */
+  --s-1: 4px;   --s-2: 8px;   --s-3: 12px;  --s-4: 16px;
+  --s-5: 20px;  --s-6: 24px;  --s-8: 32px;  --s-10: 40px;
+  --s-12: 48px; --s-16: 64px;
+
+  --touch: 44px;
+
+  /* ---- Motion ---- */
+  --dur-fast:  140ms;
+  --dur-base:  260ms;
+  --dur-slow:  400ms;
+  --ease:      cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out:  cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ---- מידות ניווט ---- */
+  --rail-w:        220px;
+  --bottombar-h:   68px;
+}
