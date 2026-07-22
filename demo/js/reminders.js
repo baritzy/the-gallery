@@ -67,7 +67,6 @@
   function cardHTML(o, kind) {
     var color = U.displayColor(o);
     var d = U.dayNumber(o);
-    var chipCls = U.dayChipClass(o);
 
     var actions = '';
     if (o.status === 'ready') {
@@ -90,12 +89,13 @@
       '<div class="rem-card__top">' +
         '<button type="button" class="rem-card__name" data-open-customer="' + esc(custId) + '" ' +
           'title="מעבר לכרטיס הלקוח">' + esc(o.customerName) + '</button>' +
-        '<span class="chip ' + chipCls + '" style="margin-inline-start:auto">' + I.clock + 'יום ' + d + ' / 10</span>' +
+        '<span class="pill pill--sm is-' + color + '" style="margin-inline-start:auto">' +
+          esc(U.STATUS_LABEL[o.status]) + '</span>' +
       '</div>' +
       '<div class="rem-card__meta">' +
         '<button type="button" class="rem-card__order" data-open-order="' + o.id + '" ' +
           'title="פתח את פירוט ההזמנה">הזמנה #' + esc(o.orderNo) + '</button>' +
-        ' · ' + esc(o.frameDesc || '') + ' · יעד ' + U.fmtDate(o.deliveryTarget) + '</div>' +
+        ' · ' + esc(o.frameDesc || 'מסגרת') + ' · יום ' + d + ' / 10 · יעד ' + U.fmtDate(o.deliveryTarget) + '</div>' +
       '<div class="rem-card__actions">' + actions + '</div>' +
     '</div>';
   }

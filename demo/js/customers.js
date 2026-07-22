@@ -97,12 +97,26 @@
       return;
     }
 
-    listEl.innerHTML = rows.map(rowHTML).join('');
+    listEl.innerHTML = boardHead() + rows.map(rowHTML).join('');
     Array.prototype.forEach.call(listEl.querySelectorAll('.row'), function (r) {
       if (openIds[r.getAttribute('data-id')]) r.classList.add('open');
     });
 
     applyPendingFocus();
+  }
+
+  // שורת כותרות עמודה (board header) - עיצוב בלבד, ללא לוגיקה. אחיד עם הזמנות/מלאי.
+  function boardHead() {
+    return '<div class="brow--head" aria-hidden="true">' +
+      '<span class="bcol"></span>' +
+      '<span class="bcol bcol--name">לקוח</span>' +
+      '<span class="bcol">טלפון</span>' +
+      '<span class="bcol">הזמנה אחרונה</span>' +
+      '<span class="bcol">סה"כ הוציא</span>' +
+      '<span class="bcol">יתרה</span>' +
+      '<span class="bcol">פעולה</span>' +
+      '<span class="bcol"></span>' +
+    '</div>';
   }
 
   // הדגשה + גלילה לכרטיס לקוח אחרי מעבר מטאב אחר (Gallery.openCustomer)
@@ -158,21 +172,27 @@
     var lastOrder = list[0]; // ordersOf ממוין לפי openedAt יורד, לכן הראשון הוא האחרון שנפתח
     var hasNote = c.notes && String(c.notes).trim() !== '';
 
+    var noteFlag = hasNote ?
+      '<span class="cust-note-flag" title="קיימת הערה על הלקוח">' + I.lightbulb + 'הערה</span>' : '';
+    var balCell = owed > 0 ?
+      '<span class="cust-balance owed">' + U.fmtMoney(owed) + '</span>' :
+      '<span class="cust-balance paid">שולם</span>';
+
     var head =
       '<div class="row__head" role="button" tabindex="0" aria-expanded="' + !!openIds[c.id] + '" data-toggle>' +
         '<span class="cust-avatar">' + esc(initial) + '</span>' +
         '<span class="row__main">' +
-          '<span class="row__name">' + esc(c.name) + '</span>' +
-          '<span class="row__meta"><span class="mono">' + esc(c.phone) + '</span> · ' +
+          '<span class="cust-name-row"><span class="row__name">' + esc(c.name) + '</span>' + noteFlag + '</span>' +
+          '<span class="row__meta">' +
             U.plural(count, 'הזמנה אחת', 'הזמנות') +
-            (owed > 0 ? ' · <span class="cust-owed">יתרה ' + U.fmtMoney(owed) + '</span>' : '') +
+            (owed > 0 ? '<span class="cust-meta-owed-m cust-owed"> · יתרה ' + U.fmtMoney(owed) + '</span>' : '') +
           '</span>' +
         '</span>' +
-        (hasNote ? '<span class="cust-note-flag" title="קיימת הערה על הלקוח">' + I.lightbulb + 'הערה</span>' : '') +
         '<span class="row__spacer"></span>' +
-        (lastOrder ? '<span class="cust-last"><span class="k">הזמנה אחרונה</span>' +
-          '<b>' + U.fmtDate(lastOrder.openedAt) + '</b></span>' : '') +
-        '<span class="cust-total"><span class="k">סה"כ הוציא</span><b>' + U.fmtMoney(spent) + '</b></span>' +
+        '<span class="cust-phone mono">' + esc(c.phone) + '</span>' +
+        '<span class="cust-last">' + (lastOrder ? U.fmtDate(lastOrder.openedAt) : '') + '</span>' +
+        '<span class="cust-total">' + U.fmtMoney(spent) + '</span>' +
+        balCell +
         '<button class="btn btn--wa btn--sm cust-contact" data-action="contact" data-id="' + c.id + '">' +
           I.wa + 'צור קשר</button>' +
         I.chevron +

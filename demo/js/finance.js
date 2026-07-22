@@ -204,7 +204,15 @@
     if (!rows.length) {
       list = '<div class="fin-empty">אין תנועות בתקופה זו. אפשר לנווט לתקופה אחרת או להוסיף הוצאה.</div>';
     } else {
-      list = rows.map(function (row) {
+      // שורת כותרות עמודה (board header) - עיצוב בלבד, אחיד עם לוחות שאר הטאבים
+      var head = '<div class="fin-txn-head" aria-hidden="true">' +
+        '<span></span>' +
+        '<span class="ftcol--main">תיאור / לקוח</span>' +
+        '<span>תאריך</span>' +
+        '<span>אמצעי</span>' +
+        '<span class="ftcol--amt">סכום</span>' +
+      '</div>';
+      list = head + rows.map(function (row) {
         if (row.kind === 'pay') {
           var p = row.data;
           var o = orderById(p.orderId);
@@ -215,8 +223,10 @@
             '<span class="fin-txn__badge income">+</span>' +
             '<span class="fin-txn__main">' +
               '<span class="fin-txn__who">' + esc(who) + ' <span class="mono">' + esc(num) + '</span></span>' +
-              '<span class="fin-txn__sub">' + esc(p.type || 'תשלום') + ' · ' + esc(p.method || '') + ' · ' + U.fmtDate(p.date) + '</span>' +
+              '<span class="fin-txn__sub">' + esc(p.type || 'תשלום') + '</span>' +
             '</span>' +
+            '<span class="fin-txn__date">' + U.fmtDate(p.date) + '</span>' +
+            '<span class="fin-txn__method">' + esc(p.method || '') + '</span>' +
             '<span class="fin-txn__amt income">' + U.fmtMoney(p.amount) + '</span>' +
           '</button>';
         }
@@ -225,9 +235,11 @@
           '<span class="fin-txn__badge expense">−</span>' +
           '<span class="fin-txn__main">' +
             '<span class="fin-txn__who">' + esc(e.category || 'הוצאה') + '</span>' +
-            '<span class="fin-txn__sub">' + (e.note ? esc(e.note) + ' · ' : '') + U.fmtDate(e.date) + '</span>' +
+            '<span class="fin-txn__sub">' + (e.note ? esc(e.note) : '') + '</span>' +
           '</span>' +
-          '<span class="fin-txn__actions">' +
+          '<span class="fin-txn__date">' + U.fmtDate(e.date) + '</span>' +
+          '<span class="fin-txn__method"></span>' +
+          '<span class="fin-txn__amt-wrap">' +
             '<span class="fin-txn__amt expense">−' + U.fmtMoney(e.amount) + '</span>' +
             '<button type="button" class="fin-txn__del" data-del-expense="' + esc(e.id) + '" aria-label="מחק הוצאה" title="מחק הוצאה">×</button>' +
           '</span>' +
@@ -238,7 +250,7 @@
     return '<div class="fin-section">' +
       '<div class="fin-section__head">' + I.coins + '<span>תנועות בתקופה</span>' +
         '<span class="fin-section__count">' + rows.length + '</span></div>' +
-      '<div class="fin-txns">' + list + '</div>' +
+      '<div class="fin-txn-board">' + list + '</div>' +
     '</div>';
   }
 
