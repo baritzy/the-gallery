@@ -1464,3 +1464,226 @@ button.fin-txn:focus-visible { outline: none; box-shadow: var(--focus-ring); }
   .bottombar .nav__item .lbl { font-size: 10px; }
   .bottombar .nav__item .ico { width: 22px; height: 22px; }
 }
+
+/* =============================================================================
+ * ============================================================================
+ *  v2  "MONDAY-REAL"  OVERRIDES
+ *  מיישם את context/design-system-v2.md. נטען אחרון, ולכן מנצח את הכללים מעל.
+ *  משנה עיצוב בלבד: אין נגיעה בנתונים או בלוגיקה. RTL + dark מלאים.
+ * ============================================================================
+ * ========================================================================== */
+
+/* ---- 3. כותרת דף ענקית שחורה (מחליף את .view__title הביישן) ---- */
+.view__head { margin-bottom: var(--s-6); align-items: flex-end; }
+.view__title {
+  font-family: var(--font-ui);
+  font-size: var(--fs-page);            /* 40px */
+  font-weight: var(--fw-bold);          /* 700 */
+  color: var(--ink);                    /* שחור מלא #323338 */
+  letter-spacing: var(--ls-title);
+  line-height: 1.1;
+  margin: 0 0 4px;
+}
+.view__subtitle { font-size: var(--fs-sm); }
+
+/* ---- 4. תא סטטוס SOLID FILL (השינוי מספר 1) ---- */
+.pill {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: var(--r-sm);           /* 4px, לא גלולה */
+  gap: 0;
+  justify-content: center;
+  color: var(--on-status);
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-xs);
+  transition: filter var(--dur-fast) var(--ease);
+}
+.pill .dot { display: none; }           /* אין נקודה על רקע מלא-צבע */
+.pill:hover { filter: brightness(0.95); }
+
+/* מקושר ל-.pill בלבד כדי לא לדלוף ל-.kpi/.nav__badge שחולקים את שמות ה-is-* */
+.pill.is-red    { background: var(--st-red);    color: var(--on-status); }
+.pill.is-orange { background: var(--st-orange); color: var(--on-status); }
+.pill.is-green  { background: var(--st-green);  color: var(--on-status); }
+.pill.is-blue   { background: var(--st-blue);   color: var(--on-status); }
+.pill.is-grey   { background: var(--st-grey);   color: var(--on-status); }
+.pill.is-purple { background: var(--st-purple); color: var(--on-status); }
+.pill.is-yellow { background: var(--st-yellow); color: var(--on-status-yellow); }
+
+.pill--sm { height: 22px; padding: 0 9px; font-size: var(--fs-2xs); border-radius: var(--r-sm); }
+
+/* בורר סטטוס בפאנל: פינה עדינה, active מקבל fill מלא (צבע מוזרק inline מ-JS) */
+.status-opt { border-radius: var(--r-sm); height: 32px; }
+.status-opt.active { color: #fff; }
+
+/* ---- 5+7. לוח שטוח: הרשימה היא "board", השורות שטוחות עם קווי הפרדה ---- */
+.list, .group__body {
+  gap: 0;
+  background: var(--bg-surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  box-shadow: var(--e1);                /* צל עדין מאוד על הלוח, לא על כל שורה */
+}
+.row {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--line);
+}
+.row:last-child { border-bottom: 0; }
+.row:hover { background: var(--bg-surface-alt); box-shadow: none; }
+
+/* spine צבעוני עבה יותר (6px) בקצה הימני של השורה */
+.row::before { width: 6px; }
+.row:hover::before { width: 6px; }
+
+/* ---- 5. פריסת עמודות אמיתית (grid) לכל טאב, מוגדרת דרך [data-view] ---- */
+/* מקור אמת יחיד לרוחב העמודות פר-מודול, כדי שכותרת העמודות והשורות יישמרו מיושרות */
+
+/* כותרת עמודות (אפורה, זעירה) - משותפת */
+.brow--head {
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--line);
+  min-height: 34px;
+  align-items: center;
+}
+.brow--head .bcol {
+  font-size: var(--fs-2xs);             /* 11px */
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.02em;
+  color: var(--ink-muted);
+  text-align: center;
+  white-space: nowrap;
+  padding-inline: 8px;
+}
+.brow--head .bcol--name { text-align: start; padding-inline: 12px; }
+
+/* בסיס משותף לשורת-לוח בגריד */
+[data-view] .row__head,
+[data-view] .brow--head {
+  gap: 0;
+  padding: 0;
+}
+[data-view] .row__head > .pill:not(.pill--sm) {
+  align-self: stretch;
+  justify-self: stretch;
+  height: auto;
+  border-radius: 0;                     /* ממלא את כל תא הסטטוס עד הקצה (ref2) */
+}
+[data-view] .row__head > .row__spacer { display: none; }
+[data-view] .row__head > .row__main { min-width: 0; }
+
+/* --- הזמנות --- */
+[data-view="orders"] { --cols-o: 58px minmax(160px, 1fr) 92px 116px 118px 132px 40px; }
+[data-view="orders"] .row__head,
+[data-view="orders"] .brow--head {
+  display: grid; grid-template-columns: var(--cols-o);
+  align-items: stretch; min-height: 52px;
+}
+[data-view="orders"] .row__head > .row__id      { grid-column: 1; align-self: center; justify-self: center; }
+[data-view="orders"] .row__head > .row__main    { grid-column: 2; align-self: center; padding-inline: 12px; }
+[data-view="orders"] .row__head > .chip         { grid-column: 3; align-self: center; justify-self: center; }
+[data-view="orders"] .row__head > .pill--sm     { grid-column: 4; align-self: center; justify-self: center; }
+[data-view="orders"] .row__head > .row__balance { grid-column: 5; align-self: center; justify-self: center; }
+[data-view="orders"] .row__head > .pill:not(.pill--sm) { grid-column: 6; }
+[data-view="orders"] .row__head > .chev         { grid-column: 7; align-self: center; justify-self: center; }
+
+/* --- מלאי --- */
+[data-view="inventory"] { --cols-i: 56px 94px minmax(140px, 1fr) minmax(140px, 230px) 132px 40px; }
+[data-view="inventory"] .row__head,
+[data-view="inventory"] .brow--head {
+  display: grid; grid-template-columns: var(--cols-i);
+  align-items: stretch; min-height: 56px;
+}
+[data-view="inventory"] .row__head > .pthumb   { grid-column: 1; align-self: center; justify-self: center; }
+[data-view="inventory"] .row__head > .row__id  { grid-column: 2; align-self: center; padding-inline: 8px; }
+[data-view="inventory"] .row__head > .row__main{ grid-column: 3; align-self: center; padding-inline: 12px; }
+[data-view="inventory"] .row__head > .stockbar { grid-column: 4; align-self: center; padding-inline: 12px; }
+[data-view="inventory"] .row__head > .pill:not(.pill--sm) { grid-column: 5; }
+[data-view="inventory"] .row__head > .chev     { grid-column: 6; align-self: center; justify-self: center; }
+
+/* --- לקוחות (עמודות מיושרות, ללא כותרת נפרדת: התאים כבר נושאים תווית) --- */
+[data-view="customers"] { --cols-c: 56px minmax(160px, 1fr) 92px 128px 122px 128px 40px; }
+[data-view="customers"] .row__head {
+  display: grid; grid-template-columns: var(--cols-c);
+  align-items: stretch; min-height: 56px;
+}
+[data-view="customers"] .row__head > .cust-avatar    { grid-column: 1; align-self: center; justify-self: center; }
+[data-view="customers"] .row__head > .row__main      { grid-column: 2; align-self: center; padding-inline: 12px; }
+[data-view="customers"] .row__head > .cust-note-flag { grid-column: 3; align-self: center; justify-self: center; }
+[data-view="customers"] .row__head > .cust-last      { grid-column: 4; align-self: center; justify-self: center; }
+[data-view="customers"] .row__head > .cust-total     { grid-column: 5; align-self: center; justify-self: center; }
+[data-view="customers"] .row__head > .cust-contact   { grid-column: 6; align-self: center; justify-self: center; }
+[data-view="customers"] .row__head > .chev           { grid-column: 7; align-self: center; justify-self: center; }
+.cust-total { align-items: center; }
+
+/* ---- 5.4/5.5 Timeline + מסילות בצבע, אווטרים עגולים ---- */
+.progress .track, .stockbar .track { background: var(--bg-sunken); }
+.cust-avatar, .rail__avatar { border-radius: 50%; }
+
+/* ---- 6. כותרת קבוצה: טקסט צבעוני חשוף על הקנבס, בלי כרטיס ---- */
+.group { margin-bottom: var(--s-6); }
+.group__head {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: var(--s-4) var(--s-1) var(--s-2);
+  margin-bottom: var(--s-2);
+}
+.group__head::before { display: none; }
+.group__title {
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-lg);
+  color: var(--gtext, var(--ink));
+}
+.ins-group__head {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: var(--s-4) var(--s-1) var(--s-2);
+  margin-bottom: var(--s-2);
+}
+.ins-group__head::before { display: none; }
+.ins-group__title { font-weight: var(--fw-bold); font-size: var(--fs-lg); color: var(--gt, var(--ink)); }
+
+/* ---- 7. כפתורים: primary כחול בלי glow ---- */
+.btn--primary { box-shadow: none; }
+.btn--primary:hover { background: var(--primary-hover); box-shadow: none; }
+
+/* ---- מובייל: חזרה לתצוגת כרטיס/שורה נפתחת (fallback) ---- */
+@media (max-width: 768px) {
+  [data-view] .brow--head { display: none; }
+  [data-view] .row__head {
+    display: flex !important;
+    grid-template-columns: none;
+    align-items: center;
+    gap: var(--s-3);
+    padding: var(--s-3) var(--s-4);
+    min-height: 0;
+  }
+  [data-view] .row__head > * { grid-column: auto; }
+  [data-view] .row__head > .row__spacer { display: block; }
+  [data-view] .row__head > .pill:not(.pill--sm) {
+    align-self: center;
+    justify-self: auto;
+    height: 28px;
+    border-radius: var(--r-sm);
+  }
+  /* השורות חוזרות להיות כרטיסים עם רווח ביניהן */
+  .list, .group__body {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    overflow: visible;
+    gap: var(--s-2);
+  }
+  .row {
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    box-shadow: var(--e1);
+  }
+  .row:last-child { border: 1px solid var(--line); }
+  .view__title { font-size: 1.875rem; }   /* 30px בכותרת דף במסך צר */
+}

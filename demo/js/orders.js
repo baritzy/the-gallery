@@ -129,7 +129,7 @@
       return;
     }
 
-    listEl.innerHTML = rows.map(rowHTML).join('');
+    listEl.innerHTML = boardHead() + rows.map(rowHTML).join('');
     // reapply open state
     Array.prototype.forEach.call(listEl.querySelectorAll('.row'), function (r) {
       if (openIds[r.getAttribute('data-id')]) r.classList.add('open');
@@ -147,6 +147,19 @@
       '<h3>עדיין אין הזמנות פה</h3>' +
       '<p>פתח הזמנה חדשה והיא תופיע כאן וגם בסדנה למעלה.</p>' +
       '<button class="btn btn--primary" data-new-empty>' + I.plus + 'פתיחת הזמנה חדשה</button></div>';
+  }
+
+  // שורת כותרות עמודה (board header) - עיצוב בלבד, ללא לוגיקה
+  function boardHead() {
+    return '<div class="brow--head" aria-hidden="true">' +
+      '<span class="bcol"></span>' +
+      '<span class="bcol bcol--name">הזמנה</span>' +
+      '<span class="bcol">ימים</span>' +
+      '<span class="bcol">תשלום</span>' +
+      '<span class="bcol">יתרה</span>' +
+      '<span class="bcol">סטטוס</span>' +
+      '<span class="bcol"></span>' +
+    '</div>';
   }
 
   /* -------------------------------------------------------------- row HTML */
@@ -237,9 +250,10 @@
     var switcher = '<div class="status-switch"><span class="lbl">שינוי סטטוס</span>' +
       U.STATUS_LIST.map(function (s) {
         var c = statusColor(s);
-        return '<button class="status-opt' + (o.status === s ? ' active' : '') + '"' +
-          ' data-status="' + s + '" style="' + (o.status === s ? 'background:var(--st-' + c + '-soft);color:var(--st-' + c + '-text);' : '') + '">' +
-          '<span class="dot" style="background:var(--st-' + c + ')"></span>' + U.STATUS_LABEL[s] + '</button>';
+        var active = o.status === s;
+        return '<button class="status-opt' + (active ? ' active' : '') + '"' +
+          ' data-status="' + s + '" style="' + (active ? 'background:var(--st-' + c + ');color:#fff;border-color:transparent;' : '') + '">' +
+          '<span class="dot" style="background:' + (active ? '#fff' : 'var(--st-' + c + ')') + '"></span>' + U.STATUS_LABEL[s] + '</button>';
       }).join('') + '</div>';
 
     var actions = '<div class="actions">' +

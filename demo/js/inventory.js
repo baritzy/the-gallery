@@ -113,7 +113,7 @@
           '<span class="group__count">' + group.length + '</span>' +
           (lowN ? '<span class="pill is-red" style="margin-inline-start:auto"><span class="dot"></span>' + lowN + ' להזמין</span>' : '') +
         '</div>' +
-        '<div class="group__body">' + group.map(rowHTML).join('') + '</div>' +
+        '<div class="group__body">' + invBoardHead() + group.map(rowHTML).join('') + '</div>' +
       '</div>';
     });
 
@@ -134,6 +134,18 @@
     var grad = U.woodSwatch(p);
     var tag = large ? '<span class="pthumb__tag">📷 לצילום</span>' : '';
     return '<span class="' + cls + '" style="background-image:' + grad + '">' + tag + '</span>';
+  }
+
+  // שורת כותרות עמודה למלאי (board header) - עיצוב בלבד, ללא לוגיקה
+  function invBoardHead() {
+    return '<div class="brow--head" aria-hidden="true">' +
+      '<span class="bcol"></span>' +
+      '<span class="bcol bcol--name">מק"ט</span>' +
+      '<span class="bcol bcol--name">פרופיל</span>' +
+      '<span class="bcol">מלאי</span>' +
+      '<span class="bcol">סטטוס</span>' +
+      '<span class="bcol"></span>' +
+    '</div>';
   }
 
   function rowHTML(p) {

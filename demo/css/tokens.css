@@ -1,106 +1,118 @@
 /* =============================================================================
  * tokens.css  -  כל ה-CSS variables של "הגלריה"
- * מקור מחייב: context/design-system.md (סעיפים 2, 3, 4). אין מקף ארוך.
+ * מקור מחייב: context/design-system-v2.md ("Monday-Real"). אין מקף ארוך.
+ * הערכים נשלפו מ-monday-ui-style (מערכת Vibe): primary כחול, status solid מדויק.
  * ========================================================================== */
 
 :root {
-  /* ---- רקעים ומשטחים ---- */
-  --bg-canvas:      #F5F6FA;
+  /* ---- משטחים ---- */
+  --bg-canvas:      #F6F7FB;
   --bg-surface:     #FFFFFF;
-  --bg-surface-alt: #FAFBFD;
-  --bg-sunken:      #EEF0F5;
+  --bg-surface-alt: #F5F6F8;
+  --bg-sunken:      #EBEDF5;
 
   /* ---- טקסט ---- */
-  --ink:            #1E1F33;
-  --ink-secondary:  #4A4C63;
-  --ink-muted:      #676879;
+  --ink:            #323338;
+  --ink-secondary:  #676879;
+  --ink-muted:      #9699A6;   /* כותרות עמודה, captions */
   --ink-on-color:   #FFFFFF;
 
   /* ---- קווים והפרדות ---- */
-  --line:           #E6E9F0;
-  --line-strong:    #D0D4E0;
+  --line:           #D0D4E4;
+  --line-strong:    #C3C6D4;
   --line-frame:     #E4D8CC;
 
-  /* ---- Primary ---- */
-  --primary:        #6161FF;
-  --primary-hover:  #5450E0;
-  --primary-press:  #4A46CC;
-  --primary-soft:   #ECECFF;
-  --primary-ring:   rgba(97, 97, 255, 0.32);
+  /* ---- Primary (Monday blue) ---- */
+  --primary:        #0073EA;
+  --primary-hover:  #0060B9;
+  --primary-press:  #004E96;
+  --primary-soft:   #CCE5FF;   /* selected row / active nav bg */
+  --primary-ring:   rgba(0, 115, 234, 0.30);
+  --link:           #1F76C2;
 
-  /* ---- מבטא עץ אגוז ---- */
+  /* ---- מבטא עץ אגוז (זהות "הגלריה") ---- */
   --walnut:         #8A5A3B;
   --walnut-soft:    #F3E9E0;
 
-  /* ---- STATUS PALETTE ---- */
-  --st-red:         #E2445C;
-  --st-red-soft:    #FCE8EC;
-  --st-red-text:    #C22A44;
+  /* ---- STATUS: solid fill + hover (הלב של המערכת) ---- */
+  --st-green:        #00C875;  --st-green-h:  #0F9B63;
+  --st-orange:       #FDAB3D;  --st-orange-h: #C0873C;
+  --st-red:          #E2445C;  --st-red-h:    #AD3F51;
+  --st-blue:         #579BFC;  --st-blue-h:   #4C7CC1;
+  --st-purple:       #A25DDC;  --st-purple-h: #8050AB;
+  --st-indigo:       #5559DF;  --st-indigo-h: #4B4EAD;
+  --st-orange-dk:    #FF642E;  --st-orange-dk-h: #C25531;
+  --st-yellow:       #FFCB00;  --st-yellow-h: #C29E11;
+  --st-grey:         #C4C4C4;  --st-grey-h:   #B0B0B0;
 
-  --st-orange:      #FDAB3D;
-  --st-orange-soft: #FFF3E0;
-  --st-orange-text: #A66A00;
+  /* טקסט על תא סטטוס מלא */
+  --on-status:        #FFFFFF;
+  --on-status-yellow: #323338;
 
-  --st-green:       #00C875;
-  --st-green-soft:  #E1F7EE;
-  --st-green-text:  #06794C;
+  /* ---- soft status (ל-tags משניים בלבד: chips, notes, kpi) ---- */
+  --st-green-soft:  #E5F9F0;  --st-green-text:  #037F4C;
+  --st-orange-soft: #FFF3E1;  --st-orange-text: #B15C00;
+  --st-red-soft:    #FCE9EC;  --st-red-text:    #C22A44;
+  --st-blue-soft:   #E9F2FE;  --st-blue-text:   #1C6FCB;
+  --st-grey-soft:   #EEF0F5;  --st-grey-text:   #676879;
 
-  --st-blue:        #579BFC;
-  --st-blue-soft:   #E9F2FE;
-  --st-blue-text:   #1C6FCB;
-
-  --st-grey:        #A9AEBE;
-  --st-grey-soft:   #EEF0F4;
-  --st-grey-text:   #5E6376;
+  /* ---- צבעי קבוצה (spine + כותרת קבוצה) ---- */
+  --g-blue:   #0086C0;
+  --g-purple: #A25DDC;
+  --g-red:    #E2445C;
+  --g-green:  #00C875;
+  --g-orange: #FDAB3D;
 
   /* ---- טיפוגרפיה ---- */
-  --font-ui:      "Assistant", system-ui, "Segoe UI", Arial, sans-serif;
-  --font-display: "Rubik", "Assistant", system-ui, sans-serif;
+  --font-ui:      "Rubik", system-ui, "Segoe UI", Arial, sans-serif;
+  --font-display: "Rubik", system-ui, "Segoe UI", Arial, sans-serif;
   --font-mono:    "IBM Plex Mono", "SF Mono", Consolas, monospace;
 
-  --fs-2xs: 0.6875rem;
-  --fs-xs:  0.75rem;
-  --fs-sm:  0.875rem;
-  --fs-md:  1rem;
-  --fs-lg:  1.125rem;
-  --fs-xl:  1.375rem;
-  --fs-2xl: 1.75rem;
+  --fs-2xs: 0.6875rem;  /* 11px - כותרות עמודה */
+  --fs-xs:  0.8125rem;  /* 13px - תוכן תא, tags */
+  --fs-sm:  0.875rem;   /* 14px */
+  --fs-md:  0.9375rem;  /* 15px - body (Monday) */
+  --fs-lg:  1.125rem;   /* 18px - שם פריט */
+  --fs-xl:  1.375rem;   /* 22px - כותרת משנית */
+  --fs-2xl: 1.75rem;    /* 28px - KPI */
+  --fs-page: 2.5rem;    /* 40px - כותרת דף */
 
   --fw-regular: 400;
   --fw-medium:  500;
   --fw-semibold:600;
   --fw-bold:    700;
 
-  --lh-tight: 1.25;
-  --lh-base:  1.55;
+  --lh-tight: 1.2;
+  --lh-base:  1.5;
   --ls-tight: -0.01em;
+  --ls-title: -0.02em;
 
-  /* ---- Radius ---- */
-  --r-sm:   6px;
-  --r-md:   10px;
-  --r-lg:   14px;
-  --r-pill: 999px;
+  /* ---- Radius (Monday עדין) ---- */
+  --r-sm:   4px;
+  --r-md:   8px;
+  --r-lg:   12px;
+  --r-pill: 100px;
 
-  /* ---- Elevation ---- */
+  /* ---- Elevation (עדין מאוד: הצבע עושה את העבודה) ---- */
   --e0: none;
-  --e1: 0 1px 2px rgba(30, 31, 51, 0.06), 0 1px 3px rgba(30, 31, 51, 0.05);
-  --e2: 0 2px 8px rgba(30, 31, 51, 0.08);
-  --e3: 0 8px 24px rgba(30, 31, 51, 0.12);
-  --e4: 0 16px 40px rgba(30, 31, 51, 0.16);
-  --e-primary: 0 4px 14px rgba(97, 97, 255, 0.28);
-  --focus-ring: 0 0 0 3px var(--primary-ring);
+  --e1: 0 4px 12px rgba(0, 0, 0, 0.04);
+  --e2: 0 6px 20px rgba(0, 0, 0, 0.08);
+  --e3: 0 12px 32px rgba(0, 0, 0, 0.12);
+  --e4: 0 16px 40px rgba(0, 0, 0, 0.16);
+  --e-primary: none;   /* Monday לא עושה glow צבעוני מתחת לכפתור */
+  --focus-ring: 0 0 0 2px var(--bg-surface), 0 0 0 4px var(--primary-ring);
 
-  /* ---- Spacing ---- */
+  /* ---- Spacing (בסיס 4px) ---- */
   --s-1: 4px;   --s-2: 8px;   --s-3: 12px;  --s-4: 16px;
   --s-5: 20px;  --s-6: 24px;  --s-8: 32px;  --s-10: 40px;
   --s-12: 48px; --s-16: 64px;
 
-  --touch: 44px;
+  --touch: 40px;
 
   /* ---- Motion ---- */
   --dur-fast:  140ms;
-  --dur-base:  260ms;
-  --dur-slow:  400ms;
+  --dur-base:  220ms;
+  --dur-slow:  380ms;
   --ease:      cubic-bezier(0.4, 0, 0.2, 1);
   --ease-out:  cubic-bezier(0.16, 1, 0.3, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -111,63 +123,61 @@
 }
 
 /* =============================================================================
- * ערכת DARK מלאה - פלטה כהה נעימה (לא אינברסיה גסה). נבחרת דרך [data-theme="dark"]
- * על שורש המסמך. שומרת על צבעי הסטטוס קריאים: soft כהה + text בהיר.
+ * ערכת DARK מלאה (Monday dark). נבחרת דרך [data-theme="dark"] על שורש המסמך.
  * ========================================================================== */
 :root[data-theme="dark"] {
-  /* ---- רקעים ומשטחים ---- */
-  --bg-canvas:      #14151E;
-  --bg-surface:     #1D1F2B;
-  --bg-surface-alt: #242736;
-  --bg-sunken:      #2C2F40;
+  --bg-canvas:      #181B34;
+  --bg-surface:     #30324E;
+  --bg-surface-alt: #3C3F59;
+  --bg-sunken:      #4B4E69;
 
-  /* ---- טקסט ---- */
-  --ink:            #EDEEF4;
-  --ink-secondary:  #C3C6D4;
-  --ink-muted:      #8A8FA3;
+  --ink:            #D5D8DF;
+  --ink-secondary:  #B0B4C4;
+  --ink-muted:      #797E93;
   --ink-on-color:   #FFFFFF;
 
-  /* ---- קווים והפרדות ---- */
-  --line:           #2E3143;
-  --line-strong:    #3D4157;
+  --line:           #4B4E69;
+  --line-strong:    #797E93;
   --line-frame:     #4A3E32;
 
-  /* ---- Primary ---- */
-  --primary:        #7C7CFF;
-  --primary-hover:  #8F8FFF;
-  --primary-press:  #6E6EF0;
-  --primary-soft:   #2A2A46;
-  --primary-ring:   rgba(124, 124, 255, 0.42);
+  --primary:        #0073EA;
+  --primary-hover:  #2B8DF0;
+  --primary-press:  #0060B9;
+  --primary-soft:   #183263;
+  --primary-ring:   rgba(43, 141, 240, 0.40);
+  --link:           #66CCFF;
 
-  /* ---- מבטא עץ אגוז ---- */
   --walnut:         #C68F62;
   --walnut-soft:    #35271C;
 
-  /* ---- STATUS PALETTE (dark) ---- */
-  --st-red:         #FF5C74;
-  --st-red-soft:    #3A2129;
-  --st-red-text:    #FF98A8;
+  --st-green:  #33D391;  --st-green-h:  #0F9B63;
+  --st-orange: #FDBC64;  --st-orange-h: #C0873C;
+  --st-red:    #E8697D;  --st-red-h:    #AD3F51;
+  --st-blue:   #79AFFD;  --st-blue-h:   #4C7CC1;
+  --st-purple: #B57DE3;  --st-purple-h: #8050AB;
+  --st-indigo: #777AE5;  --st-indigo-h: #4B4EAD;
+  --st-orange-dk: #FF7B4D; --st-orange-dk-h: #C25531;
+  --st-yellow: #FFD533;  --st-yellow-h: #C29E11;
+  --st-grey:   #595C7A;  --st-grey-h:   #4B4E69;
 
-  --st-orange:      #FFB454;
-  --st-orange-soft: #3A2E19;
-  --st-orange-text: #FFC77D;
+  --on-status:        #FFFFFF;
+  --on-status-yellow: #323338;
 
-  --st-green:       #2BD98C;
-  --st-green-soft:  #143528;
-  --st-green-text:  #5FE3AB;
+  --st-green-soft:  #143528;  --st-green-text:  #5FE3AB;
+  --st-orange-soft: #3A2E19;  --st-orange-text: #FFC77D;
+  --st-red-soft:    #3A2129;  --st-red-text:    #FF98A8;
+  --st-blue-soft:   #1A2C43;  --st-blue-text:   #97C2FF;
+  --st-grey-soft:   #2A2D3C;  --st-grey-text:   #B0B4C4;
 
-  --st-blue:        #6BA8FF;
-  --st-blue-soft:   #1A2C43;
-  --st-blue-text:   #97C2FF;
+  --g-blue:   #339ECD;
+  --g-purple: #B57DE3;
+  --g-red:    #E8697D;
+  --g-green:  #33D391;
+  --g-orange: #FDBC64;
 
-  --st-grey:        #8A8FA3;
-  --st-grey-soft:   #2A2D3C;
-  --st-grey-text:   #B0B4C4;
-
-  /* ---- Elevation (עמוק יותר על רקע כהה) ---- */
-  --e1: 0 1px 2px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.30);
-  --e2: 0 2px 10px rgba(0, 0, 0, 0.40);
-  --e3: 0 8px 24px rgba(0, 0, 0, 0.50);
+  --e1: 0 4px 12px rgba(0, 0, 0, 0.30);
+  --e2: 0 6px 20px rgba(0, 0, 0, 0.40);
+  --e3: 0 12px 32px rgba(0, 0, 0, 0.55);
   --e4: 0 16px 44px rgba(0, 0, 0, 0.58);
-  --e-primary: 0 4px 16px rgba(124, 124, 255, 0.40);
+  --e-primary: none;
 }
