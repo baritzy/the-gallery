@@ -120,6 +120,8 @@
     var owed = openBalance(list);
     var spine = owed > 0 ? 'orange' : 'grey';
     var initial = (c.name || '?').charAt(0);
+    var lastOrder = list[0]; // ordersOf ממוין לפי openedAt יורד, לכן הראשון הוא האחרון שנפתח
+    var hasNote = c.notes && String(c.notes).trim() !== '';
 
     var head =
       '<div class="row__head" role="button" tabindex="0" aria-expanded="' + !!openIds[c.id] + '" data-toggle>' +
@@ -127,11 +129,14 @@
         '<span class="row__main">' +
           '<span class="row__name">' + esc(c.name) + '</span>' +
           '<span class="row__meta"><span class="mono">' + esc(c.phone) + '</span> · ' +
-            count + ' ' + (count === 1 ? 'הזמנה' : 'הזמנות') +
+            U.plural(count, 'הזמנה אחת', 'הזמנות') +
             (owed > 0 ? ' · <span class="cust-owed">יתרה ' + U.fmtMoney(owed) + '</span>' : '') +
           '</span>' +
         '</span>' +
+        (hasNote ? '<span class="cust-note-flag" title="קיימת הערה על הלקוח">' + I.lightbulb + 'הערה</span>' : '') +
         '<span class="row__spacer"></span>' +
+        (lastOrder ? '<span class="cust-last"><span class="k">הזמנה אחרונה</span>' +
+          '<b>' + U.fmtDate(lastOrder.openedAt) + '</b></span>' : '') +
         '<span class="cust-total"><span class="k">סה"כ הוציא</span><b>' + U.fmtMoney(spent) + '</b></span>' +
         '<button class="btn btn--wa btn--sm cust-contact" data-action="contact" data-id="' + c.id + '">' +
           I.wa + 'צור קשר</button>' +
@@ -150,7 +155,8 @@
       var bal = (o.status !== 'delivered' && o.balance > 0) ?
         '<span class="cust-order__bal">יתרה ' + U.fmtMoney(o.balance) + '</span>' :
         '<span class="cust-order__bal paid">שולם</span>';
-      return '<div class="cust-order">' +
+      return '<button type="button" class="cust-order" data-open-order="' + esc(o.id) + '" ' +
+        'title="פתח את פירוט ההזמנה">' +
         '<span class="pill is-' + color + '"><span class="dot"></span>' + esc(U.STATUS_LABEL[o.status]) + '</span>' +
         '<span class="cust-order__id mono">#' + esc(o.orderNo) + '</span>' +
         '<span class="cust-order__desc">' + esc(o.frameDesc || 'מסגרת') +
@@ -158,11 +164,24 @@
         '<span class="cust-order__date">' + U.fmtDate(o.openedAt) + '</span>' +
         '<span class="cust-order__price">' + U.fmtMoney(o.price) + '</span>' +
         bal +
-      '</div>';
+      '</button>';
     }).join('');
 
+    var noteVal = c.notes ? esc(c.notes) : '';
+    var notes = '<div class="cust-notes">' +
+      '<label class="cust-notes__label" for="note-' + esc(c.id) + '">הערות ללקוח</label>' +
+      '<textarea id="note-' + esc(c.id) + '" class="cust-notes__input" data-note-input ' +
+        'placeholder="מה חשוב לזכור על הלקוח הזה. העדפות מסגור, שיחות, כל דבר.">' + noteVal + '</textarea>' +
+      '<div class="cust-notes__foot">' +
+        '<button type="button" class="btn btn--primary btn--sm" data-save-note data-id="' + esc(c.id) + '">' +
+          I.check + 'שמור הערה</button>' +
+        '<span class="cust-notes__status" data-note-status></span>' +
+      '</div>' +
+    '</div>';
+
     return '<div class="mat">' +
-      '<div class="cust-orders__head">היסטוריית הזמנות (' + list.length + ')</div>' +
+      notes +
+      '<div class="cust-orders__head">היסטוריית הזמנות (' + list.length + ') · לחיצה על שורה פותחת את ההזמנה המלאה</div>' +
       '<div class="cust-orders">' + lines + '</div>' +
       '<div class="actions">' +
         '<button class="btn btn--wa btn--sm" data-action="contact" data-id="' + esc(c.id) + '">' +
@@ -182,7 +201,27 @@
     global.open(U.waLink(c.phone, text), '_blank');
   }
 
+  function saveNote(btn) {
+    var id = btn.getAttribute('data-id');
+    var c = findCustomer(id);
+    if (!c) return;
+    var wrap = btn.closest('.cust-notes');
+    var ta = wrap ? wrap.querySelector('[data-note-input]') : null;
+    var status = wrap ? wrap.querySelector('[data-note-status]') : null;
+    var text = ta ? ta.value.trim() : '';
+    openIds[id] = true; // השאר את השורה פתוחה אחרי השמירה (המנוי מרנדר מחדש)
+    if (status) status.textContent = 'שומר...';
+    // saveCustomer ממזג עם הרשומה הקיימת, לכן שם וטלפון לא נדרסים
+    DB.saveCustomer({ id: id, notes: text });
+  }
+
   function onClick(e) {
+    var openBtn = e.target.closest('[data-open-order]');
+    if (openBtn) { e.stopPropagation(); Gallery.OrderDetail.open(openBtn.getAttribute('data-open-order')); return; }
+
+    var noteBtn = e.target.closest('[data-save-note]');
+    if (noteBtn) { e.stopPropagation(); saveNote(noteBtn); return; }
+
     var actionBtn = e.target.closest('[data-action]');
     if (actionBtn) {
       e.stopPropagation();
@@ -198,7 +237,9 @@
 
   function onKeydown(e) {
     if (e.key !== 'Enter' && e.key !== ' ') return;
-    if (e.target.closest('[data-action]')) return; // מקש על כפתור "צור קשר" לא מקפל את השורה
+    // הקלדה בשדה טקסט או פעולה על כפתור פנימי לא מקפלת את השורה
+    if (e.target.matches('textarea, input, button') ||
+        e.target.closest('[data-action],[data-open-order],[data-save-note]')) return;
     var toggle = e.target.closest('[data-toggle]');
     var rowEl = e.target.closest('.row');
     if (toggle && rowEl) { e.preventDefault(); toggleRow(rowEl, toggle); }

@@ -10,7 +10,7 @@
  *  מבנה הרשומות תואם Firestore (id, createdAt, updatedAt, schemaVersion),
  *  והמזהים כבר נוצרים בצד לקוח עם crypto.randomUUID().
  *
- * קולקשנים: orders, customers, profiles, suppliers, usage.
+ * קולקשנים: orders, customers, profiles, suppliers, usage, reorderItems.
  * ========================================================================== */
 
 (function (global) {
@@ -155,9 +155,20 @@
 
     // --- customers ---
     getCustomers: function () { return getAll('customers'); },
-    saveCustomer: function (c) { return save('customers', c); },
+    // מיזוג עם הרשומה הקיימת: שמירת שם/טלפון מהזמנה לא תדרוס את שדה ההערות (notes), ולהפך.
+    saveCustomer: function (c) {
+      var existing = readCollection('customers').filter(function (r) { return r.id === c.id; })[0];
+      return save('customers', existing ? Object.assign({}, existing, c) : c);
+    },
     deleteCustomer: function (id) { return remove('customers', id); },
     subscribeCustomers: function (cb) { return subscribe('customers', cb); },
+
+    // --- reorderItems (רשימת הזמנה לספק: הוספות והסרות ידניות של אסף) ---
+    // רשומה: { id, sku, label, qty, supplierId, manual:true }  |  הסרה של פריט אוטומטי: { id, sku, dismissed:true }
+    getReorderItems: function () { return getAll('reorderItems'); },
+    saveReorderItem: function (r) { return save('reorderItems', r); },
+    deleteReorderItem: function (id) { return remove('reorderItems', id); },
+    subscribeReorderItems: function (cb) { return subscribe('reorderItems', cb); },
 
     // --- profiles (מלאי) ---
     getProfiles: function () { return getAll('profiles'); },

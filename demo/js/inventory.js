@@ -14,7 +14,7 @@
   var esc = U.esc;
 
   var container = null, bodyEl = null;
-  var profiles = [], suppliers = [], usage = [];
+  var profiles = [], suppliers = [], usage = [], reorderItems = [];
   var openIds = {};
   var state = { term: '', lowOnly: false };
 
@@ -53,6 +53,7 @@
     DB.subscribeSuppliers(function (s) { suppliers = s; render(); });
     DB.subscribeUsage(function (u) { usage = u; render(); });
     DB.subscribeProfiles(function (p) { profiles = p; render(); });
+    DB.subscribeReorderItems(function (r) { reorderItems = r; render(); });
   }
 
   /* ------------------------------------------------------------- מדדי מלאי */
@@ -116,7 +117,7 @@
       '</div>';
     });
 
-    html += supplierOrderHTML(list);
+    html += supplierOrderHTML();
     bodyEl.innerHTML = html;
 
     Array.prototype.forEach.call(bodyEl.querySelectorAll('.row'), function (r) {
@@ -209,35 +210,179 @@
     return '<div class="mat">' + photo + grid + draftNote + histHtml + rec + '</div>';
   }
 
-  /* ------------------------------------------------ רשימת הזמנה לספק */
-  function supplierOrderHTML(list) {
-    var lows = profiles.filter(isLow);
-    if (lows.length === 0) {
-      return '<div class="supplier-order"><h3>רשימת הזמנה לספק</h3>' +
-        '<p class="view__subtitle">אין כרגע פרופילים מתחת לסף. הכל תקין.</p></div>';
+  /* ------------------------------------------------ רשימת הזמנה לספק
+     הרשימה = איחוד של (אוטומטי: מלאי נמוך) + (הוספות ידניות) פחות (הסרות ידניות).
+     הכל נשמר ב-collection reorderItems כך שהבחירות של אסף נשמרות בין רענונים. */
+  function reorderLines() {
+    var dismissed = {}, manualSkus = {};
+    reorderItems.forEach(function (r) { if (r.dismissed && r.sku) dismissed[r.sku] = true; });
+    reorderItems.forEach(function (r) { if (r.manual && !r.dismissed && r.sku) manualSkus[r.sku] = true; });
+
+    var lines = [];
+    // אוטומטי: פרופילים מתחת לסף, פרט לאלה שאסף הסיר ידנית או שכבר הוסיף ידנית (כדי לא לכפול)
+    profiles.filter(isLow).forEach(function (p) {
+      if (dismissed[p.sku] || manualSkus[p.sku]) return;
+      lines.push({ source: 'auto', sku: p.sku, desc: p.woodType + ' ' + p.color, qty: recommendQty(p), supplierId: p.supplierId });
+    });
+    // ידני: כל הוספה של אסף
+    reorderItems.forEach(function (r) {
+      if (!r.manual || r.dismissed) return;
+      lines.push({ source: 'manual', rid: r.id, sku: r.sku || '', desc: r.label || r.sku || 'פריט', qty: r.qty || 0, supplierId: r.supplierId || null });
+    });
+    return lines;
+  }
+
+  function lineHTML(l) {
+    var removeBtn = '<button class="sup-line__x" data-remove-line data-source="' + l.source + '"' +
+      (l.source === 'manual' ? ' data-rid="' + esc(l.rid) + '"' : ' data-sku="' + esc(l.sku) + '"') +
+      ' aria-label="הסר מהרשימה" title="הסר מהרשימה">×</button>';
+    var tag = l.source === 'manual' ? ' <span class="sup-line__tag">ידני</span>' : '';
+    return '<div class="sup-line">' +
+      '<span class="sku">' + esc(l.sku || '-') + '</span>' +
+      '<span class="desc">' + esc(l.desc) + tag + '</span>' +
+      '<span class="qty">' + esc(String(l.qty)) + ' ס"מ</span>' +
+      removeBtn + '</div>';
+  }
+
+  function supBlockHTML(name, fmt, arr) {
+    return '<div class="sup-block">' +
+      '<div class="sup-block__head">' + esc(name) +
+        ' <span class="view__subtitle" style="font-weight:400">· ' + esc(fmt) + '</span></div>' +
+      '<div class="sup-lines">' + arr.map(lineHTML).join('') + '</div></div>';
+  }
+
+  function supplierOrderHTML() {
+    var lines = reorderLines();
+    var head = '<div class="supplier-order__head"><h3>רשימת הזמנה לספק</h3>' +
+      '<button class="btn btn--secondary btn--sm" data-add-reorder>' + I.plus + 'הוסף פריט ידנית</button></div>';
+    var intro = '<p class="view__subtitle so-intro">מתעדכן אוטומטית לפי פרופילים מתחת לסף. אפשר להוסיף ולהסיר ידנית.</p>';
+
+    var body;
+    if (lines.length === 0) {
+      body = '<p class="view__subtitle so-empty">אין כרגע פריטים ברשימה. הכל תקין. אפשר להוסיף פריט ידנית בכל רגע.</p>';
+    } else {
+      var known = {};
+      suppliers.forEach(function (s) { known[s.id] = true; });
+      var blocks = suppliers.map(function (s) {
+        var arr = lines.filter(function (l) { return l.supplierId === s.id; });
+        if (!arr.length) return '';
+        return supBlockHTML(s.name, s.orderFormat, arr);
+      }).join('');
+      var other = lines.filter(function (l) { return !l.supplierId || !known[l.supplierId]; });
+      if (other.length) blocks += supBlockHTML('פריטים ידניים נוספים', 'ללא ספק משויך', other);
+      body = blocks;
     }
-    var bySup = {};
-    lows.forEach(function (p) { (bySup[p.supplierId] = bySup[p.supplierId] || []).push(p); });
+    return '<div class="supplier-order" data-order-section>' + head + intro + body + '</div>';
+  }
 
-    var blocks = suppliers.map(function (s) {
-      var arr = bySup[s.id];
-      if (!arr || !arr.length) return '';
-      return '<div class="sup-block">' +
-        '<div class="sup-block__head">' + esc(s.name) +
-          ' <span class="view__subtitle" style="font-weight:400">· ' + esc(s.orderFormat) + '</span></div>' +
-        '<div class="sup-lines">' + arr.map(function (p) {
-          return '<div class="sup-line"><span class="sku">' + esc(p.sku) + '</span>' +
-            '<span class="desc">' + esc(p.woodType) + ' ' + esc(p.color) + '</span>' +
-            '<span class="qty">' + recommendQty(p) + ' ס"מ</span></div>';
-        }).join('') + '</div></div>';
+  /* --------------------------------------------- הוספה/הסרה ידנית */
+  function removeLine(btn) {
+    var source = btn.getAttribute('data-source');
+    if (source === 'manual') {
+      DB.deleteReorderItem(btn.getAttribute('data-rid'));
+      return;
+    }
+    // הסרת פריט אוטומטי: מסמנים dismissed לפי מק"ט (לא נספר שוב עד שאסף יחזיר אותו ידנית)
+    var sku = btn.getAttribute('data-sku');
+    var already = reorderItems.filter(function (r) { return r.dismissed && r.sku === sku; })[0];
+    if (!already) DB.saveReorderItem({ sku: sku, dismissed: true, manual: false });
+  }
+
+  function openReorderModal() {
+    var node = document.createElement('div');
+    node.className = 'modal';
+    node.setAttribute('role', 'dialog');
+    node.setAttribute('aria-modal', 'true');
+
+    var sorted = profiles.slice().sort(function (a, b) { return (a.sku || '').localeCompare(b.sku || ''); });
+    var profOpts = sorted.map(function (p) {
+      return '<option value="' + esc(p.id) + '" data-qty="' + recommendQty(p) + '">' +
+        esc(p.sku) + ' · ' + esc(p.woodType) + ' ' + esc(p.color) + '</option>';
     }).join('');
+    var defQty = sorted[0] ? recommendQty(sorted[0]) : 100;
 
-    return '<div class="supplier-order" data-order-section><h3>רשימת הזמנה לספק</h3>' +
-      '<p class="view__subtitle">מקובץ לפי ספק, כולל מק"טים וכמות מומלצת.</p>' + blocks + '</div>';
+    node.innerHTML =
+      '<div class="modal__head">' +
+        '<h2 class="modal__title">הוספת פריט לרשימת ההזמנה</h2>' +
+        '<button class="modal__close" data-close aria-label="סגירה">×</button>' +
+      '</div>' +
+      '<div class="modal__body"><form data-form>' +
+        '<div class="form-grid">' +
+          '<div class="form-field col-2"><label for="ro-mode">סוג פריט</label>' +
+            '<select id="ro-mode" name="mode">' +
+              '<option value="profile">פרופיל קיים מהמלאי</option>' +
+              '<option value="free">פריט חופשי (מק"ט וטקסט)</option>' +
+            '</select></div>' +
+          '<div class="form-field col-2" data-mode="profile"><label for="ro-prof">בחר פרופיל</label>' +
+            '<select id="ro-prof" name="profileId">' + profOpts + '</select></div>' +
+          '<div class="form-field" data-mode="free"><label for="ro-sku">מק"ט</label>' +
+            '<input id="ro-sku" name="freeSku" type="text" placeholder="לדוגמה 4322-20"></div>' +
+          '<div class="form-field" data-mode="free"><label for="ro-label">תיאור הפריט</label>' +
+            '<input id="ro-label" name="freeLabel" type="text" placeholder="אלון טבעי בהיר"></div>' +
+          '<div class="form-field"><label for="ro-qty">כמות מוצעת (ס"מ אורך)</label>' +
+            '<input id="ro-qty" name="qty" type="number" min="0" value="' + defQty + '"></div>' +
+        '</div>' +
+      '</form></div>' +
+      '<div class="modal__foot">' +
+        '<button class="btn btn--primary" data-save>' + I.check + 'הוסף לרשימה</button>' +
+        '<button class="btn btn--ghost" data-close>ביטול</button>' +
+      '</div>';
+
+    var modeSel = node.querySelector('[name="mode"]');
+    var profSel = node.querySelector('[name="profileId"]');
+    var qtyEl = node.querySelector('[name="qty"]');
+
+    function applyMode() {
+      var m = modeSel.value;
+      Array.prototype.forEach.call(node.querySelectorAll('[data-mode]'), function (el) {
+        el.style.display = (el.getAttribute('data-mode') === m) ? '' : 'none';
+      });
+    }
+    modeSel.addEventListener('change', applyMode);
+    applyMode();
+
+    if (profSel) profSel.addEventListener('change', function () {
+      var opt = profSel.options[profSel.selectedIndex];
+      if (opt && opt.getAttribute('data-qty')) qtyEl.value = opt.getAttribute('data-qty');
+    });
+
+    Array.prototype.forEach.call(node.querySelectorAll('[data-close]'), function (b) {
+      b.addEventListener('click', Gallery.closeModal);
+    });
+    node.querySelector('[data-save]').addEventListener('click', function () { saveReorderForm(node); });
+
+    Gallery.openModal(node);
+  }
+
+  function saveReorderForm(node) {
+    var form = node.querySelector('[data-form]');
+    function val(n) { var el = form.querySelector('[name="' + n + '"]'); return el ? el.value.trim() : ''; }
+    var mode = val('mode');
+    var qty = parseInt(val('qty'), 10) || 0;
+
+    if (mode === 'profile') {
+      var pid = val('profileId');
+      var p = profiles.filter(function (x) { return x.id === pid; })[0];
+      if (!p) { global.alert('בחר פרופיל מהרשימה.'); return; }
+      DB.saveReorderItem({ sku: p.sku, label: p.woodType + ' ' + p.color, qty: qty, supplierId: p.supplierId, manual: true })
+        .then(Gallery.closeModal);
+    } else {
+      var sku = val('freeSku');
+      var label = val('freeLabel');
+      if (!sku && !label) { global.alert('הזן מק"ט או תיאור לפריט.'); return; }
+      DB.saveReorderItem({ sku: sku, label: label || sku, qty: qty, supplierId: null, manual: true })
+        .then(Gallery.closeModal);
+    }
   }
 
   /* ------------------------------------------------------------- events */
   function onClick(e) {
+    var addBtn = e.target.closest('[data-add-reorder]');
+    if (addBtn) { e.stopPropagation(); openReorderModal(); return; }
+
+    var rmBtn = e.target.closest('[data-remove-line]');
+    if (rmBtn) { e.stopPropagation(); removeLine(rmBtn); return; }
+
     var scrollBtn = e.target.closest('[data-scroll-order]');
     if (scrollBtn) {
       e.stopPropagation();

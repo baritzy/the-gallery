@@ -107,7 +107,7 @@
     var low = lowProfiles().length;
 
     var tiles = [
-      { label: 'הכנסה החודש', value: U.fmtMoney(thisMonth), sub: trendHTML || '<span class="kpi__sub">החודש עד עכשיו</span>', tone: 'primary' },
+      { label: 'הכנסה החודש', value: U.fmtMoney(thisMonth), sub: trendHTML || '<span class="kpi__sub">החודש עד עכשיו</span>', tone: 'primary', note: 'שווי הזמנות שנפתחו החודש, לא כסף שנגבה בפועל' },
       { label: 'יתרות פתוחות', value: U.fmtMoney(openBal), sub: '<span class="kpi__sub">כסף שלא נגבה</span>', tone: openBal > 0 ? 'orange' : 'green' },
       { label: 'עבודות פתוחות', value: String(open.length), sub: late ? '<span class="kpi__flag">' + late + ' באיחור</span>' : '<span class="kpi__sub">בסדנה</span>', tone: late ? 'red' : 'blue' },
       { label: 'צריך להזמין', value: String(low), sub: '<span class="kpi__sub">פרופילים מתחת לסף</span>', tone: low ? 'orange' : 'green' }
@@ -118,8 +118,75 @@
         '<div class="kpi__label">' + esc(t.label) + '</div>' +
         '<div class="kpi__value">' + t.value + '</div>' +
         '<div class="kpi__foot">' + t.sub + '</div>' +
+        (t.note ? '<div class="kpi__note">' + esc(t.note) + '</div>' : '') +
       '</div>';
     }).join('') + '</div>';
+  }
+
+  /* =========================================================================
+   * בלוק "המלצות מרוכזות" - מה לעשות עכשיו.
+   * אוסף פעולה אחת ממוקדת מכל תחום, מתעדף (איחור > גבייה > מלאי > עבודה),
+   * וכל פעולה עם deep-link לטאב הרלוונטי.
+   * ======================================================================= */
+  function recommendationsBlock() {
+    var recs = [];
+
+    // 1. הזמנות באיחור (הכי דחוף)
+    openOrders().filter(function (o) { return U.urgency(o).level === 'late'; })
+      .sort(function (a, b) { return U.dayNumber(b) - U.dayNumber(a); })
+      .slice(0, 2).forEach(function (o) {
+        recs.push({ cls: 'late', tab: 'reminders', tabLabel: 'לתזכורות',
+          text: 'טפל בדחיפות ב' + esc(o.customerName) + ': יום ' + U.dayNumber(o) + ', חצתה את ' + SHOP.slaDays + ' הימים' });
+      });
+
+    // 2. גבייה על עבודות מוכנות לאיסוף
+    openOrders().filter(function (o) { return o.status === 'ready' && Number(o.balance || 0) > 0; })
+      .sort(function (a, b) { return b.balance - a.balance; })
+      .slice(0, 2).forEach(function (o) {
+        recs.push({ cls: 'ready', tab: 'reminders', tabLabel: 'לגבייה',
+          text: 'גבה ' + U.fmtMoney(o.balance) + ' מ' + esc(o.customerName) + ': מוכן לאיסוף' });
+      });
+
+    // 3. הזמנת מלאי לפרופילים מתחת לסף (הכי חסרים קודם)
+    lowProfiles().sort(function (a, b) {
+      return (a.stockUnits - a.minThreshold) - (b.stockUnits - b.minThreshold);
+    }).slice(0, 2).forEach(function (p) {
+      recs.push({ cls: 'stock', tab: 'inventory', tabLabel: 'למלאי',
+        text: 'הזמן עכשיו ' + esc(p.sku) + ' (' + esc(p.woodType) + ' ' + esc(p.color) + '): מתחת לסף' });
+    });
+
+    // 4. מה להתחיל לעבוד עכשיו (העבודה בעדיפות הגבוהה שאינה כבר באיחור)
+    var work = activeWork().filter(function (o) { return U.urgency(o).level !== 'late'; });
+    if (work.length) {
+      var maxBal = Math.max.apply(null, [1].concat(work.map(function (o) { return Number(o.balance || 0); })));
+      var top = work.map(function (o) {
+        return { o: o, score: 0.7 * (U.dayNumber(o) / SHOP.slaDays) + 0.3 * (Number(o.balance || 0) / maxBal) };
+      }).sort(function (a, b) { return b.score - a.score; })[0];
+      if (top) recs.push({ cls: 'work', tab: 'orders', tabLabel: 'להזמנות',
+        text: 'התחל לעבוד על ' + esc(top.o.customerName) + ': יום ' + U.dayNumber(top.o) + ' מתוך ' + SHOP.slaDays });
+    }
+
+    recs = recs.slice(0, 6);
+
+    var inner;
+    if (recs.length === 0) {
+      inner = '<div class="reco-empty">' + I.check + 'אין פעולות דחופות כרגע. הכל בשליטה, אפשר להמשיך כרגיל.</div>';
+    } else {
+      inner = '<ol class="reco-list">' + recs.map(function (r, i) {
+        return '<li class="reco-item is-' + r.cls + '">' +
+          '<span class="reco-item__num">' + (i + 1) + '</span>' +
+          '<span class="reco-item__txt">' + r.text + '</span>' +
+          '<button class="reco-item__go" data-tab="' + r.tab + '">' + esc(r.tabLabel) + ' ›</button>' +
+        '</li>';
+      }).join('') + '</ol>';
+    }
+
+    return '<div class="reco">' +
+      '<div class="reco__head">' + I.lightbulb +
+        '<span class="reco__title">מה לעשות עכשיו</span>' +
+        '<span class="reco__sub">המלצות מרוכזות, לפי סדר עדיפות</span></div>' +
+      inner +
+    '</div>';
   }
 
   /* =========================================================================
@@ -172,7 +239,7 @@
       return '<li><span class="mono">' + esc(p.sku) + '</span> ' + esc(p.woodType) + ' ' + esc(p.color) + ' · ' + when + early + '</li>';
     }).join('');
     return { status: 'late', icon: I.inventory,
-      title: 'מה עומד להיגמר: <b>' + flagged.length + '</b> פרופילים בסיכון',
+      title: 'מה עומד להיגמר: ' + (flagged.length === 1 ? '<b>פרופיל אחד</b> בסיכון' : '<b>' + flagged.length + '</b> פרופילים בסיכון'),
       body: '<ul class="ins-list">' + items + '</ul>' +
         '<p class="ins-say">זמן האספקה מהספק כ-' + LEAD_TIME_DAYS + ' יום. כדאי להזמין עכשיו כדי לא להיתקע באמצע עבודה.</p>',
       action: { label: 'לרשימת ההזמנה במלאי', tab: 'inventory' } };
@@ -224,7 +291,7 @@
       return '<li><span class="mono">' + esc(p.sku) + '</span> ' + esc(p.woodType) + ' ' + esc(p.color) + ' · <b>' + p.stockUnits + ' ס"מ</b></li>';
     }).join('');
     return { status: 'warn', icon: I.inventory,
-      title: 'מלאי מת: <b>' + round(stuck) + ' ס"מ</b> תקועים ב-' + dead.length + ' פרופילים',
+      title: 'מלאי מת: <b>' + round(stuck) + ' ס"מ</b> תקועים ב' + (dead.length === 1 ? 'פרופיל אחד' : dead.length + ' פרופילים'),
       body: '<ul class="ins-list">' + items + '</ul>' +
         '<p class="ins-say">כסף תקוע על המדף. שווה להפסיק להזמין מהם ולשקול מבצע או שימוש בעבודות זולות כדי לפנות מקום.</p>' };
   }
@@ -252,7 +319,7 @@
       return '<li>' + (i + 1) + '. ' + esc(o.customerName) + ' · יום <b>' + U.dayNumber(o) + '</b> · יתרה ' + U.fmtMoney(o.balance) + lateTag + '</li>';
     }).join('');
     return { status: 'warn', icon: I.clock,
-      title: 'מה לעשות קודם: <b>' + work.length + '</b> עבודות פתוחות',
+      title: 'מה לעשות קודם: ' + (work.length === 1 ? '<b>עבודה אחת</b> פתוחה' : '<b>' + work.length + '</b> עבודות פתוחות'),
       body: '<ul class="ins-list">' + items + '</ul>' +
         '<p class="ins-say">זו רשימת העבודה של הבוקר לפי דחיפות אמיתית, לא לפי מי שצעק אחרון. השורה הראשונה = מה שמתחילים עכשיו.</p>',
       action: { label: 'לכל ההזמנות', tab: 'orders' } };
@@ -265,8 +332,8 @@
     var warn = open.filter(function (o) { return U.urgency(o).level === 'warn'; }).length;
     var st = late >= 2 ? 'warn' : 'ok';
     return { status: st, icon: I.reminders,
-      title: 'עומס נוכחי: <b>' + open.length + '</b> עבודות בסדנה',
-      body: '<p>' + late + ' באיחור, ' + warn + ' מתקרבות ליעד.</p>' +
+      title: 'עומס נוכחי: ' + (open.length === 1 ? '<b>עבודה אחת</b> בסדנה' : '<b>' + open.length + '</b> עבודות בסדנה'),
+      body: '<p>באיחור: ' + late + '. מתקרבות ליעד: ' + warn + '.</p>' +
         '<p class="ins-say">' + (late >= 2 ?
           'עומס גבוה. שקול לעצור לקיחת עבודות דחופות חדשות או להאריך את זמן ההבטחה ללקוח.' :
           'העומס בשליטה. אפשר להמשיך לקבל עבודות חדשות.') + '</p>',
@@ -316,6 +383,7 @@
     return { status: st, icon: up ? I.trendUp : I.coins,
       title: 'הכנסת החודש: <b>' + U.fmtMoney(thisMonth) + '</b>',
       body: '<p>' + trendLine + '</p>' +
+        '<p class="ins-say ins-clarify">המספר הוא שווי ההזמנות שנפתחו החודש, לא כסף שנגבה בפועל.</p>' +
         '<p class="ins-say">' + (up ?
           'מגמה טובה. שמור על הקצב.' :
           'חודש חלש. דחוף עבודות מוכנות לאיסוף ופנה ללקוחות ותיקים כדי לסגור את הפער.') + '</p>',
@@ -415,7 +483,7 @@
     var pct = arr.length ? round(returning / arr.length * 100) : 0;
     var top = arr.sort(function (a, b) { return b.total - a.total; }).slice(0, 3)
       .map(function (c) {
-        return '<li>' + esc(c.name) + ' · <b>' + U.fmtMoney(c.total) + '</b> · ' + c.count + ' הזמנות</li>';
+        return '<li>' + esc(c.name) + ' · <b>' + U.fmtMoney(c.total) + '</b> · ' + U.plural(c.count, 'הזמנה אחת', 'הזמנות') + '</li>';
       }).join('');
     return { status: 'ok', icon: I.customers,
       title: '<b>' + pct + '%</b> מהלקוחות חזרו ליותר מעבודה אחת',
@@ -458,7 +526,7 @@
         cards: [cardTopCustomers()] }
     ];
 
-    bodyEl.innerHTML = kpiRow() + groups.map(groupHTML).join('');
+    bodyEl.innerHTML = kpiRow() + recommendationsBlock() + groups.map(groupHTML).join('');
   }
 
   function onClick(e) {

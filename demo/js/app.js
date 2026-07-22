@@ -84,6 +84,14 @@
 
   function consumption(w, h) { return (Number(w || 0) + Number(h || 0)) * 2; }
 
+  // עזר יחיד/רבים בעברית. one = הביטוי המלא ליחיד ("הזמנה אחת" / "פרופיל אחד"),
+  // many = שם העצם ברבים ("הזמנות"). דוגמה: plural(1,'הזמנה אחת','הזמנות') => "הזמנה אחת".
+  function plural(n, one, many) {
+    n = Number(n) || 0;
+    if (n === 1) return one;
+    return n + ' ' + many;
+  }
+
   // נורמליזציית טלפון ישראלי לפורמט בינלאומי עבור wa.me
   function phoneIntl(phone) {
     var digits = String(phone || '').replace(/\D/g, '');
@@ -144,7 +152,7 @@
     displayColor: displayColor, dayChipClass: dayChipClass, statusVar: statusVar,
     fmtDate: fmtDate, fmtMoney: fmtMoney, consumption: consumption,
     phoneIntl: phoneIntl, waLink: waLink, msgCopy: msgCopy, msgReady: msgReady,
-    esc: esc, woodSwatch: woodSwatch
+    esc: esc, woodSwatch: woodSwatch, plural: plural
   };
 
   /* =========================================================================
@@ -173,6 +181,95 @@
   function onEsc(e) { if (e.key === 'Escape') closeModal(); }
   Gallery.openModal = openModal;
   Gallery.closeModal = closeModal;
+
+  /* =========================================================================
+   * פירוט הזמנה משותף (OrderDetail) - מודל אחד שמציג את כל פרטי ההזמנה,
+   * ניתן לפתיחה מכל טאב: Gallery.OrderDetail.open(orderId | orderObject)
+   * ======================================================================= */
+  function orderDetailNode(o) {
+    var node = document.createElement('div');
+    node.className = 'modal';
+    node.setAttribute('role', 'dialog');
+    node.setAttribute('aria-modal', 'true');
+
+    var color = displayColor(o);
+    var d = dayNumber(o);
+    var chipCls = dayChipClass(o);
+    var showChip = o.status !== 'delivered';
+
+    function f(k, v, strong) {
+      return '<div class="field"><div class="k">' + k + '</div><div class="v' +
+        (strong ? ' strong' : '') + '">' + v + '</div></div>';
+    }
+    function fmono(k, v) {
+      return '<div class="field"><div class="k">' + k + '</div><div class="v mono">' + v + '</div></div>';
+    }
+    function chk(label, on, extra) {
+      return '<span class="check-tag' + (on ? ' on' : '') + '"><span class="dot"></span>' +
+        label + (on && extra ? ' · ' + esc(extra) : (on ? '' : ': לא')) + '</span>';
+    }
+
+    var grid = '<div class="dgrid">' +
+      f('טלפון', '<span class="mono">' + esc(o.phone) + '</span>') +
+      f('תיאור התמונה', esc(o.imageDesc || '-')) +
+      f('מסגרת', esc(o.frameDesc || '-')) +
+      fmono('מק"ט מסגרת', esc(o.profileSku || '-')) +
+      fmono('מידות', (o.width || 0) + '×' + (o.height || 0)) +
+      f('תאריך פתיחה', fmtDate(o.openedAt)) +
+      f('יעד אספקה', fmtDate(o.deliveryTarget)) +
+      (o.deliveredAt ? f('תאריך מסירה', fmtDate(o.deliveredAt)) : '') +
+      f('מחיר כולל', fmtMoney(o.price)) +
+      f('מקדמה', fmtMoney(o.deposit)) +
+      f('יתרה לתשלום', fmtMoney(o.balance), true) +
+      '</div>';
+
+    var checks = '<div class="checks">' +
+      chk('זכוכית', o.glass, o.glassType) +
+      chk('גב', o.backing) +
+      chk('פספרטו', o.passepartout, o.passeColor) +
+      '</div>';
+
+    var notes = (o.notes && String(o.notes).trim()) ?
+      '<div class="od-notes"><div class="k">הערות</div><div class="v">' + esc(o.notes) + '</div></div>' : '';
+
+    node.innerHTML =
+      '<div class="modal__head">' +
+        '<div class="od-head">' +
+          '<h2 class="modal__title">הזמנה #' + esc(o.orderNo) + ' · ' + esc(o.customerName) + '</h2>' +
+          '<div class="od-head__tags">' +
+            '<span class="pill is-' + color + '"><span class="dot"></span>' + esc(STATUS_LABEL[o.status]) + '</span>' +
+            (showChip ? '<span class="chip ' + chipCls + '">' + I.clock + 'יום ' + d + ' / 10</span>' : '') +
+          '</div>' +
+        '</div>' +
+        '<button class="modal__close" data-close aria-label="סגירה">×</button>' +
+      '</div>' +
+      '<div class="modal__body">' +
+        '<div class="od-mat">' + grid + checks + notes + '</div>' +
+      '</div>' +
+      '<div class="modal__foot">' +
+        '<button class="btn btn--wa" data-od-wa>' + I.wa + 'שלח עותק ללקוח</button>' +
+        '<button class="btn btn--ghost" data-close>סגירה</button>' +
+      '</div>';
+
+    Array.prototype.forEach.call(node.querySelectorAll('[data-close]'), function (b) {
+      b.addEventListener('click', closeModal);
+    });
+    var wa = node.querySelector('[data-od-wa]');
+    if (wa) wa.addEventListener('click', function () { global.open(waLink(o.phone, msgCopy(o)), '_blank'); });
+
+    return node;
+  }
+
+  Gallery.OrderDetail = {
+    open: function (order) {
+      if (!order) return;
+      if (typeof order === 'string') {
+        DB.getOrder(order).then(function (o) { if (o) openModal(orderDetailNode(o)); });
+      } else {
+        openModal(orderDetailNode(order));
+      }
+    }
+  };
 
   /* =========================================================================
    * Router

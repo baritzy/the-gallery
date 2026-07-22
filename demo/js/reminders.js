@@ -86,7 +86,8 @@
 
     return '<div class="rem-card" style="--spine:var(--st-' + color + ')">' +
       '<div class="rem-card__top">' +
-        '<span class="rem-card__name">' + esc(o.customerName) + '</span>' +
+        '<button type="button" class="rem-card__name" data-open-order="' + o.id + '" ' +
+          'title="פתח את פירוט ההזמנה">' + esc(o.customerName) + '</button>' +
         '<span class="chip ' + chipCls + '" style="margin-inline-start:auto">' + I.clock + 'יום ' + d + ' / 10</span>' +
       '</div>' +
       '<div class="rem-card__meta">הזמנה #' + esc(o.orderNo) + ' · ' + esc(o.frameDesc || '') +
@@ -102,6 +103,9 @@
   }
 
   function onClick(e) {
+    var openBtn = e.target.closest('[data-open-order]');
+    if (openBtn) { e.stopPropagation(); Gallery.OrderDetail.open(openBtn.getAttribute('data-open-order')); return; }
+
     var btn = e.target.closest('[data-action]');
     if (!btn) return;
     var id = btn.getAttribute('data-id');
