@@ -294,14 +294,26 @@
     if (t.closest('[data-pay]')) { Gallery.OrdersPay.openPayment(o.id); return; }
     if ((el = t.closest('[data-issue]'))) { Gallery.OrdersPay.openReceiptStep(o.id, el.getAttribute('data-issue')); return; }
     if ((el = t.closest('[data-delpay]'))) {
-      if (global.confirm('למחוק את התשלום? הקבלה שהונפקה (אם יש) לא נמחקת.')) D.orders.removePayment(o.id, el.getAttribute('data-delpay'));
+      var pid = el.getAttribute('data-delpay');
+      var pay = (o.payments || []).filter(function (p) { return p.id === pid; })[0];
+      if (!pay) return;
+      var plabel = (D.orders.PAYMENT_TYPES[pay.type] || 'תשלום') + ' ' + U.fmtMoney(pay.amount) + ' (הזמנה ' + o.number + ')';
+      Gallery.confirmDelete({
+        label: 'התשלום ' + plabel, detail: 'הקבלה שהונפקה (אם יש) לא נמחקת.',
+        onDelete: function () { return D.trash.movePayment(o.id, pid, 'תשלום ' + plabel); }
+      });
       return;
     }
     if (t.closest('[data-wa-copy]')) { Gallery.whatsapp(custPhone(o), U.msgOrderCopy(o)); return; }
     if (t.closest('[data-wa-ready]')) { Gallery.whatsapp(custPhone(o), U.msgReady(o)); return; }
     if (t.closest('[data-edit]')) { Gallery.OrdersForm.open(o.id); return; }
     if (t.closest('[data-delete]')) {
-      if (global.confirm('למחוק את הזמנה ' + o.number + '? אי אפשר לבטל.')) { Gallery.closeModal(); D.orders.remove(o.id); }
+      var who = D.customers.nameOf(o.customerId);
+      Gallery.deleteRecord({
+        collection: 'orders', id: o.id, label: 'הזמנה ' + o.number + (who ? ' של ' + who : ''),
+        detail: 'שורות הספק, הקבלות והתשלומים שלה לא נמחקים, והשחזור מחזיר הכל כמו שהיה.',
+        onDone: function () { Gallery.closeModal(); }
+      });
     }
   }
   function onCardChange(e) {

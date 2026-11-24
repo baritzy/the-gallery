@@ -275,7 +275,9 @@
       return;
     }
     if ((el = t.closest('[data-del-expense]'))) {
-      if (global.confirm('למחוק את ההוצאה?')) D.expenses.remove(el.getAttribute('data-del-expense'));
+      var ex = D.expenses.peekOne(el.getAttribute('data-del-expense'));
+      if (ex) Gallery.deleteRecord({ collection: 'expenses', id: ex.id,
+        label: 'ההוצאה "' + (ex.category || 'הוצאה') + (ex.note ? ', ' + ex.note : '') + '" ' + U.fmtMoney(ex.amount) });
     }
   }
   function onChange(e) {

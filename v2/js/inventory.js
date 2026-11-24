@@ -6,7 +6,7 @@
  *   js/inventory-raw.js       חומרי גלם (C20.2)
  *   js/inventory-products.js  מוצרים למכירה (C20.3), admin בלבד, לא נטען בסדנה
  *   js/inventory-count.js     ספירת מלאי (C22)
- * כסף: עלות מסגרת לא מוצגת בכלל. מחירי מוצרים רק ב-admin (Gallery.can('money')).
+ * כסף: עלות מסגרת (למטר) רק בטופס של admin. מחירי מוצרים רק ב-admin (Gallery.can('money')).
  * ========================================================================== */
 
 (function (global) {
@@ -58,11 +58,16 @@
   Inv.meters = meters;
   Inv.supplier = function (id) { return dat.suppliers.filter(function (s) { return s.id === id; })[0] || null; };
   Inv.supplierName = function (id) { var s = Inv.supplier(id); return s ? s.name : 'ללא ספק'; };
-  Inv.supplierOptions = function (sel) {
-    return '<option value="">ללא ספק</option>' + dat.suppliers.map(function (s) {
-      return '<option value="' + esc(s.id) + '"' + (s.id === sel ? ' selected' : '') + '>' + esc(s.name) + '</option>';
+  /* R3: kind = 'frames' | 'raw' -> רק ספקים מהסוג הזה. ספק נוכחי מסוג אחר נשאר ברשימה (מסומן), כדי לא לאבד אותו. */
+  Inv.supplierOptions = function (sel, kind) {
+    var list = dat.suppliers.filter(function (s) { return !kind || D.suppliers.kindOf(s) === kind || s.id === sel; });
+    return '<option value="">ללא ספק</option>' + list.map(function (s) {
+      var other = kind && D.suppliers.kindOf(s) !== kind;
+      return '<option value="' + esc(s.id) + '"' + (s.id === sel ? ' selected' : '') + '>' + esc(s.name) +
+        (other ? (kind === 'raw' ? ' (ספק מסגרות)' : ' (ספק חומרי גלם)') : '') + '</option>';
     }).join('');
   };
+  Inv.isFrameSupplier = function (id) { var s = Inv.supplier(id); return !!s && D.suppliers.kindOf(s) === 'frames'; };
   Inv.match = function (fields) {
     if (!st.term) return true;
     var t = st.term.toLowerCase();
@@ -74,8 +79,10 @@
     var q = l.reduce(function (s, x) { return s + num(type === 'frame' ? x.qtyRods : x.qty); }, 0);
     return type === 'frame' ? 'ברשימת ספק: ' + U.plural(q, 'מוט אחד', 'מוטות') : 'ברשימת ספק: ' + q + (unit ? ' ' + unit : '');
   };
-  Inv.emptyHTML = function (title, sub) {
-    return '<div class="empty">' + I.frameEmpty + '<h3>' + esc(title) + '</h3><p>' + esc(sub || '') + '</p></div>';
+  /* addLabel = כפתור הוספה בתוך המצב הריק (R3) */
+  Inv.emptyHTML = function (title, sub, addLabel) {
+    return '<div class="empty">' + I.frameEmpty + '<h3>' + esc(title) + '</h3><p>' + esc(sub || '') + '</p>' +
+      (addLabel ? '<button type="button" class="btn btn--primary btn--lg" data-add-empty>' + I.plus + esc(addLabel) + '</button>' : '') + '</div>';
   };
   Inv.noteHTML = function (col, item) {
     return '<button type="button" class="inv-note' + (item.note ? '' : ' is-empty') + '" data-note="' + col + '" data-id="' + esc(item.id) + '">' +
@@ -191,7 +198,10 @@
       '<div class="view__head inv-head">' +
         '<div><h1 class="view__title">מלאי</h1>' +
         '<p class="view__subtitle">' + (IS_ADMIN ? 'מסגרות, חומרי גלם ומוצרים למכירה.' : 'מסגרות וחומרי גלם בסדנה.') + '</p></div>' +
-        '<button class="btn btn--secondary btn--lg inv-count-btn" data-count>' + I.count + 'ספירת מלאי</button>' +
+        '<div class="inv-head__acts">' +
+          '<button class="btn btn--primary btn--lg inv-add" data-add hidden>' + I.plus + '<span></span></button>' +
+          '<button class="btn btn--secondary btn--lg inv-count-btn" data-count>' + I.count + 'ספירת מלאי</button>' +
+        '</div>' +
       '</div>' +
       '<div class="seg inv-seg" role="tablist" data-seg>' + SUBS.map(function (k) {
         return '<button type="button" role="tab" data-sub="' + k + '" aria-pressed="' + (st.sub === k) + '">' +
@@ -200,7 +210,6 @@
       '<div class="toolbar inv-toolbar">' +
         '<div class="search">' + I.search + '<input type="search" data-search aria-label="חיפוש במלאי"></div>' +
         '<div class="chips" data-chips></div>' +
-        '<button class="btn btn--primary inv-add" data-add hidden>' + I.plus + '<span></span></button>' +
       '</div>' +
       '<div data-body></div>';
 
@@ -223,7 +232,7 @@
       if (Inv.openCount) Inv.openCount(st.sub === 'raw' ? 'rawMaterials' : st.sub);
       else Gallery.toast('ספירת המלאי עדיין נטענת, נסה שוב בעוד רגע');
     });
-    addBtn.addEventListener('click', function () { var p = Inv.panes[st.sub]; if (p && p.onAdd) p.onAdd(); });
+    addBtn.addEventListener('click', function () { var p = st.sub === 'frames' ? FramesPane : Inv.panes[st.sub]; if (p && p.onAdd) p.onAdd(); });
     chipsEl.addEventListener('click', onChipClick);
     bodyEl.addEventListener('click', onClick);
     bodyEl.addEventListener('change', onChange);
@@ -279,6 +288,7 @@
     var nb = t.closest('[data-note]');
     if (nb) { Inv.noteModal(nb.getAttribute('data-note'), nb.getAttribute('data-id')); return; }
     var pane = st.sub === 'frames' ? FramesPane : Inv.panes[st.sub];
+    if (t.closest('[data-add-empty]')) { if (pane && pane.onAdd) pane.onAdd(); return; }
     if (pane && pane.onClick) pane.onClick(e);
   }
   function onChange(e) {
@@ -306,6 +316,8 @@
 
   var FramesPane = {
     placeholder: 'חיפוש לפי מק"ט, סוג עץ, צבע, ספק...',
+    addLabel: 'מסגרת חדשה',
+    onAdd: function () { editFrame(null); },
     chipsHTML: function () {
       var n = dat.frames.filter(D.frames.isLow).length;
       return '<button class="fchip" data-low aria-pressed="' + st.lowOnly + '">רק מלאי נמוך <span class="cnt">' + n + '</span></button>';
@@ -316,7 +328,7 @@
         if (st.lowOnly && !D.frames.isLow(f)) return false;
         return Inv.match([f.sku, f.woodType, f.color, f.note, Inv.supplierName(f.supplierId)]);
       });
-      if (!dat.frames.length) return Inv.emptyHTML('עוד אין מסגרות במלאי', 'אפשר להזין את כל המסגרות דרך "ספירת מלאי" ואז "הוסף פריט חדש".');
+      if (!dat.frames.length) return Inv.emptyHTML('עוד אין מסגרות במלאי', 'מוסיפים מסגרת אחת אחת, או הרבה בבת אחת דרך "ספירת מלאי".', 'מסגרת חדשה');
       if (!list.length) return Inv.emptyHTML('לא נמצא פרופיל תואם', 'נסה מק"ט או צבע אחר.');
       var groups = dat.suppliers.map(function (s) { return { s: s, arr: list.filter(function (f) { return f.supplierId === s.id; }) }; });
       var known = {}; dat.suppliers.forEach(function (s) { known[s.id] = 1; });
@@ -340,6 +352,7 @@
         return;
       }
       if (t.closest('[data-edit-frame]')) { editFrame(id); return; }
+      if (t.closest('[data-del-frame]')) { deleteFrame(id); return; }
       if (t.closest('[data-toggle]')) {
         Inv.open['f' + id] = !Inv.open['f' + id];
         renderBody();
@@ -376,6 +389,8 @@
         (pend ? '<span class="inv-pend">' + I.suppliers + esc(pend) + '</span>' : '') +
         '<button type="button" class="btn btn--secondary inv-act" data-call>' + I.phone + 'ספק</button>' +
         '<button type="button" class="btn btn--primary inv-act" data-line>' + I.plus + 'הוסף לרשימת ספק</button>' +
+        '<button type="button" class="btn btn--ghost inv-act" data-edit-frame>' + I.edit + 'עריכה</button>' +
+        '<button type="button" class="iconbtn inv-del-ico" data-del-frame aria-label="מחיקת מסגרת ' + esc(f.sku) + '" title="מחיקה">' + I.trash + '</button>' +
       '</div>' +
       (open ? '<div class="inv-item__panel">' + framePanel(f) + '</div>' : '') +
     '</article>';
@@ -411,39 +426,83 @@
   }
   function low(f) { return D.frames.isLow(f); }
 
-  /* עריכת מסגרת (פרטים בלבד, בלי עלות) */
+  /* R3: הוספה / עריכה מלאה של מסגרת. עלות למטר רק ב-admin (לא קיימת בכלל בטופס של הסדנה). */
   function editFrame(id) {
-    var f = D.frames.peekOne(id);
+    var isNew = !id;
+    var f = isNew ? { sku: '', woodType: '', color: '', supplierId: null, stockUnits: 0, minThreshold: 290, unit: 'ס"מ אורך',
+      rodLengthCm: 290, costPerCm: 0, photo: null, note: '' } : D.frames.peekOne(id);
     if (!f) return;
+    var money = Gallery.can('money');
+    var photo = f.photo || null;
+    var noFrameSup = !dat.suppliers.some(function (s) { return D.suppliers.kindOf(s) === 'frames'; });
     var node = Gallery.modalNode({
-      title: I.edit + 'עריכת מסגרת ' + esc(f.sku),
-      body: '<div class="form-grid">' +
+      title: isNew ? I.plus + 'מסגרת חדשה' : I.edit + 'עריכת מסגרת ' + esc(f.sku),
+      body: '<div class="form-grid inv-fform">' +
         field('sku', 'מק"ט', f.sku) + field('woodType', 'סוג עץ / חומר', f.woodType) + field('color', 'צבע', f.color) +
-        '<div class="form-field"><label>ספק</label><select class="select" name="supplierId">' + Inv.supplierOptions(f.supplierId) + '</select></div>' +
-        field('stockM', 'במלאי (מטרים)', meters(f.stockUnits).replace(/,/g, ''), 'number') +
+        '<div class="form-field"><label>ספק מסגרות</label><select class="select" name="supplierId">' + Inv.supplierOptions(f.supplierId, 'frames') + '</select>' +
+          (noFrameSup ? '<small class="field-note">אין ספקי מסגרות. אפשר להוסיף בטאב ספקים.</small>' : '') + '</div>' +
+        field('stockM', 'במלאי (מטרים)', isNew ? '' : meters(f.stockUnits).replace(/,/g, ''), 'number') +
         field('minM', 'סף מינימום (מטרים)', meters(f.minThreshold).replace(/,/g, ''), 'number') +
+        (money ? '<div class="form-field money"><label>עלות למטר (₪)</label><input name="costM" type="number" inputmode="decimal" step="0.1" min="0" value="' +
+          esc(f.costPerCm ? String(Math.round(num(f.costPerCm) * 100 * 100) / 100) : '') + '"></div>' : '') +
+        '<div class="form-field col-2"><label for="inv-fnote">הערה</label><textarea id="inv-fnote" name="note" rows="2" placeholder="לדוגמה: מהחומר הזה מזמינים 10 מוטות">' + esc(f.note || '') + '</textarea></div>' +
+        '<div class="form-field col-2"><label>תמונה</label><div class="inv-fphoto">' +
+          '<span class="inv-fphoto__show" data-photo-show></span>' +
+          '<label class="btn btn--secondary inv-act"><input type="file" accept="image/*" capture="environment" data-photo-pick hidden><span data-photo-lbl></span></label>' +
+          '<button type="button" class="btn btn--ghost inv-act" data-photo-rm>הסר תמונה</button>' +
+        '</div></div>' +
       '</div>',
-      foot: '<button class="btn btn--primary btn--lg" data-save>' + I.check + 'שמור</button>' +
+      foot: '<button class="btn btn--primary btn--lg" data-save>' + I.check + (isNew ? 'הוסף מסגרת' : 'שמור') + '</button>' +
         '<button class="btn btn--ghost btn--lg" data-close>ביטול</button>' +
-        '<button class="btn btn--danger inv-del" data-del>' + I.trash + 'מחק</button>'
+        (isNew ? '' : '<button class="btn btn--danger inv-del" data-del>' + I.trash + 'מחק</button>')
     });
+    node.classList.add('modal--wide');
+    function showPhoto() {
+      node.querySelector('[data-photo-show]').innerHTML = photo ? '<img src="' + esc(photo) + '" alt="תמונת הפרופיל">' : '<span class="inv-fphoto__none">אין תמונה</span>';
+      node.querySelector('[data-photo-lbl]').textContent = photo ? 'החלף תמונה' : 'צלם / העלה תמונה';
+      node.querySelector('[data-photo-rm]').hidden = !photo;
+    }
+    showPhoto();
+    node.querySelector('[data-photo-pick]').addEventListener('change', function (e) {
+      var file = e.target.files && e.target.files[0];
+      if (!file) return;
+      resizeImage(file, 500, function (dataUrl) { photo = dataUrl; showPhoto(); });
+      e.target.value = '';
+    });
+    node.querySelector('[data-photo-rm]').addEventListener('click', function () { photo = null; showPhoto(); });
     node.querySelector('[data-save]').addEventListener('click', function () {
       var btn = this;
       if (btn.disabled) return;   // QA O4: הקשה כפולה לא שומרת פעמיים
-      function v(n) { return node.querySelector('[name="' + n + '"]').value.trim(); }
+      function v(n) { var el = node.querySelector('[name="' + n + '"]'); return el ? el.value.trim() : ''; }
       if (!v('sku')) { Gallery.toast('חסר מק"ט'); return; }
+      var dup = dat.frames.filter(function (x) { return x.sku === v('sku') && x.id !== f.id; })[0];
+      if (dup) { Gallery.toast('כבר יש מסגרת עם המק"ט ' + v('sku')); return; }
       btn.disabled = true;
       Object.assign(f, { sku: v('sku'), woodType: v('woodType'), color: v('color'), supplierId: v('supplierId') || null,
-        stockUnits: Math.max(0, Math.round(num(v('stockM')) * 100)), minThreshold: Math.max(0, Math.round(num(v('minM')) * 100)) });
-      D.frames.save(f).then(function () { Gallery.closeModal(); Gallery.toast('המסגרת נשמרה'); })
+        stockUnits: Math.max(0, Math.round(num(v('stockM')) * 100)), minThreshold: Math.max(0, Math.round(num(v('minM')) * 100)),
+        note: v('note'), photo: photo });
+      if (money) f.costPerCm = Math.max(0, num(v('costM')) / 100);
+      D.frames.save(f).then(function () { Gallery.closeModal(); Gallery.toast(isNew ? 'המסגרת נוספה' : 'המסגרת נשמרה'); })
         .catch(function (err) { btn.disabled = false; Gallery.toast('השמירה נכשלה: ' + (err && err.message ? err.message : err)); });
     });
-    node.querySelector('[data-del]').addEventListener('click', function () {
-      if (!global.confirm('למחוק את המסגרת ' + f.sku + ' מהמלאי?')) return;
-      D.frames.remove(f.id).then(function () { Gallery.closeModal(); Gallery.toast('המסגרת נמחקה'); });
-    });
-    Gallery.openModal(node, { focus: false });
+    var del = node.querySelector('[data-del]');
+    if (del) del.addEventListener('click', function () { deleteFrame(f.id); });
+    Gallery.openModal(node, { focus: isNew });
   }
+
+  function deleteFrame(id) {
+    var f = D.frames.peekOne(id);
+    if (!f) return;
+    var open = dat.lines.filter(function (l) { return !l.sentAt && l.itemType === 'frame' && l.itemId === id; }).length;
+    Gallery.deleteRecord({
+      collection: 'frames', id: id,
+      label: 'מסגרת ' + f.sku + (f.woodType || f.color ? ' (' + [f.woodType, f.color].filter(Boolean).join(' ') + ')' : ''),
+      detail: open ? 'יש לה ' + U.plural(open, 'שורה פתוחה', 'שורות פתוחות') + ' ברשימת ספק. השורות נשארות.' : '',
+      onDone: function () { if (Gallery.isModalOpen()) Gallery.closeModal(); }
+    });
+  }
+  Inv.deleteFrame = deleteFrame;
+
   function field(name, label, val, type) {
     return '<div class="form-field"><label>' + label + '</label><input name="' + name + '" type="' + (type || 'text') + '"' +
       (type === 'number' ? ' inputmode="decimal" step="0.1" min="0"' : '') + ' value="' + esc(val == null ? '' : val) + '"></div>';

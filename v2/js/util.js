@@ -222,8 +222,8 @@
     var p = phoneIntl(phone);
     var t = encodeURIComponent(text || '');
     var wame = 'https://wa.me/' + p + '?text=' + t;
-    var mode = settings().whatsappMode || 'auto';
-    if (mode === 'auto') mode = deviceKind() === 'desktop' ? 'web' : 'app';
+    // R3: תמיד אוטומטי (אין יותר בחירה בהגדרות). אייפד/טלפון = אפליקציה, מחשב = וואטסאפ ווב בלשונית קבועה.
+    var mode = deviceKind() === 'desktop' ? 'web' : 'app';
 
     if (mode === 'app') {
       var appUrl = 'whatsapp://send?' + (p ? 'phone=' + p + '&' : '') + 'text=' + t;

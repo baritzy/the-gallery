@@ -4,7 +4,7 @@
  * C3 / D5: ייצוא גיבוי (JSON), ייבוא גיבוי, והצעת הורדה אוטומטית פעם ביום
  *          בכניסה הראשונה של המנהל (אם יש אינטרנט ועוד לא גובה היום).
  * D10:     "נקה נתוני דמו" לפני ניסוי אמיתי.
- * C14:     מצב פתיחת וואטסאפ.
+ * R3:      וואטסאפ אוטומטי (בלי בורר), נתוני דוגמה לפי דרישה (טען / מחק), סל מחזור.
  * W4:      סנכרון ענן (Gallery.backend): מצב + קוד חנות + החלפת קוד + העלאת נתונים מקומיים לענן.
  *          בענן: ניקוי דמו דורש הקלדת קוד החנות (מוחק בשני האייפדים), והגיבוי מחכה ל-flush.
  * ========================================================================== */
@@ -19,12 +19,7 @@
   var D = Gallery.data;
   var S = Gallery.store;
 
-  var WA_MODES = [
-    { id: 'auto', label: 'אוטומטי', hint: 'אייפד וטלפון: אפליקציה. מחשב: וואטסאפ ווב' },
-    { id: 'app', label: 'אפליקציה', hint: 'פותח ישר את וואטסאפ במכשיר' },
-    { id: 'web', label: 'וואטסאפ ווב', hint: 'לשונית אחת קבועה במחשב' },
-    { id: 'wame', label: 'קישור רגיל', hint: 'wa.me, עם דף ביניים' }
-  ];
+  /* R3: בורר מצב הוואטסאפ הוסר. הפתיחה אוטומטית (util.js): אייפד וטלפון = אפליקציה, מחשב = וואטסאפ ווב. */
 
   /* ---------------------------------------------------------------- סנכרון */
   var FLUSH_MS = 10000;
@@ -86,7 +81,7 @@
     if (isCloud()) {
       var typed = global.prompt('מחיקה בענן: הנתונים יימחקו בשני האייפדים (חנות וסדנה), ואי אפשר לבטל.\n' +
         'יימחקו: הזמנות, לקוחות, מלאי, מוצרים, מכירות, קבלות, הוצאות ורשימות ספקים.\n' +
-        'יישארו: הגדרות החנות, שלושת הספקים וכללי התזכורות.\n\n' +
+        'יישארו: הגדרות החנות, שלושת ספקי המסגרות וכללי התזכורות.\n\n' +
         'כדי לאשר, הקלידו את קוד החנות: ' + shopCode());
       if (typed == null) return;
       if (String(typed).trim().toLowerCase() !== shopCode()) { Gallery.toast('הקוד לא תואם. לא נמחק כלום.'); return; }
@@ -96,13 +91,58 @@
       });
       return;
     }
-    if (!global.confirm('למחוק את כל נתוני הדמו?\n\nיימחקו: הזמנות, לקוחות, מלאי, מוצרים, מכירות, קבלות, הוצאות ורשימות ספקים. המונים יתחילו מחדש.\nיישארו: הגדרות החנות, שלושת הספקים וכללי התזכורות.\n\nמומלץ להוריד גיבוי קודם.')) return;
+    if (!global.confirm('למחוק את כל הנתונים במכשיר?\n\nיימחקו: הזמנות, לקוחות, מלאי, מוצרים, מכירות, קבלות, הוצאות, רשימות ספקים וסל המחזור. המונים יתחילו מחדש.\nיישארו: הגדרות החנות, שלושת ספקי המסגרות וכללי התזכורות.\n\nמומלץ להוריד גיבוי קודם.')) return;
     if (!global.confirm('בטוח? אי אפשר לבטל את זה (רק לשחזר מגיבוי).')) return;
     D.wipeDemo().then(function () {
       Gallery.closeModal();
-      Gallery.toast('נתוני הדמו נמחקו. אפשר להתחיל לעבוד.');
+      Gallery.toast('כל הנתונים נמחקו. אפשר להתחיל לעבוד.');
     });
   }
+
+  /* ---------------------------------------------------------- R3: נתוני דוגמה */
+  function demoLoad(node) {
+    var btn = node && node.querySelector('[data-demo-load]');
+    if (btn) btn.disabled = true;
+    D.demo.load().then(function (res) {
+      if (res.already) Gallery.toast('נתוני הדוגמה כבר טעונים (' + res.count + ' רשומות). לא נוסף כלום.', { timeout: 5000 });
+      else if (res.loaded) Gallery.toast('נטענו נתוני דוגמה: 3 לקוחות, 6 הזמנות, מלאי וספקים.' + (isCloud() ? ' הם יופיעו גם באייפד השני.' : ''), { timeout: 6000 });
+      refreshDemo(node);
+    }).catch(function (e) {
+      Gallery.toast('הטעינה נכשלה: ' + (e && e.message ? e.message : 'שגיאה'));
+      refreshDemo(node);
+    });
+  }
+  function demoClear(node) {
+    var n = D.demo.count();
+    if (!n) { Gallery.toast('אין נתוני דוגמה למחיקה'); return; }
+    Gallery.confirmDelete({
+      title: 'האם אתה בטוח שברצונך למחוק את נתוני הדוגמה?',
+      detail: 'יימחקו ' + n + ' רשומות דוגמה' + (isCloud() ? ', בשני האייפדים' : '') + '. נתונים אמיתיים לא נמחקים. אי אפשר לשחזר.',
+      confirmLabel: 'מחק נתוני דוגמה', undo: false,
+      onDelete: function () {
+        return D.demo.clear().then(function (res) {
+          Gallery.toast('נמחקו ' + res.removed + ' רשומות דוגמה' + (res.kept ? '. ' + res.kept + ' נשארו כי נתונים אמיתיים משתמשים בהן.' : '.'), { timeout: 6000 });
+          refreshDemo(node);
+        });
+      }
+    });
+  }
+  function demoStatus() {
+    var n = D.demo.count();
+    return n ? 'יש עכשיו ' + n + ' רשומות דוגמה (מסומנות, נפרדות מהנתונים האמיתיים).' : 'אין נתוני דוגמה. אפשר לטעון סט קטן כדי לראות איך הכל עובד.';
+  }
+  function refreshDemo(node) {
+    if (!node || !document.body.contains(node)) return;
+    var n = D.demo.count();
+    var st = node.querySelector('[data-demo-status]');
+    if (st) st.textContent = demoStatus();
+    var l = node.querySelector('[data-demo-load]'), c = node.querySelector('[data-demo-clear]');
+    if (l) l.disabled = n > 0;
+    if (c) c.disabled = n === 0;
+    var tr = node.querySelector('[data-trash-lbl]');
+    if (tr) tr.textContent = trashLabel();
+  }
+  function trashLabel() { return 'פתח סל מחזור (' + D.trash.visible().length + ')'; }
 
   function migrate() {
     if (!isCloud()) return;
@@ -169,30 +209,36 @@
           '</div>' +
           '<p class="field-note">הגיבוי הוא קובץ אחד עם כל הנתונים. כדאי לשמור אותו גם בגוגל דרייב.</p>') +
         syncSection() +
-        section('וואטסאפ', I.wa,
-          '<div class="set__modes" role="radiogroup">' + WA_MODES.map(function (m) {
-            return '<button type="button" class="set__mode" role="radio" data-wa="' + m.id + '" aria-checked="' + (s.whatsappMode === m.id) + '">' +
-              '<b>' + esc(m.label) + '</b><small>' + esc(m.hint) + '</small></button>';
-          }).join('') + '</div>') +
+        section('נתוני דוגמה', I.store,
+          '<p class="set__note" data-demo-status>' + esc(demoStatus()) + '</p>' +
+          '<div class="set__btns">' +
+            '<button class="btn btn--primary btn--lg" data-demo-load' + (D.demo.count() ? ' disabled' : '') + '>' + I.download + 'טען נתוני דוגמה</button>' +
+            '<button class="btn btn--danger btn--lg" data-demo-clear' + (D.demo.count() ? '' : ' disabled') + '>' + I.trash + 'מחק נתוני דוגמה</button>' +
+          '</div>' +
+          '<p class="field-note">3 לקוחות, 6 הזמנות בכל הסטטוסים, מסגרות, חומרי גלם, מוצרים והוצאות. המחיקה מוחקת רק אותם' + (isCloud() ? ', בשני האייפדים' : '') + '.</p>') +
+        section('סל מחזור', I.trash,
+          '<p class="set__note">כל מה שנמחק נשמר 30 יום ואפשר לשחזר.</p>' +
+          '<div class="set__btns"><button class="btn btn--secondary btn--lg" data-open-trash>' + I.trash + '<span data-trash-lbl>' + trashLabel() + '</span></button></div>') +
         section('פרטי החנות', I.store,
           '<div class="form-grid">' +
             field('שם', 'shop.name', s.shop.name) + field('טלפון', 'shop.phone', s.shop.phone) +
             field('כתובת', 'shop.address', s.shop.address, true) + field('עוסק מורשה', 'shop.vatId', s.shop.vatId) +
             field('שעות פתיחה', 'shop.hours', s.shop.hours, true) +
-          '</div>') +
+          '</div>' +
+          '<p class="field-note">וואטסאפ נפתח לבד: באייפד ובטלפון באפליקציה, במחשב בוואטסאפ ווב בלשונית אחת.</p>') +
         section('מספור וקוד', I.lock,
           '<div class="form-grid">' +
             field('מספר ההזמנה הבא', 'nextOrder', D.orders.peekNextNumber(), false, 'number') +
             field('קוד מנהל (4 ספרות)', 'adminPin', s.adminPin, false, 'text') +
             field('ימים עד מסירה (ברירת מחדל)', 'slaDays', s.slaDays, false, 'number') +
           '</div>' +
-          '<button class="btn btn--secondary" data-save-fields>' + I.check + 'שמירה</button>') +
-        section('נתוני דמו', I.trash,
+          '<div class="set__btns"><button class="btn btn--secondary" data-save-fields>' + I.check + 'שמירה</button>' +
+          '<button class="btn btn--ghost" data-lock>' + I.lock + 'נעל את המכשיר הזה</button></div>') +
+        section('איפוס מלא', I.trash,
           (isCloud()
-            ? '<p class="set__note"><b>שימו לב: המכשיר מחובר לענן.</b> הניקוי מוחק את הנתונים בשני האייפדים (חנות וסדנה), ודורש הקלדה של קוד החנות.</p>'
-            : '<p class="set__note">לפני שמתחילים לעבוד באמת: מוחקים את נתוני הדמו.</p>') +
-          '<div class="set__btns"><button class="btn btn--danger btn--lg" data-wipe>' + I.trash + (isCloud() ? 'מחק את כל הנתונים בשני האייפדים' : 'נקה נתוני דמו') + '</button>' +
-          '<button class="btn btn--ghost" data-lock>' + I.lock + 'נעל את המכשיר הזה</button></div>'),
+            ? '<p class="set__note"><b>שימו לב: המכשיר מחובר לענן.</b> האיפוס מוחק את <b>כל</b> הנתונים (גם האמיתיים) בשני האייפדים, ודורש הקלדה של קוד החנות.</p>'
+            : '<p class="set__note">מוחק את <b>כל</b> הנתונים במכשיר, גם האמיתיים. לנתוני דוגמה בלבד: "מחק נתוני דוגמה" למעלה.</p>') +
+          '<div class="set__btns"><button class="btn btn--danger btn--lg" data-wipe>' + I.trash + (isCloud() ? 'מחק את כל הנתונים בשני האייפדים' : 'מחק את כל הנתונים') + '</button></div>'),
       foot: '<button class="btn btn--ghost" data-close>סגירה</button>'
     });
     node.classList.add('settings');
@@ -201,19 +247,15 @@
       var t = e.target;
       if (t.closest('[data-export]')) { downloadBackup().then(function () { Gallery.closeModal(); }); return; }
       if (t.closest('[data-wipe]')) { wipeDemo(); return; }
+      if (t.closest('[data-demo-load]')) { demoLoad(node); return; }
+      if (t.closest('[data-demo-clear]')) { demoClear(node); return; }
+      if (t.closest('[data-open-trash]')) { Gallery.openTrash(); return; }
       if (t.closest('[data-sync-migrate]')) { migrate(); return; }
       if (t.closest('[data-sync-change]')) {
         if (isCloud() && !global.confirm('להתנתק מהחנות במכשיר הזה ולהזין קוד אחר? הנתונים בענן לא נמחקים.')) return;
         B().askAgain(); return;
       }
       if (t.closest('[data-lock]')) { if (global.confirm('לנעול? בכניסה הבאה יידרש קוד מנהל.')) Gallery.lockAdmin(); return; }
-      var m = t.closest('[data-wa]');
-      if (m) {
-        var mode = m.getAttribute('data-wa');
-        D.settings.update({ whatsappMode: mode });
-        Array.prototype.forEach.call(node.querySelectorAll('[data-wa]'), function (b) { b.setAttribute('aria-checked', String(b === m)); });
-        return;
-      }
       if (t.closest('[data-save-fields]')) saveFields(node);
     });
     node.querySelector('[data-import]').addEventListener('change', function (e) {

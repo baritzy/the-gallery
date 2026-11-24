@@ -305,7 +305,7 @@
       if (row && t.closest('[data-redit]')) { editView(D.reminderRules.peekOne(row.getAttribute('data-rid'))); return; }
       if (row && t.closest('[data-rdel]')) {
         var rr = D.reminderRules.peekOne(row.getAttribute('data-rid'));
-        if (rr && global.confirm('למחוק את הכלל "' + (rr.label || D.reminderRules.describe(rr)) + '"?')) D.reminderRules.remove(rr.id);
+        if (rr) Gallery.deleteRecord({ collection: 'reminderRules', id: rr.id, label: 'הכלל "' + (rr.label || D.reminderRules.describe(rr)) + '"' });
         return;
       }
       if (t.closest('[data-rsave]')) {

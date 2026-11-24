@@ -25,6 +25,7 @@
         '<button type="button" class="inv-raw__main" data-contact aria-label="פרטי ספק עבור ' + esc(r.name) + '">' +
           '<span class="inv-raw__name">' + esc(r.name) + '</span>' +
           '<span class="inv-item__sup">' + I.phone + esc(Inv.supplierName(r.supplierId)) + ' · מינימום ' + num(r.minQty) + ' ' + esc(r.unit || '') + '</span>' +
+          (Inv.isFrameSupplier(r.supplierId) ? '<span class="inv-suphint">' + I.alert + 'זה ספק מסגרות. כדאי לבחור ספק חומרי גלם בעריכה</span>' : '') +
         '</button>' +
         (low ? '<span class="pill is-red pill--lg"><span class="dot"></span>נגמר / נמוך</span>' : '') +
         '<div class="inv-step">' +
@@ -37,21 +38,31 @@
         (pend ? '<span class="inv-pend">' + I.suppliers + esc(pend) + '</span>' : '') +
         '<button type="button" class="btn btn--ghost inv-act" data-edit>' + I.edit + 'עריכה</button>' +
         '<button type="button" class="btn btn--primary inv-act" data-line>' + I.plus + 'הוסף לרשימת ספק</button>' +
+        '<button type="button" class="iconbtn inv-del-ico" data-del aria-label="מחיקת ' + esc(r.name) + '" title="מחיקה">' + I.trash + '</button>' +
       '</div>' +
     '</article>';
   }
 
   function editModal(id) {
     var isNew = !id;
-    var r = isNew ? { name: '', unit: 'יחידות', qty: 0, minQty: 1, supplierId: 'sup-yoni', note: '' } : D.rawMaterials.peekOne(id);
+    var rawSups = D.suppliers.rawSuppliers();
+    var r = isNew ? { name: '', unit: 'יחידות', qty: 0, minQty: 1, supplierId: rawSups.length === 1 ? rawSups[0].id : null, note: '' } : D.rawMaterials.peekOne(id);
     if (!r) return;
+    var wrongKind = Inv.isFrameSupplier(r.supplierId);
     var node = Gallery.modalNode({
       title: (isNew ? I.plus + 'חומר גלם חדש' : I.edit + 'עריכה: ' + esc(r.name)),
       body: '<div class="form-grid">' +
         Inv.field('name', 'שם הפריט', r.name) + Inv.field('unit', 'יחידה (קופסאות, גלילים...)', r.unit) +
         Inv.field('qty', 'כמות במלאי', num(r.qty), 'number') + Inv.field('minQty', 'מינימום (מתחתיו = נמוך)', num(r.minQty), 'number') +
-        '<div class="form-field"><label>ספק</label><select class="select" name="supplierId">' + Inv.supplierOptions(r.supplierId) + '</select></div>' +
+        '<div class="form-field"><label>ספק חומרי גלם</label><div class="inv-suprow">' +
+          '<select class="select" name="supplierId">' + Inv.supplierOptions(r.supplierId, 'raw') + '</select>' +
+          '<button type="button" class="btn btn--secondary" data-newsup>' + I.plus + 'ספק חדש</button></div>' +
+          (wrongKind ? '<small class="inv-suphint">' + I.alert + 'הספק הנוכחי הוא ספק מסגרות. כדאי לבחור ספק חומרי גלם.</small>' : '') +
+          (!rawSups.length ? '<small class="field-note">עוד אין ספקי חומרי גלם. לחצו "ספק חדש".</small>' : '') + '</div>' +
         Inv.field('note', 'הערה', r.note) +
+        '<div class="inv-newsup" data-newsup-box hidden>' +
+          Inv.field('ns_name', 'שם הספק החדש', '') + Inv.field('ns_phone', 'טלפון', '') +
+        '</div>' +
       '</div>',
       foot: '<button class="btn btn--primary btn--lg" data-save>' + I.check + (isNew ? 'הוסף פריט' : 'שמור') + '</button>' +
         '<button class="btn btn--ghost btn--lg" data-close>ביטול</button>' +
@@ -62,18 +73,33 @@
       if (btn.disabled) return;   // QA O4: הקשה כפולה לא שומרת פעמיים
       function v(n) { return node.querySelector('[name="' + n + '"]').value.trim(); }
       if (!v('name')) { Gallery.toast('חסר שם לפריט'); return; }
+      var newSup = !node.querySelector('[data-newsup-box]').hidden && v('ns_name');
       btn.disabled = true;
-      Object.assign(r, { name: v('name'), unit: v('unit') || 'יחידות', qty: Math.max(0, num(v('qty'))),
-        minQty: Math.max(0, num(v('minQty'))), supplierId: v('supplierId') || null, note: v('note') });
-      D.rawMaterials.save(r).then(function () { Gallery.closeModal(); Gallery.toast(isNew ? 'הפריט נוסף' : 'הפריט נשמר'); })
+      var supP = newSup ? D.suppliers.createRaw({ name: v('ns_name'), phone: v('ns_phone') }) : Promise.resolve(null);
+      supP.then(function (sup) {
+        Object.assign(r, { name: v('name'), unit: v('unit') || 'יחידות', qty: Math.max(0, num(v('qty'))),
+          minQty: Math.max(0, num(v('minQty'))), supplierId: sup ? sup.id : (v('supplierId') || null), note: v('note') });
+        return D.rawMaterials.save(r);
+      }).then(function () { Gallery.closeModal(); Gallery.toast(isNew ? 'הפריט נוסף' : 'הפריט נשמר'); })
         .catch(function (err) { btn.disabled = false; Gallery.toast('השמירה נכשלה: ' + (err && err.message ? err.message : err)); });
     });
-    var del = node.querySelector('[data-del]');
-    if (del) del.addEventListener('click', function () {
-      if (!global.confirm('למחוק את "' + r.name + '" מהמלאי?')) return;
-      D.rawMaterials.remove(r.id).then(function () { Gallery.closeModal(); Gallery.toast('הפריט נמחק'); });
+    node.querySelector('[data-newsup]').addEventListener('click', function () {
+      var box = node.querySelector('[data-newsup-box]');
+      box.hidden = !box.hidden;
+      if (!box.hidden) { var i = box.querySelector('input'); if (i) i.focus(); }
     });
+    var del = node.querySelector('[data-del]');
+    if (del) del.addEventListener('click', function () { deleteRaw(r.id); });
     Gallery.openModal(node);
+  }
+
+  function deleteRaw(id) {
+    var r = D.rawMaterials.peekOne(id);
+    if (!r) return;
+    Gallery.deleteRecord({
+      collection: 'rawMaterials', id: id, label: r.name,
+      onDone: function () { if (Gallery.isModalOpen()) Gallery.closeModal(); }
+    });
   }
 
   function contact(id) {
@@ -105,7 +131,7 @@
     onChip: function (e) { if (e.target.closest('[data-low]')) { st.lowOnly = !st.lowOnly; return true; } return false; },
     onAdd: function () { editModal(null); },
     render: function () {
-      if (!dat.raw.length) return Inv.emptyHTML('עוד אין חומרי גלם', 'לחצו "פריט חדש" כדי להוסיף סיכות, קרטון גב, טייפים וכו\'.');
+      if (!dat.raw.length) return Inv.emptyHTML('עוד אין חומרי גלם', 'מוסיפים סיכות, קרטון גב, טייפים וכו\'.', 'פריט חדש');
       var list = dat.raw.filter(function (r) {
         if (st.lowOnly && !D.rawMaterials.isLow(r)) return false;
         return Inv.match([r.name, r.unit, r.note, Inv.supplierName(r.supplierId)]);
@@ -124,6 +150,7 @@
       if (adj) { D.rawMaterials.adjust(id, num(adj.getAttribute('data-adj'))); return; }
       if (t.closest('[data-line]')) { Inv.lineModal('raw', id); return; }
       if (t.closest('[data-edit]')) { editModal(id); return; }
+      if (t.closest('[data-del]')) { deleteRaw(id); return; }
       if (t.closest('[data-contact]')) contact(id);
     }
   };

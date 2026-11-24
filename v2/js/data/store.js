@@ -36,7 +36,8 @@
     'frames', 'rawMaterials', 'products',
     'suppliers', 'supplierOrderLines',
     'sales', 'receipts', 'expenses', 'usage',
-    'reminderRules'
+    'reminderRules',
+    'trash'   // R3: סל מחזור (מחיקה רכה). { id, collection, record, deletedAt, label, parentId?, itemId? }. ראו data/trash.js
     // W4: 'reorderItems' הוסר (אף מודול לא משתמש בו; הוחלף ב-supplierOrderLines). גיבויים ישנים שמכילים אותו נטענים, והשדה פשוט מתעלם.
   ];
   var SINGLETONS = ['settings', 'counters', 'reminderOrder', 'meta'];

@@ -170,7 +170,10 @@
           'placeholder="העדפות מסגור, שיחות, כל דבר שחשוב לזכור.">' + esc(c.notes || '') + '</textarea>' +
         '<button type="button" class="btn btn--primary" data-save-note>' + I.check + 'שמור הערה</button>' +
       '</div>' +
-      (Gallery.SalesUI ? '<div class="cus-sell"><button type="button" class="btn btn--secondary btn--lg" data-sell-to>' + I.tag + 'מכירת מוצר ללקוח</button></div>' : '') +
+      '<div class="cus-sell">' +
+        (Gallery.SalesUI ? '<button type="button" class="btn btn--secondary btn--lg" data-sell-to>' + I.tag + 'מכירת מוצר ללקוח</button>' : '') +
+        '<button type="button" class="btn btn--danger cus-del" data-del-cust>' + I.trash + 'מחיקת לקוח</button>' +
+      '</div>' +
       '<h3 class="cus-hist__head">היסטוריה (' + hist.length + ')' +
         '<span> · הזמנות: ' + sm.orders.length + ' · קניות: ' + sm.sales.length + '</span></h3>' +
       (hist.length ? '<div class="cus-hist">' + hist.map(function (h) { return h.html; }).join('') + '</div>' :
@@ -250,6 +253,20 @@
     openIds[id] = true;
     D.customers.save(c).then(function () { Gallery.toast('ההערה נשמרה'); });
   }
+  /* R3: מחיקה לסל המחזור. ההזמנות והקניות לא נמחקות, והשחזור מחבר אותן חזרה (אותו מזהה). */
+  function deleteCustomer(id) {
+    var c = D.customers.peekOne(id);
+    if (!c) return;
+    var sm = summary(c);
+    var bits = [];
+    if (sm.orders.length) bits.push(U.plural(sm.orders.length, 'יש לו הזמנה אחת', 'יש לו הזמנות'));
+    if (sm.sales.length) bits.push(U.plural(sm.sales.length, 'קנייה אחת', 'קניות'));
+    Gallery.deleteRecord({
+      collection: 'customers', id: id, label: 'הלקוח ' + (c.name || ''),
+      detail: bits.length ? bits.join(' ו') + '. הן לא נמחקות, רק יוצגו בלי שם עד שחזור.' : ''
+    });
+  }
+
   function toggle(row) {
     var id = row.getAttribute('data-id');
     if (openIds[id]) delete openIds[id]; else openIds[id] = true;
@@ -268,6 +285,7 @@
     var b;
     if ((b = t.closest('[data-open-order]'))) { Gallery.openOrder(b.getAttribute('data-open-order')); return; }
     if (t.closest('[data-save-note]')) { saveNote(row); return; }
+    if (t.closest('[data-del-cust]')) { deleteCustomer(row.getAttribute('data-id')); return; }
     if (t.closest('[data-sell-to]')) { Gallery.SalesUI.pickProduct({ customerId: row.getAttribute('data-id') }); return; }
     if (t.closest('[data-contact]')) { e.stopPropagation(); contact(row.getAttribute('data-id')); return; }
     if (t.closest('[data-toggle]')) toggle(row);

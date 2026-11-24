@@ -20,23 +20,30 @@
   function iso(d) { return d.toISOString(); }
   function plusDays(d, n) { var x = new Date(d.getTime()); x.setDate(x.getDate() + n); return x; }
 
-  var SUP = { avraham: 'sup-avraham', silver: 'sup-silver', yoni: 'sup-yoni' };
+  var SUP = { avraham: 'sup-avraham', silver: 'sup-silver', yoni: 'sup-yoni', sharon: 'demo-sup-sharon', merkaz: 'demo-sup-merkaz' };
 
   function seedSuppliers() {
     if (S.all('suppliers').length) return;
     [
-      { id: SUP.avraham, name: 'פרופילי אברהם', contactName: 'אברהם', phone: '050-0000901', email: '', note: 'פרופילי עץ. מזמינים במוטות.' },
-      { id: SUP.silver, name: 'סילבר', contactName: 'משרד סילבר', phone: '050-0000902', email: '', note: 'פרופילים מוזהבים וכסופים.' },
-      { id: SUP.yoni, name: 'יוני', contactName: 'יוני', phone: '050-0000903', email: '', note: 'קרטונים, זכוכית, טייפים וחומרים מתכלים.' }
+      { id: SUP.avraham, kind: 'frames', name: 'פרופילי אברהם', contactName: 'אברהם', phone: '050-0000901', email: '', note: 'פרופילי עץ. מזמינים במוטות.' },
+      { id: SUP.silver, kind: 'frames', name: 'סילבר', contactName: 'משרד סילבר', phone: '050-0000902', email: '', note: 'פרופילים מוזהבים וכסופים.' },
+      { id: SUP.yoni, kind: 'frames', name: 'יוני', contactName: 'יוני', phone: '050-0000903', email: '', note: 'פרופילים. מזמינים במוטות.' }
     ].forEach(function (s) { S.put('suppliers', s); });
   }
 
+  /* R3: כל רשומת דמו מסומנת demo: true, כדי ש"מחק נתוני דוגמה" בהגדרות ימחק רק אותן */
+  function P(col, rec) { rec.demo = true; return S.put(col, rec); }
+
   function seedDemo() {
+    /* ---------------- ספקי חומרי גלם (דמו). שלושת ספקי המסגרות אמיתיים ---------------- */
+    P('suppliers', { id: SUP.sharon, kind: 'raw', name: 'אריזות השרון', contactName: 'רונית', phone: '050-0000911', email: '', note: 'קרטון גב, טייפים ואריזה.' });
+    P('suppliers', { id: SUP.merkaz, kind: 'raw', name: 'כלי עבודה מרכז', contactName: 'שמעון', phone: '050-0000912', email: '', note: 'סיכות, ווים ותליות.' });
+
     /* ---------------- מסגרות (פרופילים). מלאי בס"מ, מוט = 290 ס"מ ---------------- */
     var COST = { 'אלון': 1.4, 'אשור': 1.1, 'ליבנה': 0.9, 'אורן': 0.8, 'אגוז': 2.1, 'מייפל': 1.6, 'אלומיניום': 1.2 };
     var frameBySku = {};
     function frame(sku, wood, color, sup, stock, min, note) {
-      var f = S.put('frames', {
+      var f = P('frames', {
         sku: sku, woodType: wood, color: color, supplierId: sup,
         stockUnits: stock, minThreshold: min, unit: 'ס"מ אורך', rodLengthCm: 290,
         costPerCm: COST[wood] || 1, photo: null, note: note || ''
@@ -60,16 +67,16 @@
 
     /* ---------------- חומרי גלם (C20) ---------------- */
     [
-      ['סיכות למהדק V-nails', 'קופסאות', 3, 2, SUP.yoni, ''],
-      ['קרטון גב (backing board)', 'גיליונות', 6, 10, SUP.yoni, 'גודל 70x100'],
-      ['טייפ חום', 'גלילים', 4, 3, SUP.yoni, ''],
-      ['מסקינג טייפ', 'גלילים', 1, 3, SUP.yoni, ''],
-      ['גומיות', 'שקיות', 5, 2, SUP.yoni, ''],
-      ['זכוכית 2 מ"מ', 'גיליונות', 12, 8, SUP.yoni, ''],
-      ['פספרטו לבן', 'גיליונות', 9, 5, SUP.yoni, ''],
-      ['תליות ווים', 'חבילות', 2, 2, SUP.yoni, '']
+      ['סיכות למהדק V-nails', 'קופסאות', 3, 2, SUP.merkaz, ''],
+      ['קרטון גב (backing board)', 'גיליונות', 6, 10, SUP.sharon, 'גודל 70x100'],
+      ['טייפ חום', 'גלילים', 4, 3, SUP.sharon, ''],
+      ['מסקינג טייפ', 'גלילים', 1, 3, SUP.sharon, ''],
+      ['גומיות', 'שקיות', 5, 2, SUP.sharon, ''],
+      ['זכוכית 2 מ"מ', 'גיליונות', 12, 8, SUP.sharon, ''],
+      ['פספרטו לבן', 'גיליונות', 9, 5, SUP.sharon, ''],
+      ['תליות ווים', 'חבילות', 2, 2, SUP.merkaz, '']
     ].forEach(function (r) {
-      S.put('rawMaterials', { name: r[0], unit: r[1], qty: r[2], minQty: r[3], supplierId: r[4], note: r[5] });
+      P('rawMaterials', { name: r[0], unit: r[1], qty: r[2], minQty: r[3], supplierId: r[4], note: r[5] });
     });
 
     /* ---------------- מוצרים למכירה (C20) ---------------- */
@@ -83,7 +90,7 @@
       ['ציור מקורי, ירושלים', 1400, '50x60', 'original', 'אלון לבן מושחל', 0, '104', ''],
       ['מראה ממוסגרת', 600, '60x90', 'other', 'אלומיניום כסף מוברש', 1, '120', '']
     ].map(function (p) {
-      return S.put('products', { name: p[0], price: p[1], size: p[2], kind: p[3], frame: p[4], qty: p[5], sticker: p[6], note: p[7], soldAt: null });
+      return P('products', { name: p[0], price: p[1], size: p[2], kind: p[3], frame: p[4], qty: p[5], sticker: p[6], note: p[7], soldAt: null });
     });
 
     /* ---------------- לקוחות ---------------- */
@@ -91,7 +98,7 @@
     var names = ['דנה כהן', 'יוסי לוי', 'מרים אברהם', 'אבי שרון', 'נועה פרידמן', 'רון גבאי', 'טל בן דוד',
       'ליאת מזרחי', 'עדן כרמל', 'שירה גולן', 'גדעון אורן', 'רחל דגן', 'משה עטר', 'ענת בר', 'עומר שלו', 'הילה נחום'];
     names.forEach(function (n, i) {
-      custByKey[n] = S.put('customers', { name: n, phone: '050-0000' + (101 + i), notes: '' });
+      custByKey[n] = P('customers', { name: n, phone: '050-0000' + (101 + i), notes: '' });
     });
 
     /* ---------------- הזמנות ----------------
@@ -164,8 +171,8 @@
     });
 
     // שמירה ראשונה כדי לקבל id להזמנות
-    savedOrders = savedOrders.map(function (o) { var s = S.put('orders', o); o.id = s.id; return o; });
-    usage.forEach(function (u) { u.orderId = u._order.id; delete u._order; S.put('usage', u); });
+    savedOrders = savedOrders.map(function (o) { var s = P('orders', o); o.id = s.id; return o; });
+    usage.forEach(function (u) { u.orderId = u._order.id; delete u._order; P('usage', u); });
 
     /* ---------------- מכירות מוצרים (2 נמכרו) ---------------- */
     var sold = [
@@ -175,9 +182,9 @@
     var salePays = [];
     sold.forEach(function (x) {
       var at = iso(daysAgo(x.ago, 15));
-      var sale = S.put('sales', { productId: x.p.id, customerId: custByKey[x.c].id, price: x.p.price, at: at, receiptId: null });
+      var sale = P('sales', { productId: x.p.id, customerId: custByKey[x.c].id, price: x.p.price, at: at, receiptId: null });
       x.p.soldAt = at;
-      S.put('products', x.p);
+      P('products', x.p);
       salePays.push({ sale: sale, method: x.method, at: at });
     });
 
@@ -193,35 +200,35 @@
       receiptNo += 1;
       if (ev.kind === 'order') {
         var o = ev.x.order, pay = ev.x.pay;
-        var r = S.put('receipts', { number: receiptNo, at: pay.at, customerId: o.customerId, amount: pay.amount, method: ev.x.method,
+        var r = P('receipts', { number: receiptNo, at: pay.at, customerId: o.customerId, amount: pay.amount, method: ev.x.method,
           source: 'order', refId: o.id, paymentId: pay.id, sentToCustomer: receiptNo % 3 !== 0, url: '', provider: 'simulated' });
         pay.receiptId = r.id;
       } else {
         var s = ev.x.sale;
-        var r2 = S.put('receipts', { number: receiptNo, at: ev.at, customerId: s.customerId, amount: s.price, method: ev.x.method,
+        var r2 = P('receipts', { number: receiptNo, at: ev.at, customerId: s.customerId, amount: s.price, method: ev.x.method,
           source: 'sale', refId: s.id, paymentId: null, sentToCustomer: true, url: '', provider: 'simulated' });
         s.receiptId = r2.id;
-        S.put('sales', s);
+        P('sales', s);
       }
     });
-    savedOrders.forEach(function (o) { S.put('orders', o); });
+    savedOrders.forEach(function (o) { P('orders', o); });
 
     /* ---------------- רשימות הזמנה לספקים (C24) ---------------- */
     var yossiOrder = savedOrders.filter(function (o) { return o.items[0].profileSku === '5322-225'; })[0];
-    S.put('supplierOrderLines', { supplierId: SUP.silver, itemType: 'frame', itemId: frameBySku['5322-225'].id, label: '5322-225 ליבנה מוזהב עתיק',
+    P('supplierOrderLines', { supplierId: SUP.silver, itemType: 'frame', itemId: frameBySku['5322-225'].id, label: '5322-225 ליבנה מוזהב עתיק',
       qtyRods: 2, source: 'worktable', orderId: yossiOrder ? yossiOrder.id : null, itemRowId: yossiOrder ? yossiOrder.items[0].id : null, sentAt: null });
-    S.put('supplierOrderLines', { supplierId: SUP.avraham, itemType: 'frame', itemId: frameBySku['1320-10'].id, label: '1320-10 אשור דבש',
+    P('supplierOrderLines', { supplierId: SUP.avraham, itemType: 'frame', itemId: frameBySku['1320-10'].id, label: '1320-10 אשור דבש',
       qtyRods: 3, source: 'low_stock', orderId: null, sentAt: null });
     var masking = S.all('rawMaterials').filter(function (r) { return r.name === 'מסקינג טייפ'; })[0];
-    if (masking) S.put('supplierOrderLines', { supplierId: SUP.yoni, itemType: 'raw', itemId: masking.id, label: masking.name, qty: 5, source: 'manual', orderId: null, sentAt: null });
+    if (masking) P('supplierOrderLines', { supplierId: SUP.sharon, itemType: 'raw', itemId: masking.id, label: masking.name, qty: 5, source: 'manual', orderId: null, sentAt: null });
 
     /* ---------------- הוצאות (C34, ללא שינוי) ---------------- */
     [
       [3200, 'שכירות', 'שכירות החנות', 4, null], [3200, 'שכירות', 'שכירות החנות', 35, null], [3200, 'שכירות', 'שכירות החנות', 66, null],
       [1450, 'חומרי גלם', 'הזמנת פרופילים', 7, SUP.avraham], [980, 'חומרי גלם', 'פרופילים מוזהבים', 19, SUP.silver],
-      [640, 'חומרי גלם', 'קרטון גב וטייפים', 28, SUP.yoni], [540, 'ציוד', 'להבי חיתוך', 14, null], [210, 'אחר', 'חומרי ניקיון ומשרד', 11, null]
+      [640, 'חומרי גלם', 'קרטון גב וטייפים', 28, SUP.sharon], [540, 'ציוד', 'להבי חיתוך', 14, null], [210, 'אחר', 'חומרי ניקיון ומשרד', 11, null]
     ].forEach(function (e) {
-      S.put('expenses', { amount: e[0], category: e[1], note: e[2], date: iso(daysAgo(e[3])), supplierId: e[4] });
+      P('expenses', { amount: e[0], category: e[1], note: e[2], date: iso(daysAgo(e[3])), supplierId: e[4] });
     });
 
     /* ---------------- מונים ---------------- */

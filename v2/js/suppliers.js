@@ -4,7 +4,8 @@
  * חוזה: P-projects/The-Gallery/context/v2-contract.md
  * נטען גם ב-admin וגם ב-workshop. בלי מחירים בכלל, בשום תפקיד (פשוט יותר).
  * -----------------------------------------------------------------------------
- * שלוש עמודות כמו דף הספקים הידני: פרופילי אברהם | סילבר | יוני.
+ * R3: שני חלקים. ספקי מסגרות = שלוש עמודות כמו דף הספקים הידני (פרופילי אברהם | סילבר | יוני).
+ * ספקי חומרי גלם = כרטיסים באותו מבנה, admin מוסיף / עורך / מוחק (מחיקה לסל המחזור).
  * לכל ספק: פרטי קשר (עריכה ב-admin), שורות פתוחות (מטבלת העבודה / מלאי נמוך / ידני),
  * הוספה ידנית, הסרה, "הוסף מלאי נמוך", PDF (print.js), וואטסאפ, "סמן נשלח" -> היסטוריה.
  * ========================================================================== */
@@ -92,6 +93,7 @@
       '<header class="sup-card__head">' +
         '<div class="sup-card__title"><h2>' + esc(s.name) + '</h2>' +
           (canEdit ? '<button type="button" class="iconbtn sup-card__edit" data-edit aria-label="עריכת פרטי ספק">' + I.edit + '</button>' : '') +
+          (canEdit && D.suppliers.kindOf(s) === 'raw' ? '<button type="button" class="iconbtn sup-card__del" data-del-sup aria-label="מחיקת ספק ' + esc(s.name) + '" title="מחיקת ספק">' + I.trash + '</button>' : '') +
         '</div>' +
         '<div class="sup-card__contact">' +
           (s.contactName ? '<span>' + esc(s.contactName) + '</span>' : '') +
@@ -114,13 +116,22 @@
     '</article>';
   }
 
+  /* R3: שני חלקים. ספקי מסגרות (3 העמודות כמו בדף הידני) וספקי חומרי גלם (admin מוסיף / עורך / מוחק). */
   function render() {
     queued = false;
-    var cardsEl = root && root.querySelector('[data-cards]');
-    if (!cardsEl) return;
+    var framesEl = root && root.querySelector('[data-cards]');
+    var rawEl = root && root.querySelector('[data-raw-cards]');
+    if (!framesEl || !rawEl) return;
     var sups = D.suppliers.sorted();
-    cardsEl.innerHTML = sups.length ? sups.map(cardHTML).join('') :
-      '<div class="empty"><h3>אין ספקים</h3></div>';
+    var fr = sups.filter(function (s) { return D.suppliers.kindOf(s) === 'frames'; });
+    var raw = sups.filter(function (s) { return D.suppliers.kindOf(s) === 'raw'; });
+    framesEl.innerHTML = fr.length ? fr.map(cardHTML).join('') : '<div class="empty"><h3>אין ספקי מסגרות</h3></div>';
+    var canEdit = Gallery.can('admin');
+    rawEl.innerHTML = raw.length ? raw.map(cardHTML).join('') :
+      '<div class="empty sup-rawempty"><h3>עוד אין ספקי חומרי גלם</h3><p>קרטון, טייפים, סיכות, ווים: כל ספק כזה מקבל כאן רשימת הזמנה משלו.</p>' +
+        (canEdit ? '<button type="button" class="btn btn--primary btn--lg" data-new-raw>' + I.plus + 'ספק חומרי גלם חדש</button>' : '') + '</div>';
+    var addBtn = root.querySelector('[data-new-raw-head]');
+    if (addBtn) addBtn.hidden = !canEdit || !raw.length;
     Gallery.updateBadge('suppliers', L.pending().length);
   }
   function queue() {
@@ -133,12 +144,14 @@
    * מודלים
    * ------------------------------------------------------------------------- */
   function editSupplier(s) {
+    var isNew = !s;
+    s = s || { name: '', contactName: '', phone: '', email: '', note: '', kind: 'raw' };
     var f = function (k, label, type) {
       return '<div class="form-field"><label for="sup-' + k + '">' + label + '</label>' +
         '<input id="sup-' + k + '" type="' + (type || 'text') + '" data-k="' + k + '" value="' + esc(s[k] || '') + '"' + (type === 'tel' ? ' dir="ltr"' : '') + '></div>';
     };
     var node = Gallery.modalNode({
-      title: 'פרטי ספק · ' + esc(s.name),
+      title: isNew ? I.plus + 'ספק חומרי גלם חדש' : 'פרטי ספק · ' + esc(s.name),
       body: '<div class="form-grid sup-form">' + f('name', 'שם הספק') + f('contactName', 'איש קשר') + f('phone', 'טלפון', 'tel') + f('email', 'אימייל', 'email') + '</div>' +
         '<div class="form-field"><label for="sup-note">הערה</label><textarea id="sup-note" rows="2" data-k="note">' + esc(s.note || '') + '</textarea></div>',
       foot: '<button class="btn btn--primary btn--lg" data-save>' + I.check + 'שמור</button><button class="btn btn--ghost" data-close>ביטול</button>'
@@ -147,13 +160,26 @@
       var rec = Object.assign({}, s);
       Array.prototype.forEach.call(node.querySelectorAll('[data-k]'), function (i) { rec[i.getAttribute('data-k')] = i.value.trim(); });
       if (!rec.name) { Gallery.toast('צריך שם לספק'); return; }
-      D.suppliers.save(rec).then(function () { Gallery.closeModal(); Gallery.toast('פרטי הספק נשמרו'); });
+      if (!rec.kind) rec.kind = D.suppliers.kindOf(s);
+      if (this.disabled) return;
+      this.disabled = true;
+      D.suppliers.save(rec).then(function () { Gallery.closeModal(); Gallery.toast(isNew ? 'הספק נוסף' : 'פרטי הספק נשמרו'); });
     });
     Gallery.openModal(node);
   }
 
+  function deleteSupplier(s) {
+    if (D.suppliers.kindOf(s) !== 'raw' || !Gallery.can('admin')) return;
+    var items = D.rawMaterials.peek().filter(function (r) { return r.supplierId === s.id; }).length;
+    var open = L.pending(s.id).length;
+    var bits = [];
+    if (items) bits.push(U.plural(items, 'פריט אחד במלאי משויך אליו', 'פריטים במלאי משויכים אליו') + ' (יישארו בלי ספק)');
+    if (open) bits.push(U.plural(open, 'שורה פתוחה ברשימה', 'שורות פתוחות ברשימה') + ' (יחזרו עם השחזור)');
+    Gallery.deleteRecord({ collection: 'suppliers', id: s.id, label: 'הספק ' + s.name, detail: bits.join('. ') });
+  }
+
   function addManual(s) {
-    var type = 'frame';
+    var type = D.suppliers.kindOf(s) === 'raw' ? 'raw' : 'frame';
     var qty = 1;
     function options() {
       var items = type === 'frame' ? D.frames.peek() : D.rawMaterials.peek();
@@ -168,11 +194,11 @@
     var node = Gallery.modalNode({
       title: 'שורה חדשה · ' + esc(s.name),
       body: '<div class="seg sup-seg" role="radiogroup" aria-label="סוג">' +
-          '<button type="button" role="radio" data-type="frame" aria-checked="true">מסגרת (מוטות)</button>' +
-          '<button type="button" role="radio" data-type="raw" aria-checked="false">חומר גלם</button></div>' +
+          '<button type="button" role="radio" data-type="frame" aria-checked="' + (type === 'frame') + '">מסגרת (מוטות)</button>' +
+          '<button type="button" role="radio" data-type="raw" aria-checked="' + (type === 'raw') + '">חומר גלם</button></div>' +
         '<div class="form-field"><label for="sup-item">פריט</label><select id="sup-item" class="select sup-select" data-item>' + options() + '</select></div>' +
         '<div class="form-field" data-freewrap hidden><label for="sup-free">מה להזמין?</label><input id="sup-free" type="text" data-free placeholder="למשל: 4322-20 דבש בהיר"></div>' +
-        '<div class="wt-step sup-step"><div class="wt-step__lbl" data-qlbl>כמה מוטות?</div><div class="wt-step__ctl">' +
+        '<div class="wt-step sup-step"><div class="wt-step__lbl" data-qlbl>' + (type === 'frame' ? 'כמה מוטות?' : 'כמה יחידות?') + '</div><div class="wt-step__ctl">' +
           '<button type="button" class="wt-step__btn" data-step="1" aria-label="עוד">' + I.plus + '</button>' +
           '<output class="wt-step__val mono" data-qtyv>1</output>' +
           '<button type="button" class="wt-step__btn" data-step="-1" aria-label="פחות">' + I.minus + '</button></div></div>',
@@ -249,9 +275,7 @@
   }
 
   function removeLine(l) {
-    L.remove(l.id).then(function () {
-      Gallery.toast('השורה הוסרה', { timeout: 5000, actions: [{ label: 'ביטול', primary: true, onClick: function () { L.save(l); } }] });
-    });
+    Gallery.deleteRecord({ collection: 'supplierOrderLines', id: l.id, label: 'השורה "' + (l.label || 'פריט') + '" מהרשימה' });
   }
 
   function markSent(s) {
@@ -262,6 +286,7 @@
   }
 
   function onClick(e) {
+    if (e.target.closest('[data-new-raw],[data-new-raw-head]')) { editSupplier(null); return; }
     var card = e.target.closest('[data-sup]');
     if (!card) return;
     var s = D.suppliers.peekOne(card.getAttribute('data-sup'));
@@ -273,6 +298,7 @@
     if (q && l) { changeQty(l, Number(q.getAttribute('data-qty'))); return; }
     if (e.target.closest('[data-rm]') && l) { removeLine(l); return; }
     if (e.target.closest('[data-edit]')) { editSupplier(s); return; }
+    if (e.target.closest('[data-del-sup]')) { deleteSupplier(s); return; }
     if (e.target.closest('[data-add]')) { addManual(s); return; }
     if (e.target.closest('[data-low]')) { addLowStock(s); return; }
     if (e.target.closest('[data-print]')) { Gallery.printSupplierList(s.id); return; }
@@ -291,7 +317,10 @@
     el.innerHTML =
       '<div class="view__head"><div><h1 class="view__title">ספקים</h1>' +
         '<p class="view__subtitle">רשימת הזמנה לכל ספק. מתמלאת לבד מ-X בטבלת העבודה וממלאי נמוך.</p></div></div>' +
-      '<div class="sup-grid" data-cards></div>';
+      '<section class="sup-sec"><h2 class="sup-sec__title">ספקי מסגרות</h2><div class="sup-grid" data-cards></div></section>' +
+      '<section class="sup-sec"><div class="sup-sec__head"><h2 class="sup-sec__title">ספקי חומרי גלם</h2>' +
+        '<button type="button" class="btn btn--primary" data-new-raw-head hidden>' + I.plus + 'ספק חדש</button></div>' +
+        '<div class="sup-grid sup-grid--raw" data-raw-cards></div></section>';
     el.addEventListener('click', onClick);
     render();
     D.suppliers.subscribe(queue);

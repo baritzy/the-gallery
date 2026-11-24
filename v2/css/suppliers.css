@@ -87,3 +87,16 @@
 .sup-sugg__why { font-size: var(--fs-xs); color: var(--st-orange-text); }
 .sup-sugg__qty { font-size: var(--fs-md); white-space: nowrap; }
 .sup-sugg__qty .mono { font-weight: var(--fw-bold); font-size: var(--fs-xl); }
+
+/* ---- R3: חלקים (ספקי מסגרות / ספקי חומרי גלם) ---- */
+[data-view="suppliers"] .sup-sec + .sup-sec { margin-top: var(--s-10, 40px); }
+[data-view="suppliers"] .sup-sec__head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); flex-wrap: wrap; }
+[data-view="suppliers"] .sup-sec__head .btn { min-height: var(--touch); }
+[data-view="suppliers"] .sup-sec__head .btn[hidden] { display: none; }
+[data-view="suppliers"] .sup-sec__title { margin: 0 0 var(--s-3); font-size: var(--fs-xl); font-weight: var(--fw-bold); color: var(--ink); }
+[data-view="suppliers"] .sup-sec__head .sup-sec__title { margin: 0; }
+[data-view="suppliers"] .sup-sec__head { margin-bottom: var(--s-3); }
+[data-view="suppliers"] .sup-rawempty { grid-column: 1 / -1; padding: var(--s-8) var(--s-4); border: 1px dashed var(--line-strong); border-radius: var(--r-lg); background: var(--bg-surface); }
+[data-view="suppliers"] .sup-card__del { width: var(--touch); height: var(--touch); color: var(--st-red-text); }
+[data-view="suppliers"] .sup-card__del:hover { background: var(--st-red-soft); }
+[data-view="suppliers"] .sup-card__title h2 { flex: 1; min-width: 0; overflow-wrap: anywhere; }

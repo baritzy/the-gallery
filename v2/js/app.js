@@ -174,19 +174,24 @@
         '<div class="brand__role">' + roleLabel + '</div></div></div>' +
       '<nav class="nav" role="tablist" aria-label="ניווט ראשי">' + tabs.map(navItemHTML).join('') + '</nav>' +
       '<div class="rail__foot">' +
-        (ROLE === 'admin' ? '<button class="rail__tool" data-settings>' + I.gear + '<span>הגדרות וגיבוי</span></button>' : '') +
+        (ROLE === 'admin' ? '<button class="rail__tool" data-settings>' + I.gear + '<span>הגדרות וגיבוי</span></button>' :
+          '<button class="rail__tool" data-trash>' + I.trash + '<span>סל מחזור</span></button>') +
         '<a class="rail__tool rail__tool--link" href="index.html">' + I.back + '<span>מסך בחירה</span></a>' +
       '</div>';
 
     var bottom = document.getElementById('bottombar');
     bottom.innerHTML = tabs.map(navItemHTML).join('') +
-      (ROLE === 'admin' ? '<button class="nav__item" data-settings>' + I.gear + '<span class="lbl">הגדרות</span></button>' : '');
+      (ROLE === 'admin' ? '<button class="nav__item" data-settings>' + I.gear + '<span class="lbl">הגדרות</span></button>' :
+        '<button class="nav__item" data-trash>' + I.trash + '<span class="lbl">סל מחזור</span></button>');
 
     Array.prototype.forEach.call(document.querySelectorAll('[data-tab]'), function (btn) {
       btn.addEventListener('click', function () { switchTab(btn.getAttribute('data-tab')); });
     });
     Array.prototype.forEach.call(document.querySelectorAll('[data-settings]'), function (btn) {
       btn.addEventListener('click', function () { Gallery.openSettings(); });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-trash]'), function (btn) {
+      btn.addEventListener('click', function () { if (Gallery.openTrash) Gallery.openTrash(); });
     });
   }
 

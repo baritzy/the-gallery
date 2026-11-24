@@ -121,8 +121,19 @@
     tbody.addEventListener('click', function (e) {
       var d = e.target.closest('[data-del]');
       if (!d) return;
-      items.splice(Number(d.getAttribute('data-del')), 1);
-      renderItems();
+      var idx = Number(d.getAttribute('data-del'));
+      var gone = items[idx];
+      if (!gone) return;
+      var lbl = 'תמונה ' + (idx + 1) + (gone.desc ? ' "' + gone.desc + '"' : '');
+      /* R3: אישור + ביטול. השורה בטופס עד השמירה, אז הביטול מחזיר אותה לטופס (כל עוד הוא פתוח). */
+      Gallery.confirmDelete({
+        label: lbl, detail: 'השורה תימחק מההזמנה כשתשמרו את הטופס.',
+        onDelete: function () { var i = items.indexOf(gone); if (i !== -1) items.splice(i, 1); renderItems(); return null; },
+        undo: function () {
+          if (!document.body.contains(tbody) || items.indexOf(gone) !== -1) { Gallery.toast('הטופס כבר נסגר. אפשר להוסיף את השורה מחדש.'); return; }
+          items.splice(Math.min(idx, items.length), 0, gone); renderItems();
+        }
+      });
     });
     node.querySelector('[data-add]').addEventListener('click', function () {
       var prev = items[items.length - 1] || {};

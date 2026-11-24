@@ -45,6 +45,7 @@
         (sold ? '<span class="pill is-grey pill--lg">נמכר' + (p.soldAt ? ' ' + U.fmtDateShort(p.soldAt) : '') + '</span>' :
           '<button type="button" class="btn btn--primary btn--lg inv-sell" data-sell>' + I.tag + 'מכור</button>') +
         '<button type="button" class="iconbtn inv-prod__edit" data-edit aria-label="עריכת מוצר">' + I.edit + '</button>' +
+        '<button type="button" class="iconbtn inv-del-ico" data-del aria-label="מחיקת מוצר" title="מחיקה">' + I.trash + '</button>' +
       '</div>' +
     '</article>';
   }
@@ -93,11 +94,18 @@
         .catch(function (err) { btn.disabled = false; Gallery.toast('השמירה נכשלה: ' + (err && err.message ? err.message : err)); });
     });
     var del = node.querySelector('[data-del]');
-    if (del) del.addEventListener('click', function () {
-      if (!global.confirm('למחוק את "' + p.name + '"? מכירות קודמות נשארות בהיסטוריה.')) return;
-      D.products.remove(p.id).then(function () { Gallery.closeModal(); Gallery.toast('המוצר נמחק'); });
-    });
+    if (del) del.addEventListener('click', function () { deleteProduct(p.id); });
     Gallery.openModal(node);
+  }
+
+  function deleteProduct(id) {
+    var p = D.products.peekOne(id);
+    if (!p) return;
+    Gallery.deleteRecord({
+      collection: 'products', id: id, label: 'המוצר "' + p.name + '"',
+      detail: 'מכירות קודמות נשארות בהיסטוריה.',
+      onDone: function () { if (Gallery.isModalOpen()) Gallery.closeModal(); }
+    });
   }
 
   Inv.panes.products = {
@@ -118,7 +126,7 @@
     },
     onAdd: function () { editModal(null); },
     render: function () {
-      if (!dat.products.length) return Inv.emptyHTML('עוד אין מוצרים למכירה', 'לחצו "מוצר חדש" כדי להוסיף תמונה או הדפס שמוצגים בחנות.');
+      if (!dat.products.length) return Inv.emptyHTML('עוד אין מוצרים למכירה', 'מוסיפים תמונה או הדפס שמוצגים בחנות.', 'מוצר חדש');
       var list = dat.products.filter(function (p) {
         if (st.prodFilter === 'available' && isSold(p)) return false;
         if (st.prodFilter === 'sold' && !isSold(p)) return false;
@@ -135,6 +143,7 @@
       if (!card) return;
       var id = card.getAttribute('data-pid');
       if (t.closest('[data-sell]')) { Gallery.openSale(id); return; }
+      if (t.closest('[data-del]')) { deleteProduct(id); return; }
       if (t.closest('[data-edit]')) editModal(id);
     }
   };

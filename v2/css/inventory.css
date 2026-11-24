@@ -16,8 +16,9 @@
   background: var(--bg-sunken); color: var(--ink-secondary);
 }
 .inv-seg__cnt.is-warn { background: var(--st-red-soft); color: var(--st-red-text); }
-.inv-toolbar .inv-add { margin-inline-start: auto; min-height: var(--touch); }
-.inv-toolbar .inv-add[hidden] { display: none; }
+.inv-head__acts { display: flex; gap: var(--s-2); flex-wrap: wrap; align-items: center; }
+.inv-head__acts .inv-add[hidden] { display: none; }
+.inv-head__acts .btn { min-height: var(--touch-lg); }
 [data-view="inventory"] .fchip { min-height: var(--touch); height: auto; }
 
 /* ---- קבוצה (ספק) ---- */
@@ -236,4 +237,26 @@
   .inv-act { flex: 1 1 auto; justify-content: center; }
   .inv-cnt__head, .inv-cnt__tools, .inv-cnt__list, .inv-cnt__foot { padding-inline: var(--s-3); }
   .inv-step__val { width: 96px; }
+}
+
+/* ---- R3: מחיקה ישירה בשורה + טופס מסגרת ---- */
+.inv-del-ico { width: var(--touch); height: var(--touch); color: var(--st-red-text); flex: none; }
+.inv-del-ico:hover { background: var(--st-red-soft); }
+.inv-fphoto { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; }
+.inv-fphoto__show { width: 96px; height: 96px; border-radius: var(--r-md); border: 1px solid var(--line); background: var(--bg-sunken);
+  display: flex; align-items: center; justify-content: center; overflow: hidden; flex: none; }
+.inv-fphoto__show img { width: 100%; height: 100%; object-fit: cover; }
+.inv-fphoto__none { font-size: var(--fs-xs); color: var(--ink-muted); }
+.inv-fphoto [hidden] { display: none; }
+.inv-suphint { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-sm); color: var(--st-orange-text, #9A5B00); font-weight: var(--fw-semibold); }
+.inv-suphint .ico { width: 16px; height: 16px; }
+.inv-newsup { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-3); padding: var(--s-3); border: 1px dashed var(--line-strong); border-radius: var(--r-md); background: var(--bg-surface-alt); }
+.inv-newsup[hidden] { display: none; }
+.inv-suprow { display: flex; gap: var(--s-2); align-items: stretch; }
+.inv-suprow select { flex: 1; min-width: 0; }
+.inv-suprow .btn { flex: none; min-height: var(--touch); }
+@media (max-width: 768px) {
+  .inv-fform, .inv-newsup { grid-template-columns: 1fr; }
+  .inv-head__acts { width: 100%; }
+  .inv-head__acts .btn { flex: 1 1 auto; justify-content: center; }
 }

@@ -309,7 +309,14 @@
       var ta = node.querySelector('[data-text]');
       if (q) { ta.value = q.getAttribute('data-q'); ta.focus(); return; }
       if (e.target.closest('[data-save]')) { save(ta.value.trim()); return; }
-      if (e.target.closest('[data-clear]')) save('');
+      if (e.target.closest('[data-clear]')) {
+        Gallery.confirmDelete({
+          label: 'ההערה "' + it.note + '"',
+          onDelete: function () {
+            return D.trash.moveItemNote(o.id, it.id, 'הערה: ' + it.note + ' (הזמנה ' + o.number + ')').then(function (entry) { Gallery.closeModal(); return entry; });
+          }
+        });
+      }
     });
     Gallery.openModal(node);
   }

@@ -46,7 +46,7 @@
   function fmt(n) { return String(Math.round(num(n) * 100) / 100); }
 
   function newRowHTML(kind) {
-    var sup = '<select class="select" name="supplierId">' + Inv.supplierOptions('') + '</select>';
+    var sup = '<select class="select" name="supplierId">' + Inv.supplierOptions('', kind === 'frames' ? 'frames' : 'raw') + '</select>';
     var f;
     if (kind === 'frames') {
       f = inp('sku', 'מק"ט') + inp('woodType', 'סוג עץ') + inp('color', 'צבע') + sup +

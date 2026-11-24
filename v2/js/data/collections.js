@@ -109,12 +109,39 @@
   });
 
   /* =========================================================================
-   * ספקים  { id, name, contactName, phone, email, note }
+   * ספקים  { id, name, contactName, phone, email, note, kind:'frames'|'raw' }
    * supplierOrderLines { id, supplierId, itemType:'frame'|'raw', itemId, label,
    *                      qtyRods (מסגרות) | qty (חומרי גלם), source:'worktable'|'low_stock'|'manual',
    *                      orderId?, itemRowId?, createdAt, sentAt? }
    * ======================================================================= */
-  data.suppliers = makeCollection('suppliers');
+  /* R3: לספק יש סוג. kind: 'frames' (ספקי מסגרות: פרופילי אברהם, סילבר, יוני) | 'raw' (ספקי חומרי גלם).
+     רשומות ישנות בלי kind לא נכתבות מחדש (מיגרציה בקריאה בלבד): שלושת המזהים הקבועים = frames,
+     ספק אחר = raw אם רק חומרי גלם מפנים אליו, אחרת frames. */
+  var FRAME_SUPPLIER_IDS = ['sup-avraham', 'sup-silver', 'sup-yoni'];
+  data.SUPPLIER_KINDS = { frames: 'ספקי מסגרות', raw: 'ספקי חומרי גלם' };
+  data.suppliers = makeCollection('suppliers', {
+    FRAME_IDS: FRAME_SUPPLIER_IDS,
+    kindOf: function (s) {
+      if (!s) return null;
+      if (s.kind === 'frames' || s.kind === 'raw') return s.kind;
+      if (FRAME_SUPPLIER_IDS.indexOf(s.id) !== -1) return 'frames';
+      var usedByFrames = S.all('frames').some(function (f) { return f.supplierId === s.id; });
+      var usedByRaw = S.all('rawMaterials').some(function (r) { return r.supplierId === s.id; });
+      return (usedByRaw && !usedByFrames) ? 'raw' : 'frames';
+    },
+    ofKind: function (kind) {
+      return S.all('suppliers').filter(function (s) { return data.suppliers.kindOf(s) === kind; });
+    },
+    frameSuppliers: function () { return data.suppliers.ofKind('frames'); },
+    rawSuppliers: function () { return data.suppliers.ofKind('raw'); },
+    /* ספק חומרי גלם חדש (טופס חומר גלם / טאב ספקים) */
+    createRaw: function (p) {
+      return S.ready.then(function () {
+        return S.put('suppliers', { name: String(p.name || '').trim(), contactName: String(p.contactName || '').trim(),
+          phone: String(p.phone || '').trim(), email: String(p.email || '').trim(), note: String(p.note || '').trim(), kind: 'raw' });
+      });
+    }
+  });
 
   function itemOf(type, id) { return type === 'raw' ? S.find('rawMaterials', id) : S.find('frames', id); }
 
@@ -300,7 +327,7 @@
       vatId: '050598721',
       hours: 'ימים א׳ עד ה׳ 9:00 עד 18:00, ו׳ 9:00 עד 13:00'
     },
-    whatsappMode: 'auto',   // auto | app | web | wame
+    // R3: whatsappMode הוסר. הפתיחה אוטומטית תמיד (util.js). שדה ישן במסמך נשאר ולא נקרא.
     adminPin: '1234',
     slaDays: 10,
     lastBackupAt: null
@@ -331,7 +358,14 @@
   data.KEEP_ON_WIPE = ['suppliers', 'reminderRules'];
   data.exportAll = function () { return S.ready.then(S.exportAll); };
   data.importAll = function (dump) { return S.ready.then(function () { return S.importAll(dump); }); };
-  data.wipeDemo = function () { return S.ready.then(function () { S.wipeAll(data.KEEP_ON_WIPE); return true; }); };
+  data.wipeDemo = function () {
+    return S.ready.then(function () {
+      S.wipeAll(data.KEEP_ON_WIPE);
+      // R3: ספקי דוגמה (חומרי גלם) לא נשארים אחרי איפוס מלא
+      S.all('suppliers').forEach(function (s) { if (s.demo) S.del('suppliers', s.id); });
+      return true;
+    });
+  };
 
   /* hook נתונים גלובלי (חוזה): הוספת שורה לרשימת ההזמנה של ספק */
   Gallery.addSupplierLine = function (line) { return data.supplierOrderLines.add(line); };
