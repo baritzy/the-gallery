@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0073EA">
+<meta name="color-scheme" content="light">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>הגלריה · בחירת כניסה</title>
+<link rel="icon" href="assets/logo.png?v=23">
+<link rel="apple-touch-icon" href="assets/icon-180.png?v=23">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-title" content="הגלריה">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/tokens.css?v=23">
+<link rel="stylesheet" href="css/app.css?v=23">
+<link rel="stylesheet" href="css/foundation.css?v=23">
+<script src="js/version.js?v=23"></script>
+</head>
+<body class="chooser-page">
+  <!-- C1: שתי כניסות. כל אייפד שומר סימנייה לכניסה שלו (admin.html / workshop.html). -->
+  <main class="chooser">
+    <img class="chooser__logo" src="assets/logo.png?v=23" alt="">
+    <h1 class="chooser__title">הגלריה</h1>
+    <p class="chooser__sub">באיזה מכשיר אתם?</p>
+    <div class="chooser__btns">
+      <a class="chooser__btn chooser__btn--admin" href="admin.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9h18v2a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0z"/><path d="M5 13v8h14v-8"/><path d="M10 21v-5h4v5"/></svg>
+        <b>חנות (ניהול)</b>
+        <small>הזמנות, לקוחות, כספים. דורש קוד.</small>
+      </a>
+      <a class="chooser__btn chooser__btn--workshop" href="workshop.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M3 14h18M9 4v16"/></svg>
+        <b>סדנה</b>
+        <small>טבלת עבודה, מלאי, ספקים, תזכורות.</small>
+      </a>
+    </div>
+  </main>
+</body>
+</html>

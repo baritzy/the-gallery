@@ -1,0 +1,181 @@
+/* =============================================================================
+ * orders.css  -  טאב הזמנות, כרטיס הזמנה, טופס בסגנון הדף, תשלום וקבלה
+ * OWNER: foundation (wave 2). admin בלבד.
+ * ========================================================================== */
+
+.chips--orders { margin-bottom: var(--s-4); }
+.fchip--blocked[aria-pressed="true"] { background: var(--st-red-soft); color: var(--st-red-text); }
+
+/* ---------- רשימה ---------- */
+.olist { display: flex; flex-direction: column; background: var(--bg-surface); border: 1px solid var(--line); border-radius: var(--r-md); overflow: hidden; box-shadow: var(--e1); }
+.olist__head, .orow__main {
+  display: grid;
+  grid-template-columns: 112px minmax(150px, 1.3fr) minmax(150px, 1.4fr) 128px 96px minmax(110px, 1fr);
+  align-items: center; gap: var(--s-3);
+}
+.olist__head {
+  padding-block: 10px; padding-inline-start: 22px; padding-inline-end: 72px; border-bottom: 1px solid var(--line);
+  font-size: var(--fs-xs); font-weight: var(--fw-bold); color: var(--ink-muted);
+}
+.olist__head span:last-child { display: none; }
+.orow { position: relative; display: flex; align-items: stretch; border-bottom: 1px solid var(--line); }
+.orow:last-child { border-bottom: 0; }
+.orow::before { content: ""; position: absolute; top: 0; bottom: 0; right: 0; width: 6px; background: var(--spine); }
+.orow__main {
+  flex: 1; min-width: 0; min-height: 76px; padding: var(--s-2) var(--s-4); padding-inline-start: 22px;
+  background: transparent; border: 0; text-align: start; cursor: pointer; font: inherit; color: inherit;
+}
+.orow:hover { background: var(--bg-surface-alt); }
+.orow__main:focus-visible { outline: none; box-shadow: inset var(--focus-ring); }
+.orow__num { font-family: var(--font-mono); font-size: var(--fs-num); font-weight: 600; color: var(--ink); letter-spacing: -0.02em; line-height: 1; }
+.orow__status { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; }
+.orow__reason { font-size: var(--fs-sm); color: var(--st-red-text); font-weight: var(--fw-semibold); line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.orow__items { display: flex; flex-direction: column; font-size: var(--fs-sm); color: var(--ink-secondary); min-width: 0; }
+.orow__items b { color: var(--ink); font-weight: var(--fw-semibold); }
+.orow__desc { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink-muted); }
+.orow__due { display: flex; flex-direction: column; font-family: var(--font-mono); font-size: var(--fs-md); font-weight: 600; }
+.orow__due small { font-family: var(--font-ui); font-size: var(--fs-xs); color: var(--ink-secondary); font-weight: var(--fw-semibold); }
+.orow__due.is-late, .orow__due.is-late small { color: var(--st-red-text); }
+.orow__bal { font-weight: var(--fw-semibold); color: var(--st-green-text); font-variant-numeric: tabular-nums; }
+.orow__bal.is-owed { color: var(--ink); }
+.orow__cust { justify-self: end; font-size: var(--fs-sm); color: var(--ink-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.orow__flag, .orow__flag-sp { flex: none; width: 56px; }
+.orow__flag {
+  border: 0; border-inline-start: 1px solid var(--line); background: transparent; color: var(--ink-muted); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.orow__flag .ico { width: 24px; height: 24px; }
+.orow__flag:hover { background: var(--st-red-soft); color: var(--st-red); }
+.orow__flag.is-on { color: var(--st-red); background: var(--st-red-soft); }
+.orow.is-blocked { background: #FFF8F9; }
+
+/* W4: אייפד 1024-1180 לרוחב (לצד ה-rail): עמודות צרות יותר, כדי שהשורה לא תגלוש שמאלה מעל ה-rail */
+@media (min-width: 901px) and (max-width: 1279px) {
+  .olist__head, .orow__main {
+    grid-template-columns: 96px minmax(110px, 1.2fr) minmax(100px, 1.3fr) 104px 84px minmax(80px, 1fr);
+    gap: var(--s-2);
+  }
+  .orow__status .pill { white-space: normal; height: auto; min-height: 28px; padding-block: 4px; line-height: 1.2; text-align: center; max-width: 100%; }
+}
+@media (max-width: 900px) {
+  .olist__head { display: none; }
+  .orow__main { grid-template-columns: 96px 1fr auto; grid-template-areas: "num status due" "num items cust"; row-gap: 6px; }
+  .orow__num { grid-area: num; }
+  .orow__status { grid-area: status; }
+  .orow__items { grid-area: items; }
+  .orow__due { grid-area: due; justify-self: end; text-align: end; }
+  .orow__bal { display: none; }
+  .orow__cust { grid-area: cust; }
+}
+
+/* ---------- כרטיס הזמנה ---------- */
+.ocard__head {
+  position: relative; display: flex; align-items: center; gap: var(--s-5); flex-wrap: wrap;
+  padding: var(--s-5) var(--s-6); border-bottom: 1px solid var(--line);
+  border-top: 8px solid var(--spine); border-radius: var(--r-lg) var(--r-lg) 0 0;
+}
+.ocard__numwrap { display: flex; flex-direction: column; line-height: 1; }
+.ocard__numlbl { font-size: var(--fs-xs); color: var(--ink-muted); font-weight: var(--fw-semibold); }
+.ocard__num { font-family: var(--font-mono); font-size: var(--fs-num-xl); font-weight: 600; letter-spacing: -0.03em; }
+.ocard__headmid { display: flex; flex-direction: column; gap: 4px; }
+.ocard__under { font-size: var(--fs-xs); color: var(--ink-secondary); }
+.ocard__cust { margin-inline-start: auto; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; padding-inline-end: 56px; }
+.ocard__custname { background: none; border: 0; font: var(--fw-semibold) var(--fs-md)/1.3 var(--font-ui); color: var(--ink-secondary); cursor: pointer; padding: 1px 8px;
+  min-height: 44px; display: inline-flex; align-items: center; }   /* QA O1: מטרת מגע 44px */
+.ocard__phone { font-size: var(--fs-sm); color: var(--ink-muted); }
+.ocard__visits { font-size: var(--fs-xs); color: var(--ink-muted); }
+.ocard__head .modal__close { position: absolute; top: var(--s-4); left: var(--s-4); }
+.ocard .modal__body { display: flex; flex-direction: column; gap: var(--s-5); }
+.ocard__flag {
+  display: flex; align-items: center; gap: var(--s-3); padding: var(--s-4);
+  background: var(--st-red-soft); border-inline-start: 6px solid var(--st-red); border-radius: var(--r-md); color: var(--ink);
+}
+.ocard__flag > .ico { width: 28px; height: 28px; color: var(--st-red); flex: none; }
+.ocard__flag > div { flex: 1; font-size: var(--fs-md); }
+.ocard__flag small { display: block; color: var(--ink-secondary); font-size: var(--fs-xs); }
+.ocard__statusbar { display: flex; gap: var(--s-2); flex-wrap: wrap; }
+.sbtn {
+  flex: 1 1 110px; min-height: var(--touch-lg); border-radius: var(--r-md); border: 2px solid var(--line);
+  background: var(--bg-surface); color: var(--ink-secondary); font: var(--fw-bold) var(--fs-md)/1 var(--font-ui); cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--s-2);
+}
+.sbtn .ico { width: 20px; height: 20px; }
+.sbtn--blue.is-on   { background: var(--st-blue);   border-color: var(--st-blue);   color: #fff; }
+.sbtn--yellow.is-on { background: var(--st-yellow); border-color: var(--st-yellow); color: var(--on-status-yellow); }
+.sbtn--green.is-on  { background: var(--st-green);  border-color: var(--st-green);  color: #fff; }
+.sbtn--grey.is-on   { background: var(--st-grey);   border-color: var(--st-grey);   color: #fff; }
+.sbtn--flag { color: var(--st-red-text); border-style: dashed; border-color: var(--st-red); }
+.ocard__sechead { font-weight: var(--fw-bold); font-size: var(--fs-md); margin-bottom: var(--s-2); }
+.ocard__facts, .ocard__sums { display: flex; gap: var(--s-6); flex-wrap: wrap; align-items: flex-end; }
+.dateinput { height: var(--touch); border: 1px solid var(--line-strong); border-radius: var(--r-sm); padding: 0 var(--s-2); font: inherit; background: var(--bg-surface); }
+.ocard__notes { background: var(--bg-surface-alt); border-radius: var(--r-md); padding: var(--s-3) var(--s-4); }
+.ocard__money { border-top: 1px solid var(--line); padding-top: var(--s-4); display: flex; flex-direction: column; gap: var(--s-3); align-items: flex-start; }
+.paylist { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+.payline { display: flex; align-items: center; gap: var(--s-4); flex-wrap: wrap; padding: var(--s-2) var(--s-3); border: 1px solid var(--line); border-radius: var(--r-md); min-height: 56px; }
+.payline__type { font-weight: var(--fw-bold); min-width: 92px; }
+.payline__date { color: var(--ink-secondary); font-size: var(--fs-sm); }
+.payline__amt { font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
+.payline__rcpt { color: var(--st-green-text); font-size: var(--fs-sm); font-weight: var(--fw-semibold); }
+.payline__x { margin-inline-start: auto; width: 44px; height: 44px; border: 0; border-radius: var(--r-sm); background: transparent; color: var(--ink-muted); font-size: 22px; cursor: pointer; }
+.payline__x:hover { background: var(--st-red-soft); color: var(--st-red-text); }
+.pay-empty { color: var(--ink-muted); }
+.ocard__foot { align-items: center; }
+.ocard__footsp { flex: 1; }
+
+/* ---------- טופס בסגנון דף ההזמנה (C8 / D11) ---------- */
+.paper { background: #FFFEFB; }
+.paper__head {
+  position: relative; display: flex; align-items: center; justify-content: space-between; gap: var(--s-5); flex-wrap: wrap;
+  padding: var(--s-5) var(--s-6) var(--s-4); border-bottom: 2px solid var(--ink);
+  padding-inline-end: 80px;
+}
+.paper__shop { display: flex; align-items: center; gap: var(--s-4); }
+.paper__logo { width: 64px; height: 64px; border-radius: 12px; object-fit: cover; }
+.paper__name { font-size: 2rem; font-weight: var(--fw-bold); line-height: 1.1; }
+.paper__line { font-size: var(--fs-sm); color: var(--ink-secondary); }
+.paper__no { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.1; }
+.paper__no span { font-size: var(--fs-sm); color: var(--ink-secondary); font-weight: var(--fw-semibold); }
+.paper__no b { font-family: var(--font-mono); font-size: var(--fs-num-xl); font-weight: 600; letter-spacing: -0.03em; }
+.paper__no small { font-size: var(--fs-sm); color: var(--ink-muted); }
+.paper__head .modal__close { position: absolute; top: var(--s-4); left: var(--s-4); }
+.paper__body { display: flex; flex-direction: column; gap: var(--s-5); }
+.paper__row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--s-4); align-items: end; }
+.paper__row--bottom { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.paper__known { align-self: center; }
+.known { display: inline-block; font-size: var(--fs-sm); font-weight: var(--fw-semibold); background: var(--bg-sunken); border-radius: var(--r-sm); padding: 6px 10px; }
+.paper__items { display: flex; flex-direction: column; gap: var(--s-3); align-items: flex-start; }
+.paper__items .tablewrap { width: 100%; }
+.wtable--form td { padding: 6px; }
+.wtable--form td:first-child { width: 72px; }
+.dims { display: flex; align-items: center; gap: 4px; min-width: 150px; }
+.dims span { color: var(--ink-muted); font-weight: var(--fw-bold); }
+@media (max-width: 768px) {
+  .paper__row, .paper__row--bottom { grid-template-columns: 1fr; }
+  .paper__head { padding-inline-end: var(--s-6); padding-top: 72px; }
+}
+
+.created-num { text-align: center; font-family: var(--font-mono); font-size: 4rem; font-weight: 600; letter-spacing: -0.03em; }
+
+/* ---------- תשלום וקבלה ---------- */
+.paysum { display: flex; gap: var(--s-6); margin-bottom: var(--s-5); flex-wrap: wrap; }
+.paysum div { display: flex; flex-direction: column; }
+.paysum span { font-size: var(--fs-xs); color: var(--ink-muted); font-weight: var(--fw-semibold); }
+.paysum b { font-size: var(--fs-xl); }
+.paysum .is-owed b { color: var(--st-red-text); }
+.seg--big { margin-bottom: var(--s-5); }
+.bignum { font-size: 2rem !important; height: 68px !important; font-weight: var(--fw-bold); text-align: center; }
+.step-q { font-size: var(--fs-xl); font-weight: var(--fw-bold); text-align: center; margin: 0 0 var(--s-4); }
+.methods { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s-3); margin-bottom: var(--s-4); }
+.method {
+  min-height: 120px; border-radius: var(--r-lg); border: 2px solid var(--line-strong); background: var(--bg-surface);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--s-2); cursor: pointer;
+  font: var(--fw-bold) var(--fs-lg)/1 var(--font-ui); color: var(--ink);
+}
+.method .ico { width: 36px; height: 36px; color: var(--primary); }
+.method:hover, .method:focus-visible { border-color: var(--primary); background: var(--primary-soft); outline: none; }
+.method.is-busy { opacity: .6; pointer-events: none; }
+.rcpt { border: 1px dashed var(--line-strong); border-radius: var(--r-md); padding: var(--s-4); display: flex; flex-direction: column; gap: var(--s-2); margin-bottom: var(--s-3); }
+.rcpt__row { display: flex; justify-content: space-between; font-size: var(--fs-md); }
+.rcpt__row span { color: var(--ink-secondary); }
+.known.tone-yellow { background: var(--st-yellow); color: var(--on-status-yellow); }
+.known.tone-green { background: var(--st-green); color: #fff; }

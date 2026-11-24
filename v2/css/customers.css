@@ -1,0 +1,105 @@
+/* =============================================================================
+ * customers.css  -  עיצוב מודול customers (C37)
+ * OWNER: agent B (wave 3). רק טוקנים מ-tokens.css. קידומת cus-.
+ * צבע השם עצמו: tone-yellow / tone-green מ-foundation.css (כמו בהזמנות).
+ * ========================================================================== */
+
+[data-view="customers"] .fchip { min-height: var(--touch); height: auto; }
+.cus-list { display: flex; flex-direction: column; gap: var(--s-2); }
+
+.cus-headrow, .cus-row__head {
+  display: grid; align-items: center; gap: var(--s-3);
+  grid-template-columns: 52px minmax(200px, 1.6fr) 140px 120px 100px 100px auto;
+}
+.cus-headrow { padding: 0 var(--s-4) var(--s-1); font-size: var(--fs-xs); font-weight: var(--fw-bold); color: var(--ink-muted); }
+
+.cus-row {
+  background: var(--bg-surface); border: 1px solid var(--line); border-radius: var(--r-md); box-shadow: var(--e1);
+  transition: box-shadow var(--dur-fast) var(--ease);
+}
+.cus-row.is-open { box-shadow: var(--e2); }
+.cus-row.is-focus { box-shadow: 0 0 0 3px var(--primary); }
+.cus-row__head { min-height: 76px; padding: var(--s-2) var(--s-4); cursor: pointer; }
+.cus-row__head:focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: var(--r-md); }
+
+.cus-visits {
+  width: 44px; height: 44px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+  font: 700 var(--fs-lg)/1 var(--font-mono); background: var(--bg-sunken); color: var(--ink-secondary);
+}
+.cus-visits--yellow { background: var(--st-yellow); color: var(--on-status-yellow); }
+.cus-visits--green { background: var(--st-green); color: #fff; }
+
+.cus-row__main { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; }
+.cus-name { font-size: var(--fs-lg); font-weight: var(--fw-bold); color: var(--ink); line-height: 1.3; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cus-name.tone-yellow, .cus-name.tone-green { padding: 2px 12px; }
+.cus-row__meta { font-size: var(--fs-sm); color: var(--ink-secondary); }
+.cus-noteflag { display: inline-flex; align-items: center; gap: 4px; color: var(--st-orange-text); font-weight: var(--fw-semibold); }
+.cus-noteflag .ico { width: 16px; height: 16px; }
+.cus-phone { font-size: var(--fs-md); color: var(--ink-secondary); direction: ltr; text-align: end; }
+.cus-last { font-size: var(--fs-sm); color: var(--ink-secondary); }
+.cus-total { font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
+.cus-bal { font-weight: var(--fw-semibold); color: var(--st-green-text); }
+.cus-bal.is-owed { color: var(--st-red-text); font-weight: var(--fw-bold); }
+.cus-row__acts { display: inline-flex; align-items: center; gap: var(--s-2); justify-self: end; }
+.cus-row__acts .chev { width: 22px; height: 22px; color: var(--ink-muted); transition: transform var(--dur-base) var(--ease); }
+.cus-row.is-open .cus-row__acts .chev { transform: rotate(180deg); }
+.cus-wa { min-height: var(--touch); }
+
+.cus-row__panel { padding: 0 var(--s-4) var(--s-4); }
+.cus-panel { background: var(--bg-surface-alt); border: 1px solid var(--line); border-radius: var(--r-md); padding: var(--s-4); }
+.cus-notes { display: flex; flex-wrap: wrap; gap: var(--s-2); align-items: flex-end; margin-bottom: var(--s-4); }
+.cus-notes__label { flex-basis: 100%; font-size: var(--fs-sm); font-weight: var(--fw-semibold); color: var(--ink-secondary); }
+.cus-notes__input {
+  flex: 1 1 320px; min-height: 64px; border: 1px solid var(--line-strong); border-radius: var(--r-sm);
+  padding: var(--s-2) var(--s-3); font: inherit; font-size: var(--fs-md); background: var(--bg-surface); color: var(--ink); resize: vertical;
+}
+.cus-notes__input:focus-visible { outline: none; border-color: var(--primary); box-shadow: var(--focus-ring); }
+
+.cus-hist__head { margin: 0 0 var(--s-2); font-size: var(--fs-md); }
+.cus-hist__head span { font-weight: var(--fw-medium); color: var(--ink-secondary); font-size: var(--fs-sm); }
+.cus-hist { display: flex; flex-direction: column; gap: var(--s-1); }
+.cus-hist__empty { color: var(--ink-secondary); }
+.cus-h {
+  display: grid; grid-template-columns: 76px 128px minmax(160px, 1fr) 110px 90px 120px; align-items: center; gap: var(--s-3);
+  min-height: 56px; padding: var(--s-1) var(--s-3); border: 1px solid var(--line); border-radius: var(--r-sm);
+  background: var(--bg-surface); text-align: start; font: inherit; color: inherit; width: 100%;
+}
+.cus-h--order { cursor: pointer; }
+.cus-h--order:hover { border-color: var(--primary); }
+.cus-h--order:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.cus-h__num { font-size: var(--fs-xl); font-weight: 700; color: var(--ink); }
+.cus-h__desc { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink-secondary); }
+.cus-h__date { font-size: var(--fs-sm); color: var(--ink-secondary); }
+.cus-h__price { font-weight: var(--fw-semibold); font-variant-numeric: tabular-nums; }
+.cus-h__bal { font-size: var(--fs-sm); color: var(--st-green-text); font-weight: var(--fw-semibold); }
+.cus-h__bal.is-owed { color: var(--st-red-text); }
+.cus-h__buy .ico { width: 14px; height: 14px; }
+.cus-h__noreceipt { color: var(--st-orange-text); }
+
+/* W4: אייפד לרוחב (עד 1279px, לצד ה-rail) השורה גלשה שמאלה מעל ה-rail. מסתירים "ביקור אחרון" ומצמצמים עמודות. */
+@media (min-width: 901px) and (max-width: 1279px) {
+  .cus-headrow, .cus-row__head { grid-template-columns: 52px minmax(120px, 1fr) 130px 96px 96px auto; }
+  .cus-last, .cus-headrow > span:nth-child(4) { display: none; }
+  .cus-wa span { display: none; }
+}
+@media (max-width: 900px) {
+  .cus-headrow { display: none; }
+  .cus-row__head { grid-template-columns: 48px 1fr auto; grid-template-areas: "v main acts" "v phone bal"; row-gap: 4px; }
+  .cus-visits { grid-area: v; }
+  .cus-row__main { grid-area: main; }
+  .cus-row__acts { grid-area: acts; }
+  .cus-phone { grid-area: phone; text-align: start; justify-self: start; }
+  .cus-bal { grid-area: bal; justify-self: end; }
+  .cus-last, .cus-total { display: none; }
+  .cus-wa span { display: none; }
+  .cus-h { grid-template-columns: 64px 1fr auto; grid-template-areas: "num desc price" "num pill bal"; row-gap: 4px; }
+  .cus-h__num { grid-area: num; }
+  .cus-h .pill { grid-area: pill; justify-self: start; }
+  .cus-h__desc { grid-area: desc; }
+  .cus-h__price { grid-area: price; justify-self: end; }
+  .cus-h__bal { grid-area: bal; justify-self: end; }
+  .cus-h__date { display: none; }
+}
+
+/* W4: מכירת מוצר מתוך כרטיס הלקוח (admin) */
+[data-view="customers"] .cus-sell { margin: 0 0 var(--s-4); }

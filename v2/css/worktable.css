@@ -1,0 +1,187 @@
+/* =============================================================================
+ * worktable.css  -  עיצוב מודול worktable
+ * OWNER: agent A (wave 3). להשתמש רק בטוקנים מ-tokens.css (ראו v2-contract.md).
+ * כל הכללים בקובץ הזה עטופים ב-[data-view="worktable"] או בקידומת מחלקה של המודול (wt-).
+ * מטרות מגע 48px ומעלה (C5), טבלה בסגנון הדף הפיזי (C16).
+ * ========================================================================== */
+
+[data-view="worktable"] .wt-head { align-items: flex-end; }
+[data-view="worktable"] .wt-today {
+  font: var(--fw-bold) var(--fs-xl)/1 var(--font-mono); color: var(--ink-secondary); direction: ltr;
+}
+
+/* ---- סינון ---- */
+[data-view="worktable"] .wt-filters { display: flex; flex-wrap: wrap; gap: var(--s-2); margin: var(--s-4) 0; }
+[data-view="worktable"] .wt-fchip { height: var(--touch); padding: 0 var(--s-5); font-size: var(--fs-md); font-weight: var(--fw-semibold); }
+[data-view="worktable"] .wt-fchip--red[aria-pressed="true"] { background: var(--st-red-soft); color: var(--st-red-text); }
+
+/* ---- טבלה ---- */
+[data-view="worktable"] .wt-wrap { box-shadow: var(--e1); }
+[data-view="worktable"] .wt-table { min-width: 940px; font-size: var(--fs-md); }
+[data-view="worktable"] .wt-table th { font-size: var(--fs-sm); color: var(--ink); padding: 12px 8px; }
+[data-view="worktable"] .wt-table td { padding: 6px 8px; }
+[data-view="worktable"] .wt-table td { height: 64px; }
+[data-view="worktable"] .wt-table th.wt-c-no { width: 136px; }
+
+/* מספר ההזמנה = "כותרת הקבוצה" (rowspan) */
+[data-view="worktable"] td.wt-no {
+  vertical-align: top; padding: var(--s-3) var(--s-3); background: var(--bg-surface);
+  border-inline-start: 0; border-inline-end: 1px solid var(--line);
+  box-shadow: inset -6px 0 0 var(--wt-st, var(--st-grey));
+}
+[data-view="worktable"] .wt-no--blue   { --wt-st: var(--st-blue); }
+[data-view="worktable"] .wt-no--yellow { --wt-st: var(--st-yellow); }
+[data-view="worktable"] .wt-no--green  { --wt-st: var(--st-green); }
+[data-view="worktable"] .wt-no--red    { --wt-st: var(--st-red); background: var(--st-red-soft); }
+[data-view="worktable"] .wt-no--grey   { --wt-st: var(--st-grey); }
+[data-view="worktable"] .wt-no__num {
+  font: var(--fw-bold) var(--fs-num)/1 var(--font-mono); color: var(--ink); direction: ltr; text-align: right;
+  margin-bottom: var(--s-2); display: block;
+}
+[data-view="worktable"] .wt-no__pill { margin-bottom: var(--s-2); white-space: normal; height: auto; min-height: 40px; padding-block: 6px; line-height: 1.2; max-width: 100%; }
+[data-view="worktable"] .wt-no__pill.is-yellow .dot { background: var(--on-status-yellow); }
+[data-view="worktable"] .wt-no__due {
+  display: flex; align-items: center; gap: 4px; font-size: var(--fs-xs); color: var(--ink-secondary); margin-bottom: var(--s-2);
+}
+[data-view="worktable"] .wt-no__due .ico { width: 16px; height: 16px; }
+[data-view="worktable"] .wt-no__due.is-late { color: var(--st-red-text); font-weight: var(--fw-bold); }
+
+[data-view="worktable"] .wt-flagbtn {
+  display: inline-flex; align-items: center; gap: 6px; min-height: var(--touch); padding: 0 var(--s-3);
+  border-radius: var(--r-md); border: 2px solid var(--line-strong); background: var(--bg-surface);
+  color: var(--ink-secondary); font: var(--fw-semibold) var(--fs-sm)/1 var(--font-ui); cursor: pointer; white-space: nowrap;
+}
+[data-view="worktable"] .wt-flagbtn .ico { width: 20px; height: 20px; }
+[data-view="worktable"] .wt-flagbtn:hover { border-color: var(--st-red); color: var(--st-red-text); }
+[data-view="worktable"] .wt-flagbtn.is-on { background: var(--st-red); border-color: var(--st-red); color: #fff; }
+
+/* שורת דגל אדום מעל הקבוצה */
+[data-view="worktable"] tr.wt-flagrow td { height: auto; padding: 0; background: var(--st-red); border-bottom: 0; }
+[data-view="worktable"] .wt-flag { display: flex; align-items: center; gap: var(--s-3); padding: var(--s-2) var(--s-4); color: #fff; }
+[data-view="worktable"] .wt-flag__icon .ico { width: 24px; height: 24px; }
+[data-view="worktable"] .wt-flag__txt { flex: 1; font-size: var(--fs-md); }
+[data-view="worktable"] .wt-flag__since { opacity: .85; font-size: var(--fs-sm); }
+[data-view="worktable"] .wt-flag__btn { background: #fff; border-color: #fff; color: var(--st-red-text); }
+
+/* רווח בין הזמנות */
+[data-view="worktable"] tr.wt-gap td { height: 10px; padding: 0; background: var(--bg-canvas); border-bottom: 1px solid var(--line); }
+[data-view="worktable"] tr.wt-gap td + td { border: 0; }
+
+[data-view="worktable"] .wt-idx { font-weight: var(--fw-bold); font-size: var(--fs-lg); text-align: center; }
+[data-view="worktable"] .wt-desc { font-size: var(--fs-md); min-width: 120px; }
+[data-view="worktable"] .wt-size { font-size: var(--fs-lg); text-align: center; white-space: nowrap; }
+[data-view="worktable"] .wt-frame__sku { font: var(--fw-bold) var(--fs-lg)/1.1 var(--font-mono); direction: ltr; text-align: right; white-space: nowrap; display: block; }
+[data-view="worktable"] .wt-frame__info { font-size: var(--fs-xs); color: var(--ink-secondary); margin-top: 2px; }
+
+/* הדבקה / מט: מתג גדול */
+[data-view="worktable"] .wt-tog {
+  display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+  min-width: 58px; min-height: var(--touch); padding: 0 var(--s-2);
+  border-radius: var(--r-md); border: 2px dashed var(--line-strong); background: transparent;
+  color: var(--ink-muted); font: var(--fw-semibold) var(--fs-md)/1 var(--font-ui); cursor: pointer;
+}
+[data-view="worktable"] .wt-tog .ico { width: 20px; height: 20px; }
+[data-view="worktable"] .wt-tog.is-on { border: 2px solid var(--primary); background: var(--primary-soft); color: var(--primary); }
+
+/* חומר V / X */
+[data-view="worktable"] .wt-mat { display: inline-flex; gap: 6px; }
+[data-view="worktable"] .wt-matbtn {
+  width: 50px; height: 50px; border-radius: var(--r-md); border: 2px solid var(--line-strong); background: var(--bg-surface);
+  color: var(--ink-muted); font: var(--fw-bold) var(--fs-xl)/1 var(--font-ui); cursor: pointer;
+}
+[data-view="worktable"] .wt-matbtn--V:hover { border-color: var(--st-green); color: var(--st-green-text); }
+[data-view="worktable"] .wt-matbtn--X:hover { border-color: var(--st-red); color: var(--st-red-text); }
+[data-view="worktable"] .wt-matbtn--V.is-on { background: var(--st-green); border-color: var(--st-green); color: #fff; }
+[data-view="worktable"] .wt-matbtn--X.is-on { background: var(--st-red); border-color: var(--st-red); color: #fff; }
+[data-view="worktable"] .wt-mat__ord.is-sent { color: var(--st-blue-text); }
+[data-view="worktable"] .wt-mat__ord { font-size: var(--fs-2xs); color: var(--st-red-text); font-weight: var(--fw-semibold); margin-top: 4px; white-space: nowrap; }
+
+/* בוצע */
+[data-view="worktable"] .wt-done { width: 56px; height: 56px; }
+[data-view="worktable"] .wt-done span { width: 40px; height: 40px; border-radius: 8px; }
+[data-view="worktable"] .wt-done input:checked + span::after { width: 11px; height: 20px; border-width: 0 4px 4px 0; }
+[data-view="worktable"] tr.is-done .wt-desc { color: var(--st-green-text); }
+
+/* הערות */
+[data-view="worktable"] .wt-notecell { min-width: 140px; }
+[data-view="worktable"] .wt-note {
+  display: flex; align-items: center; gap: 6px; width: 100%; min-height: var(--touch); padding: 6px var(--s-3);
+  border-radius: var(--r-md); border: 1px dashed var(--line-strong); background: transparent; text-align: start;
+  color: var(--ink-muted); font: var(--fw-regular) var(--fs-sm)/1.3 var(--font-ui); cursor: pointer;
+}
+[data-view="worktable"] .wt-note .ico { width: 18px; height: 18px; flex: none; }
+[data-view="worktable"] .wt-note.has-note { border: 1px solid var(--st-yellow); background: var(--st-yellow-soft); color: var(--ink); font-weight: var(--fw-medium); }
+
+[data-view="worktable"] .wt-empty { padding: var(--s-10) var(--s-4); }
+
+/* ---- W4: טבלה צפופה עד 1279px (אייפד לרוחב 1024-1180 ואייפד לאורך 768-834) ----
+   הטבלה נכנסת לרוחב המסך בלי גלילה אופקית. מטרות המגע נשארות 48px ומעלה (C5). */
+@media (max-width: 1279px) {
+  [data-view="worktable"] .wt-table { min-width: 0; }
+  [data-view="worktable"] .wt-table th { padding: 10px 4px; white-space: normal; line-height: 1.2; }
+  [data-view="worktable"] .wt-table td { padding: 4px; }
+  [data-view="worktable"] .wt-table th.wt-c-no { width: auto; }
+  [data-view="worktable"] td.wt-no { padding: var(--s-2); }
+  [data-view="worktable"] .wt-no__num { font-size: 28px; }
+  [data-view="worktable"] .wt-flagbtn { padding: 0 var(--s-2); white-space: normal; }
+  [data-view="worktable"] .wt-tog { min-width: 52px; }
+  [data-view="worktable"] .wt-desc { min-width: 0; }
+  [data-view="worktable"] .wt-matbtn { width: 48px; height: 48px; }
+  [data-view="worktable"] .wt-mat { gap: 4px; }
+  [data-view="worktable"] .wt-size { font-size: var(--fs-md); }
+  [data-view="worktable"] .wt-frame__sku { font-size: var(--fs-md); }
+  [data-view="worktable"] .wt-done { width: 52px; height: 52px; }
+  [data-view="worktable"] .wt-notecell { min-width: 0; }
+  [data-view="worktable"] .wt-note { padding: 6px var(--s-2); }
+}
+
+/* ---- W4: שכבה צפופה יותר עד 1100px (אייפד 1024 לרוחב, אייפד 768 לאורך) ---- */
+@media (max-width: 1100px) {
+  [data-view="worktable"] .wt-table td { padding: 3px; }
+  [data-view="worktable"] td.wt-no { padding: var(--s-2) 6px; }
+  [data-view="worktable"] .wt-tog { min-width: 48px; padding: 0 6px; }
+  [data-view="worktable"] .wt-frame__sku { font-size: var(--fs-sm); }
+  [data-view="worktable"] .wt-done { width: 48px; height: 48px; }
+  [data-view="worktable"] .wt-note:not(.has-note) { justify-content: center; }
+  [data-view="worktable"] .wt-note:not(.has-note) span { display: none; }
+}
+
+/* =============================================================================
+ * מודלים של טבלת העבודה (נפתחים ב-body, לכן לפי מחלקה wt-)
+ * ========================================================================== */
+.wt-modal .modal__body { font-size: var(--fs-md); }
+.wt-sheet__prof { display: flex; gap: var(--s-4); align-items: center; margin-bottom: var(--s-4); }
+.wt-sheet__swatch { width: 72px; height: 72px; border-radius: var(--r-md); flex: none; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); }
+.wt-sheet__sku { font: var(--fw-bold) var(--fs-2xl)/1 var(--font-mono); direction: ltr; text-align: right; display: block; }
+.wt-sheet__name { font-size: var(--fs-lg); margin-top: 4px; }
+.wt-sheet__sup { font-size: var(--fs-md); color: var(--ink-secondary); margin-top: 2px; }
+.wt-sheet__facts { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-3); margin-bottom: var(--s-4); }
+.wt-sheet__fact { background: var(--bg-surface-alt); border-radius: var(--r-md); padding: var(--s-3) var(--s-4); }
+.wt-sheet__fact .k { font-size: var(--fs-sm); color: var(--ink-secondary); font-weight: var(--fw-semibold); }
+.wt-sheet__fact .v { font-size: var(--fs-2xl); font-weight: var(--fw-bold); margin-top: 4px; }
+.wt-sheet__fact .s { font-size: var(--fs-xs); color: var(--ink-muted); margin-top: 2px; }
+.wt-sheet__fact.is-short { background: var(--st-red-soft); }
+.wt-sheet__fact.is-short .v { color: var(--st-red-text); }
+.wt-sheet__warn { display: flex; gap: var(--s-3); align-items: flex-start; background: var(--st-orange-soft); color: var(--st-orange-text); padding: var(--s-4); border-radius: var(--r-md); }
+.wt-sheet__warn .ico { width: 24px; height: 24px; flex: none; }
+
+.wt-step { background: var(--primary-soft); border-radius: var(--r-md); padding: var(--s-4); text-align: center; }
+.wt-step__lbl { font-size: var(--fs-lg); font-weight: var(--fw-bold); margin-bottom: var(--s-3); }
+.wt-step__lbl span { font-size: var(--fs-sm); font-weight: var(--fw-regular); color: var(--ink-secondary); }
+.wt-step__ctl { display: flex; align-items: center; justify-content: center; gap: var(--s-4); }
+.wt-step__btn {
+  width: 64px; height: 64px; border-radius: 50%; border: 2px solid var(--primary); background: var(--bg-surface);
+  color: var(--primary); display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.wt-step__btn .ico { width: 28px; height: 28px; }
+.wt-step__btn:active { background: var(--primary); color: #fff; }
+.wt-step__val { min-width: 72px; font: var(--fw-bold) var(--fs-num-xl)/1 var(--font-mono); color: var(--ink); }
+.wt-step__note { margin-top: var(--s-3); font-size: var(--fs-sm); color: var(--ink-secondary); }
+
+.wt-notearea { width: 100%; min-height: 110px; font: inherit; font-size: var(--fs-lg); padding: var(--s-3); border: 1px solid var(--line-strong); border-radius: var(--r-md); }
+.wt-quick { display: flex; flex-wrap: wrap; gap: var(--s-2); margin-top: var(--s-3); }
+.wt-ordnotes { margin-top: var(--s-3); color: var(--ink-secondary); }
+
+@media (max-width: 640px) {
+  .wt-sheet__facts { grid-template-columns: 1fr; }
+}

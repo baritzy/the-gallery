@@ -1,0 +1,89 @@
+/* =============================================================================
+ * suppliers.css  -  עיצוב מודול suppliers
+ * OWNER: agent A (wave 3). להשתמש רק בטוקנים מ-tokens.css (ראו v2-contract.md).
+ * כל הכללים בקובץ הזה עטופים ב-[data-view="suppliers"] או בקידומת מחלקה של המודול (sup-).
+ * שלוש עמודות כמו דף הספקים הידני (C23).
+ * ========================================================================== */
+
+[data-view="suppliers"] .sup-grid {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-4); align-items: start; margin-top: var(--s-4);
+}
+@media (max-width: 1100px) { [data-view="suppliers"] .sup-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 720px)  { [data-view="suppliers"] .sup-grid { grid-template-columns: 1fr; } }
+
+[data-view="suppliers"] .sup-card {
+  background: var(--bg-surface); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--e1);
+  display: flex; flex-direction: column; gap: var(--s-3); padding: var(--s-4); min-width: 0;
+}
+[data-view="suppliers"] .sup-card__head { border-bottom: 2px solid var(--ink); padding-bottom: var(--s-3); }
+[data-view="suppliers"] .sup-card__title { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); }
+[data-view="suppliers"] .sup-card__title h2 { margin: 0; font-size: var(--fs-2xl); font-weight: var(--fw-bold); }
+[data-view="suppliers"] .sup-card__edit { width: var(--touch); height: var(--touch); }
+[data-view="suppliers"] .sup-card__edit:hover { color: var(--primary); }
+[data-view="suppliers"] .sup-card__contact { display: flex; flex-wrap: wrap; gap: var(--s-2) var(--s-4); align-items: center; margin-top: var(--s-2); font-size: var(--fs-md); color: var(--ink-secondary); }
+[data-view="suppliers"] .sup-card__contact a { display: inline-flex; align-items: center; gap: 6px; min-height: var(--touch, 44px); min-width: 44px; padding: 0 4px; color: var(--link); text-decoration: none; direction: ltr; }
+[data-view="suppliers"] .sup-card__contact a .ico { width: 18px; height: 18px; }
+[data-view="suppliers"] .sup-card__note { margin-top: var(--s-2); font-size: var(--fs-sm); color: var(--ink-muted); }
+[data-view="suppliers"] .sup-muted { color: var(--ink-muted); }
+
+[data-view="suppliers"] .sup-card__sec { display: flex; justify-content: space-between; align-items: baseline; font-weight: var(--fw-bold); font-size: var(--fs-md); }
+[data-view="suppliers"] .sup-card__cnt { font-weight: var(--fw-regular); color: var(--ink-muted); font-size: var(--fs-sm); }
+
+/* שורות */
+[data-view="suppliers"] .sup-lines { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: var(--r-md); }
+[data-view="suppliers"] .sup-line { display: flex; align-items: center; gap: var(--s-3); padding: var(--s-2) var(--s-3); border-bottom: 1px solid var(--line); min-height: 64px; }
+[data-view="suppliers"] .sup-line:last-child { border-bottom: 0; }
+[data-view="suppliers"] .sup-line__main { flex: 1; min-width: 0; }
+[data-view="suppliers"] .sup-line__label { font-size: var(--fs-md); font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+[data-view="suppliers"] .sup-line__meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 4px; }
+[data-view="suppliers"] .sup-line__unit { font-size: var(--fs-xs); color: var(--ink-secondary); }
+/* QA O5: תגית מקור ארוכה ("מטבלת העבודה · הזמנה 1012") נשברת לשורה ולא חורגת מהכרטיס */
+[data-view="suppliers"] .sup-src { height: auto; min-height: 24px; padding-block: 3px; font-size: var(--fs-2xs); line-height: 1.25;
+  white-space: normal; flex: 0 1 auto; max-width: 100%; min-width: 0; overflow-wrap: anywhere; text-align: start; }
+[data-view="suppliers"] .sup-line__rm { width: var(--touch); height: var(--touch); flex: none; }
+
+[data-view="suppliers"] .sup-qty { display: flex; flex-direction: column; align-items: center; flex: none; }
+[data-view="suppliers"] .sup-qty__val { font: var(--fw-bold) var(--fs-2xl)/1 var(--font-mono); min-width: 44px; text-align: center; padding: 2px 0; }
+[data-view="suppliers"] .sup-qty__btn {
+  width: 44px; height: 44px; border: 1px solid var(--line-strong); background: var(--bg-surface); color: var(--ink-secondary);
+  border-radius: var(--r-sm); display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+}
+[data-view="suppliers"] .sup-qty__btn .ico { width: 16px; height: 16px; }
+[data-view="suppliers"] .sup-qty__btn:disabled { opacity: .35; cursor: default; }
+
+[data-view="suppliers"] .sup-empty { padding: var(--s-6) var(--s-3); text-align: center; color: var(--ink-muted); background: var(--bg-surface-alt); border-radius: var(--r-md); }
+
+[data-view="suppliers"] .sup-low, [data-view="suppliers"] .sup-add { width: 100%; justify-content: center; }
+[data-view="suppliers"] .sup-actions { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-2); border-top: 1px solid var(--line); padding-top: var(--s-3); }
+[data-view="suppliers"] .sup-actions .btn { justify-content: center; white-space: nowrap; padding: 0 var(--s-3); }
+[data-view="suppliers"] .sup-actions .sup-sent { grid-column: 1 / -1; min-height: var(--touch-lg); font-size: var(--fs-md); }
+[data-view="suppliers"] .sup-actions .btn:disabled { opacity: .45; cursor: default; }
+
+/* היסטוריה */
+[data-view="suppliers"] .sup-hist__toggle {
+  display: flex; align-items: center; gap: var(--s-2); width: 100%; min-height: var(--touch); padding: 0 var(--s-2);
+  background: transparent; border: 0; color: var(--ink-secondary); font: var(--fw-semibold) var(--fs-sm)/1 var(--font-ui); cursor: pointer;
+}
+[data-view="suppliers"] .sup-hist__toggle .ico { width: 18px; height: 18px; }
+[data-view="suppliers"] .sup-hist__toggle .chev { width: 18px; height: 18px; margin-inline-start: auto; transition: transform var(--dur-fast); }
+[data-view="suppliers"] .sup-hist__toggle[aria-expanded="true"] .chev { transform: rotate(180deg); }
+[data-view="suppliers"] .sup-hist__batch { padding: var(--s-2) var(--s-3); border-inline-start: 3px solid var(--line); margin-bottom: var(--s-2); }
+[data-view="suppliers"] .sup-hist__date { font-size: var(--fs-xs); font-weight: var(--fw-bold); color: var(--ink-secondary); }
+[data-view="suppliers"] .sup-hist__batch ul { list-style: none; margin: 4px 0 0; padding: 0; font-size: var(--fs-sm); color: var(--ink-secondary); }
+
+/* =============================================================================
+ * מודלים של ספקים (נפתחים ב-body)
+ * ========================================================================== */
+.sup-form input { width: 100%; }
+.sup-seg { margin-bottom: var(--s-4); }
+.sup-select { width: 100%; }
+.sup-step { margin-top: var(--s-4); }
+.sup-hint { color: var(--ink-secondary); margin: 0 0 var(--s-3); }
+.sup-sugg { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: var(--r-md); }
+.sup-sugg li { display: flex; align-items: center; gap: var(--s-3); padding: var(--s-2) var(--s-3); border-bottom: 1px solid var(--line); }
+.sup-sugg li:last-child { border-bottom: 0; }
+.sup-sugg__main { flex: 1; min-width: 0; }
+.sup-sugg__label { font-weight: var(--fw-semibold); }
+.sup-sugg__why { font-size: var(--fs-xs); color: var(--st-orange-text); }
+.sup-sugg__qty { font-size: var(--fs-md); white-space: nowrap; }
+.sup-sugg__qty .mono { font-weight: var(--fw-bold); font-size: var(--fs-xl); }

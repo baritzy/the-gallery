@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl" data-role="workshop">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0073EA">
+<meta name="color-scheme" content="light">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>הגלריה · סדנה</title>
+<link rel="icon" href="assets/logo.png?v=23">
+<link rel="apple-touch-icon" href="assets/icon-180.png?v=23">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-title" content="הגלריה">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/tokens.css?v=23">
+<link rel="stylesheet" href="css/app.css?v=23">
+<link rel="stylesheet" href="css/foundation.css?v=23">
+<link rel="stylesheet" href="css/worktable.css?v=23">
+<link rel="stylesheet" href="css/inventory.css?v=23">
+<link rel="stylesheet" href="css/suppliers.css?v=23">
+<link rel="stylesheet" href="css/reminders.css?v=23">
+<link rel="stylesheet" href="css/print.css?v=23">
+</head>
+<body>
+
+<div class="app">
+  <aside class="rail" id="rail"></aside>
+  <main class="main" id="main"></main>
+</div>
+<nav class="bottombar" id="bottombar" aria-label="ניווט תחתון"></nav>
+
+<!-- כניסת סדנה (D3): whitelist בלבד. לא נטענים כאן orders, customers, finance, stats, sales, settings. אין כסף במסך הזה. -->
+<script src="js/version.js?v=23"></script>
+<script src="js/data/store.js?v=23"></script>
+<script src="js/data/collections.js?v=23"></script>
+<script src="js/data/orders-model.js?v=23"></script>
+<script src="js/data/seed.js?v=23"></script>
+<script src="js/data-ext-worktable.js?v=23"></script>
+<script src="js/data-ext-inventory.js?v=23"></script>
+<script src="js/data-ext-reminders.js?v=23"></script>
+<script src="js/data-firestore.js?v=23"></script>
+<script src="js/icons.js?v=23"></script>
+<script src="js/util.js?v=23"></script>
+<script src="js/app.js?v=23"></script>
+<script src="js/flag.js?v=23"></script>
+<script src="js/worktable.js?v=23"></script>
+<script src="js/inventory.js?v=23"></script>
+<script src="js/suppliers.js?v=23"></script>
+<script src="js/reminders.js?v=23"></script>
+<script src="js/print.js?v=23"></script>
+</body>
+</html>

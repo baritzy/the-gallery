@@ -1,0 +1,67 @@
+/* =============================================================================
+ * stats.css  -  עיצוב סטטיסטיקה (C35 / C36)
+ * OWNER: agent C (wave 3). רק טוקנים מ-tokens.css. קידומת st- (מחלקות, לא משתנים).
+ * ========================================================================== */
+
+.st-seg { flex-wrap: wrap; }
+.st-seg > button { min-height: var(--touch); font-size: var(--fs-md); padding: 0 var(--s-4); white-space: nowrap; }
+
+.st-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--s-3); margin-bottom: var(--s-5); }
+.st-card {
+  background: var(--bg-surface); border: 1px solid var(--line); border-top: 5px solid var(--st-c, var(--primary));
+  border-radius: var(--r-lg); padding: var(--s-4); display: flex; flex-direction: column; gap: 4px; position: relative;
+}
+.st-card > svg { position: absolute; top: var(--s-4); inset-inline-end: var(--s-4); width: 26px; height: 26px; color: var(--st-c, var(--primary)); opacity: .8; }
+.st-card.st-c-primary { --st-c: var(--primary); }
+.st-card.st-c-green { --st-c: var(--st-green); }
+.st-card.st-c-walnut { --st-c: var(--walnut); }
+.st-card--split { --st-c: var(--st-blue); }
+.st-card__k { font-size: var(--fs-md); color: var(--ink-secondary); font-weight: var(--fw-semibold); padding-inline-end: 32px; }
+.st-card__v { font-size: var(--fs-num-xl); font-weight: var(--fw-bold); line-height: 1.05; font-variant-numeric: tabular-nums; color: var(--ink); }
+.st-card__s { font-size: var(--fs-sm); color: var(--ink-muted); }
+.st-vs { display: flex; gap: var(--s-4); }
+.st-vs div { display: flex; flex-direction: column; }
+.st-vs b { font-size: var(--fs-2xl); line-height: 1.1; }
+.st-vs span { font-size: var(--fs-sm); color: var(--ink-secondary); }
+.st-bar { display: flex; height: 12px; border-radius: var(--r-pill); overflow: hidden; background: var(--bg-sunken); gap: 2px; margin: var(--s-2) 0 2px; }
+.st-bar__o { background: var(--st-blue); }
+.st-bar__s { background: var(--st-green); }
+
+.st-sec { background: var(--bg-surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: var(--s-4); margin-bottom: var(--s-5); }
+.st-sec__head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); flex-wrap: wrap; margin-bottom: var(--s-3); }
+.st-sec__title { display: flex; align-items: center; gap: var(--s-2); font-size: var(--fs-xl); margin: 0; }
+.st-sec__title .ico { width: 24px; height: 24px; color: var(--primary); }
+.st-sec__n { font-size: var(--fs-sm); background: var(--bg-sunken); border-radius: var(--r-pill); padding: 2px 10px; color: var(--ink-secondary); }
+.st-note { color: var(--ink-muted); font-size: var(--fs-sm); margin: var(--s-2) 0 0; }
+
+.st-chartwrap { position: relative; }
+.st-chart { width: 100%; height: auto; display: block; font-family: var(--font-ui); }
+.st-grid { stroke: var(--line); stroke-width: 1; stroke-dasharray: 2 4; }
+.st-base { stroke: var(--line-strong); stroke-width: 1; }
+.st-axis { fill: var(--ink-muted); font-size: 13px; }
+.st-val { fill: var(--ink); font-size: 14px; font-weight: 700; }
+.st-barmark { fill: var(--primary); opacity: .78; }
+.st-barmark.is-now { opacity: 1; }
+.st-hit { fill: transparent; cursor: default; }
+.st-hit:hover { fill: rgba(0, 115, 234, .06); }
+.st-tip {
+  position: absolute; width: 160px; padding: 6px 10px; border-radius: var(--r-md); background: var(--ink); color: #fff;
+  font-size: var(--fs-sm); text-align: center; pointer-events: none; box-shadow: var(--e2);
+}
+.st-tip[hidden] { display: none; }
+
+.st-legend { display: flex; gap: var(--s-2); font-size: var(--fs-sm); }
+.st-ret { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--s-2); }
+.st-ret__row {
+  display: grid; grid-template-columns: 1fr auto; grid-template-areas: "name n" "last last"; gap: 2px var(--s-3);
+  align-items: center; min-height: 64px; padding: var(--s-2) var(--s-3); text-align: start;
+  border: 1px solid var(--line); border-radius: var(--r-md); background: var(--bg-surface); cursor: pointer;
+  font-family: var(--font-ui); color: var(--ink);
+}
+.st-ret__row:hover { border-color: var(--primary); background: var(--primary-soft); }
+.st-ret__name { grid-area: name; font-size: var(--fs-lg); }
+.st-ret__n { grid-area: n; font-size: var(--fs-md); font-weight: var(--fw-bold); }
+.st-ret__last { grid-area: last; font-size: var(--fs-sm); color: var(--ink-secondary); }
+
+@media (max-width: 1000px) { .st-cards { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 560px) { .st-cards { grid-template-columns: 1fr; } }

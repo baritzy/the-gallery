@@ -1,0 +1,214 @@
+/* =============================================================================
+ * finance.css  -  עיצוב כספים (C29 עד C34) + מכירה (sale-) + קבלות (rcv-)
+ * OWNER: agent C (wave 3). רק טוקנים מ-tokens.css. admin בלבד.
+ * ========================================================================== */
+
+.fin-head-actions { display: flex; gap: var(--s-2); flex-wrap: wrap; }
+
+/* ---- ניווט תקופות (C31) ---- */
+.fin-period {
+  display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap;
+  background: var(--bg-surface); border: 1px solid var(--line); border-radius: var(--r-lg);
+  padding: var(--s-3); margin-bottom: var(--s-4);
+}
+.fin-seg > button { min-height: var(--touch); font-size: var(--fs-md); padding: 0 var(--s-4); }
+.fin-nav { display: flex; align-items: center; gap: var(--s-2); }
+.fin-nav__btn {
+  width: var(--touch); height: var(--touch); display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--bg-surface); color: var(--ink); cursor: pointer;
+}
+.fin-nav__btn .ico { width: 26px; height: 26px; }
+.fin-nav__btn:hover:not([disabled]) { background: var(--primary-soft); color: var(--primary); }
+.fin-nav__btn[disabled] { opacity: .3; cursor: default; }
+.fin-nav__label { min-width: 210px; text-align: center; font-size: var(--fs-lg); font-weight: var(--fw-bold); }
+.fin-date { display: flex; align-items: center; gap: var(--s-2); font-size: var(--fs-sm); color: var(--ink-secondary); }
+.fin-date input {
+  height: var(--touch); font-size: var(--fs-md); padding: 0 var(--s-2); border: 1px solid var(--line-strong);
+  border-radius: var(--r-md); background: var(--bg-surface); color: var(--ink); font-family: var(--font-ui);
+}
+.fin-today[disabled] { opacity: .45; }
+
+/* ---- חלוקת הכנסות (C33) ---- */
+.fin-split { margin-bottom: var(--s-5); }
+.fin-split__head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); flex-wrap: wrap; margin-bottom: var(--s-3); font-size: var(--fs-lg); font-weight: var(--fw-bold); }
+.fin-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--s-3); }
+.fin-tile {
+  display: flex; flex-direction: column; gap: 4px; text-align: start; font-family: var(--font-ui);
+  background: var(--bg-surface); border: 2px solid var(--line); border-top: 5px solid var(--fin-c, var(--primary));
+  border-radius: var(--r-lg); padding: var(--s-4); cursor: pointer; color: var(--ink);
+}
+.fin-tile.is-static { cursor: default; }
+.fin-tile.fin-c-blue { --fin-c: var(--st-blue); }
+.fin-tile.fin-c-green { --fin-c: var(--st-green); }
+.fin-tile.fin-c-primary { --fin-c: var(--primary); }
+.fin-tile.fin-c-orange { --fin-c: var(--st-orange); }
+.fin-tile.is-on { border-color: var(--fin-c); background: var(--primary-soft); border-top-width: 5px; }
+.fin-tile__k { font-size: var(--fs-sm); color: var(--ink-secondary); font-weight: var(--fw-semibold); }
+.fin-tile__v { font-size: var(--fs-2xl); font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; line-height: 1.15; }
+.fin-tile__s { font-size: var(--fs-sm); color: var(--ink-muted); }
+.fin-muted { color: var(--ink-muted); margin: var(--s-2) 0 0; }
+
+/* ---- סקשנים ---- */
+.fin-sec { background: var(--bg-surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: var(--s-4); margin-bottom: var(--s-5); }
+.fin-sec__title { display: flex; align-items: center; gap: var(--s-2); font-size: var(--fs-xl); margin: 0 0 var(--s-4); }
+.fin-sec__title .ico { width: 24px; height: 24px; color: var(--primary); }
+.fin-sec__n { font-size: var(--fs-sm); background: var(--bg-sunken); border-radius: var(--r-pill); padding: 2px 10px; color: var(--ink-secondary); }
+
+/* ---- סוף יום (C30) ---- */
+.fin-methods { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--s-3); margin-bottom: var(--s-4); }
+.fin-method {
+  display: flex; flex-direction: column; gap: 2px; padding: var(--s-3) var(--s-4);
+  border-radius: var(--r-md); background: var(--bg-surface-alt); border-inline-start: 5px solid var(--line-strong);
+}
+.fin-method.is-cash { border-inline-start-color: var(--st-green); }
+.fin-method.is-credit { border-inline-start-color: var(--st-blue); }
+.fin-method.is-other { border-inline-start-color: var(--st-purple); }
+.fin-method.is-none { border-inline-start-color: var(--st-orange); }
+.fin-method.is-receipts { border-inline-start-color: var(--walnut); background: var(--walnut-soft); }
+.fin-method.is-empty .fin-method__v { color: var(--ink-muted); }
+.fin-method__k { font-size: var(--fs-md); font-weight: var(--fw-semibold); }
+.fin-method__v { font-size: var(--fs-xl); font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
+.fin-method__n { font-size: var(--fs-sm); color: var(--ink-secondary); }
+
+.fin-alerts { border-radius: var(--r-md); padding: var(--s-3) var(--s-4); background: var(--st-green-soft); }
+.fin-alerts.has-alerts { background: var(--st-red-soft); border: 1px solid var(--st-red); }
+.fin-alerts__head { display: flex; align-items: center; gap: var(--s-2); font-size: var(--fs-lg); font-weight: var(--fw-bold); color: var(--st-green-text); }
+.fin-alerts.has-alerts .fin-alerts__head { color: var(--st-red-text); margin-bottom: var(--s-2); }
+.fin-alerts__head .ico { width: 24px; height: 24px; }
+.fin-alert {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); flex-wrap: wrap;
+  padding: var(--s-2) 0; border-top: 1px solid rgba(226, 68, 92, .25); font-size: var(--fs-md);
+}
+
+/* ---- תנועות ---- */
+.fin-rows { display: flex; flex-direction: column; }
+.fin-row {
+  display: grid; grid-template-columns: 72px 64px minmax(0, 1fr) 150px 220px 110px; align-items: center; gap: var(--s-3);
+  padding: var(--s-2) 0; border-bottom: 1px solid var(--line); min-height: 60px;
+}
+.fin-row.is-exp { grid-template-columns: 72px minmax(0, 1fr) 150px 220px 110px 48px; }
+.fin-row:last-child { border-bottom: 0; }
+.fin-row__badge { font-size: var(--fs-xs); font-weight: var(--fw-bold); border-radius: var(--r-pill); padding: 3px 8px; text-align: center; }
+.fin-row.is-order .fin-row__badge { background: var(--st-blue-soft); color: var(--st-blue-text); }
+.fin-row.is-sale .fin-row__badge { background: var(--st-green-soft); color: var(--st-green-text); }
+.fin-row.is-exp .fin-row__badge { background: var(--st-orange-soft); color: var(--st-orange-text); }
+.fin-row__num {
+  font-size: var(--fs-xl); font-weight: var(--fw-bold); background: none; border: 0; padding: 0; min-height: var(--touch);
+  color: var(--ink); cursor: pointer; direction: ltr; text-align: start;
+}
+button.fin-row__num:hover { color: var(--primary); }
+.fin-row__num--sale { display: inline-flex; align-items: center; color: var(--st-green-text); cursor: default; }
+.fin-row__num--sale .ico { width: 26px; height: 26px; }
+.fin-row__main { display: flex; flex-direction: column; min-width: 0; }
+.fin-row__main b { font-size: var(--fs-md); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fin-row__main small { color: var(--ink-secondary); font-size: var(--fs-sm); }
+.fin-row__date { color: var(--ink-secondary); font-size: var(--fs-sm); }
+.fin-row__m { font-size: var(--fs-sm); color: var(--ink-secondary); }
+.fin-row__rc { background: none; border: 0; color: var(--link); font-size: var(--fs-sm); padding: 6px 4px; min-height: 44px; min-width: 44px; cursor: pointer; text-decoration: underline; }
+.fin-row__rc.is-missing { color: var(--st-red-text); font-weight: var(--fw-bold); text-decoration: none; cursor: default; }
+.fin-row__amt { font-size: var(--fs-lg); font-weight: var(--fw-bold); text-align: end; font-variant-numeric: tabular-nums; }
+.fin-row__amt.is-neg { color: var(--st-orange-text); }
+
+/* ---- מכירת מוצר (C21) ---- */
+.sale-prod { background: var(--walnut-soft); border-radius: var(--r-md); padding: var(--s-4); margin-bottom: var(--s-4); }
+.sale-prod__name { font-size: var(--fs-xl); font-weight: var(--fw-bold); color: var(--walnut); }
+.sale-prod__meta { color: var(--ink-secondary); margin-top: 4px; }
+.sale-step { font-size: var(--fs-lg); font-weight: var(--fw-bold); margin: var(--s-5) 0 var(--s-2); }
+.sale-hits { display: flex; flex-direction: column; gap: var(--s-1); margin: var(--s-2) 0; }
+.sale-hit {
+  display: flex; justify-content: space-between; align-items: center; gap: var(--s-3); min-height: var(--touch);
+  padding: 0 var(--s-3); border: 1px solid var(--line); border-radius: var(--r-md); background: var(--bg-surface); cursor: pointer;
+  font-size: var(--fs-md); font-family: var(--font-ui); color: var(--ink);
+}
+.sale-hit:hover { background: var(--primary-soft); border-color: var(--primary); }
+.sale-nohit { color: var(--ink-muted); padding: var(--s-2) 0; }
+.sale-picked {
+  display: flex; align-items: center; gap: var(--s-3); padding: var(--s-3); border-radius: var(--r-md);
+  background: var(--primary-soft); font-size: var(--fs-lg); margin: var(--s-2) 0;
+}
+.sale-picked[hidden], .sale-modal [data-newcust][hidden] { display: none; }
+.sale-picked .ico { width: 24px; height: 24px; color: var(--primary); }
+.sale-picked .btn { margin-inline-start: auto; }
+.sale-price { font-size: 2rem !important; height: 64px !important; font-weight: var(--fw-bold); text-align: center; max-width: 220px; }
+.sale-methods { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s-3); }
+.sale-method {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--s-2);
+  min-height: 104px; border: 2px solid var(--line-strong); border-radius: var(--r-lg); background: var(--bg-surface);
+  font-size: var(--fs-xl); font-weight: var(--fw-bold); font-family: var(--font-ui); color: var(--ink); cursor: pointer;
+}
+.sale-method .ico { width: 36px; height: 36px; color: var(--primary); }
+.sale-method:hover, .sale-method:focus-visible { border-color: var(--primary); background: var(--primary-soft); outline: none; }
+.sale-method.is-busy { opacity: .6; pointer-events: none; }
+.sale-plist { display: flex; flex-direction: column; gap: var(--s-2); margin-top: var(--s-3); }
+.sale-prow {
+  display: grid; grid-template-columns: 64px 1fr auto; align-items: center; gap: var(--s-3); min-height: 64px; padding: 0 var(--s-3);
+  border: 1px solid var(--line); border-radius: var(--r-md); background: var(--bg-surface); cursor: pointer; text-align: start;
+  font-family: var(--font-ui); color: var(--ink);
+}
+.sale-prow:hover { border-color: var(--primary); background: var(--primary-soft); }
+.sale-prow__st { font-size: var(--fs-lg); font-weight: var(--fw-bold); color: var(--st-green-text); }
+.sale-prow__name { display: flex; flex-direction: column; font-size: var(--fs-lg); font-weight: var(--fw-semibold); }
+.sale-prow__name small { font-size: var(--fs-sm); color: var(--ink-secondary); font-weight: var(--fw-regular); }
+.sale-prow__price { font-size: var(--fs-lg); font-weight: var(--fw-bold); }
+
+/* ---- קבלות (C32) ---- */
+.rcv-tools { display: flex; gap: var(--s-3); align-items: center; flex-wrap: wrap; margin-bottom: var(--s-3); }
+.rcv-search { flex: 1; min-width: 260px; margin: 0; }
+.rcv-tools .seg > button { min-height: var(--touch); font-size: var(--fs-md); }
+.rcv-count { color: var(--ink-secondary); margin-bottom: var(--s-2); }
+.rcv-list { display: flex; flex-direction: column; gap: var(--s-1); max-height: 60vh; overflow-y: auto; }
+.rcv-row {
+  display: grid; grid-template-columns: 90px minmax(0, 1fr) 90px 110px 110px; align-items: center; gap: var(--s-3);
+  min-height: 64px; padding: 0 var(--s-3); border: 1px solid var(--line); border-radius: var(--r-md);
+  background: var(--bg-surface); cursor: pointer; text-align: start; font-family: var(--font-ui); color: var(--ink);
+}
+.rcv-row:hover { border-color: var(--primary); background: var(--primary-soft); }
+.rcv-row__no { font-size: var(--fs-xl); font-weight: var(--fw-bold); color: var(--st-red-text); }
+.rcv-row__main { display: flex; flex-direction: column; min-width: 0; }
+.rcv-row__main b { font-size: var(--fs-md); }
+.rcv-row__main small { color: var(--ink-secondary); font-size: var(--fs-sm); }
+.rcv-row__m { font-size: var(--fs-sm); color: var(--ink-secondary); }
+.rcv-row__amt { font-size: var(--fs-lg); font-weight: var(--fw-bold); text-align: end; }
+.rcv-row__sent { display: inline-flex; align-items: center; gap: 4px; font-size: var(--fs-xs); color: var(--ink-muted); }
+.rcv-row__sent.is-sent { color: var(--st-green-text); }
+.rcv-row__sent .ico { width: 16px; height: 16px; }
+
+/* קבלה בעיצוב פנקס הקבלות של החנות */
+.rcv-paper {
+  border: 2px solid var(--walnut); border-radius: var(--r-md); padding: var(--s-5); background: #FFFDF8;
+  box-shadow: var(--e2); position: relative;
+}
+.rcv-paper__head { display: flex; gap: var(--s-4); align-items: flex-start; border-bottom: 2px solid var(--walnut); padding-bottom: var(--s-3); margin-bottom: var(--s-3); }
+.rcv-paper__logo { width: 64px; height: 64px; border-radius: var(--r-md); object-fit: cover; flex: none; }
+.rcv-paper__shop { flex: 1; font-size: var(--fs-sm); color: var(--ink-secondary); line-height: 1.5; }
+.rcv-paper__name { font-size: var(--fs-2xl); font-weight: var(--fw-bold); color: var(--walnut); line-height: 1.1; }
+.rcv-paper__no { text-align: center; flex: none; }
+.rcv-paper__no span { display: block; font-size: var(--fs-lg); font-weight: var(--fw-bold); }
+.rcv-paper__no b { display: block; font-size: var(--fs-num); color: var(--st-red-text); direction: ltr; }
+.rcv-paper__line { display: flex; justify-content: space-between; gap: var(--s-3); padding: var(--s-2) 0; border-bottom: 1px dashed var(--line-strong); font-size: var(--fs-md); }
+.rcv-paper__line span { color: var(--ink-secondary); }
+.rcv-paper__line small { color: var(--ink-secondary); font-weight: var(--fw-regular); }
+.rcv-paper__sum { display: flex; justify-content: space-between; align-items: baseline; padding: var(--s-3) 0; font-size: var(--fs-xl); }
+.rcv-paper__sum b { font-size: var(--fs-2xl); }
+.rcv-paper__sig { display: flex; justify-content: space-between; color: var(--ink-secondary); padding-top: var(--s-3); border-top: 1px solid var(--line); }
+.rcv-paper__sim { margin-top: var(--s-3); font-size: var(--fs-xs); color: var(--ink-muted); text-align: center; }
+.rcv-sent { display: flex; align-items: center; gap: var(--s-2); color: var(--st-green-text); font-weight: var(--fw-semibold); margin: var(--s-3) 0 0; }
+.rcv-sent .ico { width: 20px; height: 20px; }
+.rcv-note { color: var(--ink-secondary); margin: var(--s-3) 0 0; }
+
+@media (max-width: 1100px) {
+  .fin-methods { grid-template-columns: repeat(3, 1fr); }
+  .fin-row, .fin-row.is-exp { grid-template-columns: 64px minmax(0, 1fr) 110px; grid-auto-flow: row; }
+  .fin-row > .fin-row__badge { display: none; }
+  .fin-row.is-exp { grid-template-columns: minmax(0, 1fr) 110px 48px; }
+  .fin-row__date, .fin-row__m { grid-column: 2 / 3; }
+  .fin-row.is-exp .fin-row__date, .fin-row.is-exp .fin-row__m { display: none; }
+}
+@media (max-width: 760px) {
+  .fin-tiles { grid-template-columns: 1fr 1fr; }
+  .fin-methods { grid-template-columns: 1fr 1fr; }
+  .rcv-row { grid-template-columns: 70px minmax(0, 1fr) 90px; }
+  .rcv-row__m, .rcv-row__sent { display: none; }
+  .sale-methods { grid-template-columns: 1fr; }
+  .fin-nav__label { min-width: 0; }
+}

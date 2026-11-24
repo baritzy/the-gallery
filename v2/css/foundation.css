@@ -1,0 +1,248 @@
+/* =============================================================================
+ * foundation.css  -  שכבת v2 משותפת: מגע גדול (C5), ניווט, מודלים, טוסט,
+ * שער קוד, מסך בחירה, הגדרות, דגל אדום, וקומפוננטות משותפות לכל המודולים
+ * (wtable, bigcheck, seg, fact, tone-*). OWNER: foundation (wave 2).
+ * נטען אחרי app.css ומנצח אותו. רק בהיר (C4).
+ * ========================================================================== */
+
+html { color-scheme: light; background: var(--bg-canvas); -webkit-text-size-adjust: 100%; }
+body { background: var(--bg-canvas); }
+
+/* ---- D3: רשת ביטחון. כל רכיב כספי מסומן class="money" ונעלם בסדנה ---- */
+[data-role="workshop"] .money { display: none !important; }
+
+/* ---- C5: מטרות מגע גדולות ---- */
+.btn { height: auto; min-height: var(--touch); padding: 0 var(--s-5); line-height: 1.2; }
+.btn .ico { width: 20px; height: 20px; flex: none; }
+.btn--sm { min-height: 44px; height: auto; padding: 0 var(--s-4); font-size: var(--fs-sm); }
+.btn--lg { min-height: var(--touch-lg); padding: 0 var(--s-6); font-size: var(--fs-md); font-weight: var(--fw-bold); }
+.btn--danger-solid { background: var(--st-red); color: #fff; }
+.btn--danger-solid:hover { background: var(--st-red-h); }
+.btn--warn { background: var(--st-orange-soft); color: var(--st-orange-text); }
+.btn.is-ok { background: var(--st-green); color: #fff; }
+.fchip { height: 44px; font-size: var(--fs-sm); }
+.search input, .select { height: var(--touch); font-size: var(--fs-md); }
+.modal__close { width: 48px; height: 48px; font-size: 26px; flex: none; }
+.form-field label { font-size: var(--fs-sm); }
+.iconbtn {
+  width: var(--touch); height: var(--touch); border: 0; border-radius: var(--r-md);
+  background: transparent; color: var(--ink-secondary); cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.iconbtn:hover { background: var(--bg-sunken); color: var(--st-red-text); }
+.iconbtn .ico { width: 20px; height: 20px; }
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.pill--lg { height: 40px; padding: 0 18px; font-size: var(--fs-md); }
+.pill.is-yellow { background: var(--st-yellow); color: var(--on-status-yellow); }
+
+/* ---- ניווט ---- */
+.brand__text { display: flex; flex-direction: column; min-width: 0; }
+.brand__name { font-size: var(--fs-lg); font-weight: var(--fw-bold); color: var(--walnut); line-height: 1.1; }
+.brand__role { font-size: var(--fs-xs); color: var(--ink-muted); font-weight: var(--fw-semibold); }
+.nav__item { min-height: 56px; font-size: var(--fs-md); }
+.nav__badge { min-width: 24px; height: 24px; font-size: var(--fs-2xs); }
+.rail__foot { margin-top: auto; padding: var(--s-3) 0 0; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: var(--s-2); }
+.rail__tool {
+  display: flex; align-items: center; gap: var(--s-2); width: 100%; min-height: var(--touch);
+  padding: 0 var(--s-3); border: 1px solid var(--line); border-radius: var(--r-md);
+  background: var(--bg-surface); color: var(--ink-secondary); font: var(--fw-semibold) var(--fs-sm)/1.2 var(--font-ui);
+  cursor: pointer; text-decoration: none;
+}
+.rail__tool:hover { background: var(--bg-surface-alt); }
+.rail__tool .ico { width: 20px; height: 20px; flex: none; }
+.rail__tool--link { border-color: transparent; color: var(--ink-muted); }
+
+@media (max-width: 900px) {
+  .bottombar { overflow-x: auto; justify-content: flex-start; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .bottombar::-webkit-scrollbar { display: none; }
+  .bottombar .nav__item { flex: 1 0 76px; min-width: 76px; font-size: 12px; }
+  .bottombar .nav__item .ico { width: 24px; height: 24px; }
+}
+
+/* ---- מודל: גדלים ---- */
+.modal { max-width: 680px; }
+.modal--wide { max-width: 940px; }
+.modal--xwide { max-width: 1180px; }
+.modal__title { font-size: var(--fs-xl); display: flex; align-items: center; gap: var(--s-2); }
+.modal__title .ico { width: 24px; height: 24px; margin: 0; }
+.modal__foot { flex-wrap: wrap; }
+/* הכותרת התחתונה הדביקה נצמדת לתחתית המסך: בלי ריפוד תחתון ברקע (אחרת תוכן מציץ מתחתיה) */
+.modal-backdrop { padding-bottom: 0; }
+.modal { margin-bottom: var(--s-8); }
+@media (max-width: 768px) {
+  .modal-backdrop { padding: var(--s-2) var(--s-2) 0; }
+  .modal { margin-bottom: var(--s-2); }
+}
+
+/* ---- טוסט ---- */
+.toast-host {
+  position: fixed; inset-inline: 0; bottom: calc(var(--s-6) + env(safe-area-inset-bottom));
+  display: flex; flex-direction: column; align-items: center; gap: var(--s-2);
+  z-index: 80; pointer-events: none; padding: 0 var(--s-4);
+}
+.toast {
+  pointer-events: auto; background: var(--ink); color: #fff; border-radius: var(--r-lg);
+  box-shadow: var(--e4); padding: var(--s-3) var(--s-5); max-width: 560px; width: max-content;
+  display: flex; align-items: center; gap: var(--s-4); flex-wrap: wrap;
+  font-size: var(--fs-md); animation: modalIn var(--dur-base) var(--ease-out) both;
+}
+.toast__actions { display: flex; gap: var(--s-2); }
+.toast .btn--ghost { color: #fff; }
+.toast .btn--ghost:hover { background: rgba(255,255,255,.12); }
+@media (max-width: 900px) { .toast-host { bottom: calc(var(--bottombar-h) + env(safe-area-inset-bottom) + var(--s-3)); } }
+
+/* ---- C37: צבע שם לקוח לפי ביקורים (2 = צהוב, 3+ = ירוק) ---- */
+.tone-yellow, .tone-green { border-radius: var(--r-sm); padding: 1px 8px; font-weight: var(--fw-semibold); }
+.tone-yellow { background: var(--st-yellow); color: var(--on-status-yellow); }
+.tone-green { background: var(--st-green); color: #fff; }
+
+/* =============================================================================
+ * קומפוננטות משותפות (מותר לשימוש בכל מודול)
+ * ========================================================================== */
+
+/* טבלה בסגנון הדף הפיזי (orders card, טופס הזמנה, טבלת עבודה) */
+.tablewrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--bg-surface); }
+.wtable { width: 100%; border-collapse: collapse; font-size: var(--fs-md); }
+.wtable th {
+  background: var(--bg-surface-alt); color: var(--ink-secondary); font-size: var(--fs-xs);
+  font-weight: var(--fw-bold); text-align: start; padding: 10px 10px; white-space: nowrap;
+  border-bottom: 1px solid var(--line);
+}
+.wtable td { padding: 6px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; min-height: 52px; height: 52px; }
+.wtable tr:last-child td { border-bottom: 0; }
+.wtable td + td, .wtable th + th { border-inline-start: 1px solid var(--line); }
+.wtable .c { text-align: center; }
+.wtable td.mono, .wtable th.mono { display: table-cell; direction: ltr; text-align: end; }
+.wtable tr.is-done td { background: var(--st-green-soft); }
+.wtable input[type="text"], .wtable input[type="number"], .wtable select {
+  width: 100%; min-width: 64px; height: 44px; border: 1px solid var(--line-strong); border-radius: var(--r-sm);
+  padding: 0 8px; font: inherit; background: var(--bg-surface); color: var(--ink);
+}
+.wtable input:focus-visible, .wtable select:focus-visible { outline: none; border-color: var(--primary); box-shadow: var(--focus-ring); }
+
+/* תיבת סימון גדולה (48px) */
+.bigcheck { display: inline-flex; width: 48px; height: 48px; align-items: center; justify-content: center; cursor: pointer; position: relative; }
+.bigcheck input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.bigcheck span {
+  width: 32px; height: 32px; border-radius: 6px; border: 2px solid var(--line-strong); background: var(--bg-surface);
+  display: inline-flex; align-items: center; justify-content: center; transition: background var(--dur-fast) var(--ease);
+}
+.bigcheck input:checked + span { background: var(--st-green); border-color: var(--st-green); }
+.bigcheck input:checked + span::after { content: ""; width: 9px; height: 16px; border: solid #fff; border-width: 0 3px 3px 0; transform: rotate(45deg) translate(-1px, -2px); }
+.bigcheck input:focus-visible + span { box-shadow: var(--focus-ring); }
+
+/* חומר V / X */
+.matl { display: inline-flex; min-width: 34px; height: 34px; align-items: center; justify-content: center; border-radius: var(--r-sm); font-weight: var(--fw-bold); }
+.matl--V { background: var(--st-green); color: #fff; }
+.matl--X { background: var(--st-red); color: #fff; }
+.matl--none { color: var(--ink-muted); }
+
+/* בורר מקטעים גדול (segmented) */
+.seg { display: flex; gap: var(--s-2); }
+.seg > button {
+  flex: 1; min-height: var(--touch-lg); border-radius: var(--r-md); border: 2px solid var(--line-strong);
+  background: var(--bg-surface); color: var(--ink-secondary); font: var(--fw-bold) var(--fs-md)/1.2 var(--font-ui); cursor: pointer;
+}
+.seg > button[aria-checked="true"], .seg > button[aria-pressed="true"] { border-color: var(--primary); background: var(--primary-soft); color: var(--primary); }
+
+/* עובדה (תווית + ערך) */
+.fact__k { font-size: var(--fs-xs); color: var(--ink-muted); font-weight: var(--fw-semibold); }
+.fact__v { font-size: var(--fs-md); font-weight: var(--fw-semibold); color: var(--ink); }
+.fact--strong .fact__v { font-size: var(--fs-xl); font-weight: var(--fw-bold); }
+.fact--strong.is-owed .fact__v { color: var(--st-red-text); }
+
+/* =============================================================================
+ * דגל אדום (flag.js)
+ * ========================================================================== */
+.flag-kinds { display: flex; gap: var(--s-2); margin-bottom: var(--s-4); flex-wrap: wrap; }
+.flag-kind {
+  flex: 1 1 200px; min-height: var(--touch-lg); border-radius: var(--r-md); border: 2px solid var(--line-strong);
+  background: var(--bg-surface); color: var(--ink-secondary); cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--s-2);
+  font: var(--fw-bold) var(--fs-md)/1.2 var(--font-ui);
+}
+.flag-kind .ico { width: 20px; height: 20px; }
+.flag-kind[aria-checked="true"] { border-color: var(--st-red); background: var(--st-red-soft); color: var(--st-red-text); }
+.flag-quick { display: flex; flex-wrap: wrap; gap: var(--s-2); margin-top: var(--s-3); }
+.flag-quick .fchip { height: auto; min-height: 44px; }
+.flag-current { background: var(--st-red-soft); border-inline-start: 6px solid var(--st-red); border-radius: var(--r-md); padding: var(--s-4); margin-bottom: var(--s-4); }
+.flag-current__kind { display: flex; align-items: center; gap: var(--s-2); color: var(--st-red-text); font-weight: var(--fw-bold); }
+.flag-current__kind .ico { width: 20px; height: 20px; }
+.flag-current__reason { font-size: var(--fs-lg); margin: 6px 0; }
+.flag-current__since { font-size: var(--fs-sm); color: var(--ink-secondary); }
+.modal--flag textarea, .settings textarea { min-height: 96px; font-size: var(--fs-md); }
+
+/* =============================================================================
+ * שער קוד מנהל (admin-gate.js)
+ * ========================================================================== */
+.gate { position: fixed; inset: 0; background: var(--bg-canvas); z-index: 100; display: flex; align-items: center; justify-content: center; padding: var(--s-4); }
+.gate__box { text-align: center; width: 100%; max-width: 360px; }
+.gate__logo { width: 84px; height: 84px; border-radius: 18px; object-fit: cover; box-shadow: var(--e2); }
+.gate__title { font-size: var(--fs-2xl); margin: var(--s-3) 0 0; }
+.gate__sub { color: var(--ink-secondary); margin: 4px 0 var(--s-5); }
+.gate__dots { display: flex; gap: var(--s-4); justify-content: center; margin-bottom: var(--s-2); }
+.gate__dots span { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--ink-muted); }
+.gate__dots span.on { background: var(--primary); border-color: var(--primary); }
+.gate__dots.shake { animation: shake 360ms var(--ease); }
+@keyframes shake { 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+.gate__msg { min-height: 26px; color: var(--st-red-text); font-weight: var(--fw-semibold); }
+.gate__pad { direction: ltr; display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s-3); margin-top: var(--s-3); }
+.gate__pad button {
+  height: 76px; border-radius: var(--r-lg); border: 1px solid var(--line); background: var(--bg-surface);
+  font: var(--fw-semibold) 1.75rem/1 var(--font-ui); color: var(--ink); cursor: pointer; box-shadow: var(--e1);
+}
+.gate__pad button:active { background: var(--primary-soft); }
+.gate__alt { display: flex; align-items: center; justify-content: center; color: var(--ink-secondary); font-weight: var(--fw-semibold); text-decoration: none; }
+
+/* =============================================================================
+ * מסך בחירה (index.html)
+ * ========================================================================== */
+.chooser-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: var(--s-4); }
+.chooser { text-align: center; width: 100%; max-width: 860px; }
+.chooser__logo { width: 96px; height: 96px; border-radius: 20px; object-fit: cover; box-shadow: var(--e2); }
+.chooser__title { font-size: var(--fs-page); margin: var(--s-3) 0 0; color: var(--walnut); }
+.chooser__sub { font-size: var(--fs-lg); color: var(--ink-secondary); margin: var(--s-1) 0 var(--s-8); }
+.chooser__btns { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-5); }
+.chooser__btn {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--s-3);
+  min-height: 260px; padding: var(--s-6); border-radius: 20px; text-decoration: none;
+  background: var(--bg-surface); border: 2px solid var(--line); box-shadow: var(--e2); color: var(--ink);
+  transition: transform var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+}
+.chooser__btn:active { transform: scale(0.98); }
+.chooser__btn svg { width: 72px; height: 72px; }
+.chooser__btn b { font-size: 2rem; }
+.chooser__btn small { font-size: var(--fs-md); color: var(--ink-secondary); }
+.chooser__btn--admin { border-color: var(--primary); }
+.chooser__btn--admin svg { color: var(--primary); }
+.chooser__btn--workshop { border-color: var(--walnut); }
+.chooser__btn--workshop svg { color: var(--walnut); }
+@media (max-width: 640px) { .chooser__btns { grid-template-columns: 1fr; } .chooser__btn { min-height: 180px; } }
+
+/* =============================================================================
+ * הגדרות וגיבוי (settings.js)
+ * ========================================================================== */
+.set__sec { padding: var(--s-4) 0; border-bottom: 1px solid var(--line); }
+.set__sec:first-child { padding-top: 0; }
+.set__sec:last-child { border-bottom: 0; }
+.set__title { display: flex; align-items: center; gap: var(--s-2); font-size: var(--fs-lg); margin: 0 0 var(--s-3); }
+.set__title .ico { width: 22px; height: 22px; color: var(--primary); }
+.set__note { margin: 0 0 var(--s-3); color: var(--ink-secondary); }
+.set__btns { display: flex; gap: var(--s-2); flex-wrap: wrap; margin-bottom: var(--s-2); }
+.set__file { position: relative; }
+.set__modes { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--s-2); }
+.set__mode {
+  min-height: 72px; padding: var(--s-3); text-align: start; border-radius: var(--r-md); border: 2px solid var(--line-strong);
+  background: var(--bg-surface); cursor: pointer; display: flex; flex-direction: column; gap: 2px; font: inherit; color: var(--ink);
+}
+.set__mode small { color: var(--ink-secondary); font-size: var(--fs-xs); }
+.set__mode[aria-checked="true"] { border-color: var(--primary); background: var(--primary-soft); }
+.settings .form-grid { margin-bottom: var(--s-3); }
+
+/* תיקון ניגודיות: טקסט לבן על מונה הניווט (גובר על .is-red הכללי מ-app.css) */
+.nav__badge.is-red, .nav__badge.is-orange, .nav__badge.is-primary { color: #fff; }
+
+/* ---- W4: הגדרות, סעיף סנכרון ---- */
+.set__facts { display: grid; grid-template-columns: auto 1fr; gap: var(--s-2) var(--s-4); margin: 0 0 var(--s-3); font-size: var(--fs-md); }
+.set__facts dt { color: var(--ink-secondary); }
+.set__facts dd { margin: 0; font-weight: var(--fw-semibold); }
