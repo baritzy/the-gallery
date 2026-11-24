@@ -278,7 +278,8 @@
         '<button class="btn btn--danger" data-delete>' + I.trash + 'מחיקה</button>' +
       '</div>';
 
-    return head + '<div class="modal__body">' + flag + statusBar + itemsTable + dates + notes + money + '</div>' + foot;
+    var history = Gallery.flagHistoryHTML ? Gallery.flagHistoryHTML(o) : '';
+    return head + '<div class="modal__body">' + flag + statusBar + itemsTable + dates + notes + history + money + '</div>' + foot;
   }
   function fact(k, v) { return '<div class="fact"><div class="fact__k">' + k + '</div><div class="fact__v">' + v + '</div></div>'; }
 
@@ -320,7 +321,16 @@
     var o = D.orders.peekOne(card.id);
     if (!o) return;
     var t = e.target;
-    if (t.matches('[data-done]')) { D.orders.setItemDone(o.id, t.getAttribute('data-done'), t.checked); return; }
+    if (t.matches('[data-done]')) {
+      var checked = t.checked;
+      D.orders.setItemDone(o.id, t.getAttribute('data-done'), checked).then(function (next) {
+        // A2: השורה האחרונה בוצעה = שואלים אם מוכנה, ואז חוזרים לכרטיס
+        if (checked && next && D.orders.allDone(next) && next.status !== 'ready' && next.status !== 'delivered' && Gallery.askOrderReady) {
+          reopenAfter(o.id, function (done) { Gallery.askOrderReady(o.id, { onClose: done }); });
+        }
+      });
+      return;
+    }
     if (t.matches('[data-due]') && t.value) { o.dueDate = U.fromDateInput(t.value); D.orders.save(o); }
   }
   function custPhone(o) { var c = D.customers.peekOne(o.customerId); return c ? c.phone : ''; }

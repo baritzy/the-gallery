@@ -46,6 +46,13 @@
   /* ---------------------------------------------------------------------------
    * רינדור
    * ------------------------------------------------------------------------- */
+  /* B7: הערת המלאי של הפריט (למשל "מזמין 10 מוטות, יותר זול") ליד השורה */
+  function noteHTML(l) {
+    var it = L.itemOf(l);
+    var note = it && String(it.note || '').trim();
+    return note ? '<div class="sup-line__fnote" data-fnote><b>הערה במלאי:</b> ' + esc(D.reminders ? D.reminders.safeText(note) : note) + '</div>' : '';
+  }
+
   function lineHTML(l) {
     var qty = L.qtyOf(l);
     return '<li class="sup-line" data-line="' + esc(l.id) + '">' +
@@ -57,6 +64,7 @@
       '<div class="sup-line__main">' +
         '<div class="sup-line__label">' + esc(l.label || 'פריט') + '</div>' +
         '<div class="sup-line__meta"><span class="sup-line__unit">' + esc(L.unitOf(l)) + '</span>' + sourceBadge(l) + '</div>' +
+        noteHTML(l) +
       '</div>' +
       '<button type="button" class="iconbtn sup-line__rm" data-rm aria-label="הסר שורה">' + I.trash + '</button>' +
     '</li>';

@@ -100,3 +100,9 @@
 [data-view="suppliers"] .sup-card__del { width: var(--touch); height: var(--touch); color: var(--st-red-text); }
 [data-view="suppliers"] .sup-card__del:hover { background: var(--st-red-soft); }
 [data-view="suppliers"] .sup-card__title h2 { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+
+/* סבב 4 (B7): הערת המלאי של הפריט ליד השורה */
+[data-view="suppliers"] .sup-line__fnote {
+  margin-top: 6px; font-size: var(--fs-sm); color: var(--ink); background: var(--st-yellow-soft);
+  border-radius: var(--r-sm); padding: 4px var(--s-2); display: inline-block; overflow-wrap: anywhere;
+}

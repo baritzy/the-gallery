@@ -21,7 +21,7 @@ var VERSIONED = [
   'js/version.js', 'js/data/store.js', 'js/data/collections.js', 'js/data/orders-model.js', 'js/data/seed.js', 'js/data/trash.js', 'js/data/demo.js',
   'js/data-ext-worktable.js', 'js/data-ext-inventory.js', 'js/data-ext-reminders.js',
   'js/data-firestore.js', 'js/data-firestore-ui.js', 'js/firebase-config.js',
-  'js/icons.js', 'js/util.js', 'js/app.js', 'js/flag.js', 'js/trash-ui.js',
+  'js/icons.js', 'js/util.js', 'js/app.js', 'js/flag.js', 'js/trash-ui.js', 'js/order-status-ui.js', 'js/reminder-popup.js',
   'js/admin-gate.js', 'js/settings.js', 'js/orders.js', 'js/orders-form.js', 'js/orders-pay.js',
   'js/worktable.js', 'js/inventory.js', 'js/inventory-raw.js', 'js/inventory-count.js', 'js/inventory-products.js',
   'js/suppliers.js', 'js/customers.js', 'js/reminders.js', 'js/finance.js', 'js/stats.js', 'js/sales.js', 'js/print.js',

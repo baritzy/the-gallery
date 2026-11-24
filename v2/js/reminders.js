@@ -81,6 +81,7 @@
     D.reminderRules.subscribe(render);
     if (ADMIN) D.customers.subscribe(render);
     D.reminderOrder.subscribe(function (ids) { orderIds = ids || []; render(); });
+    global.addEventListener('gallery:resp-hidden', render);
     global.setInterval(render, 5 * 60000); /* כללי זמן נדלקים גם בלי שינוי בנתונים */
   }
 
@@ -103,8 +104,9 @@
   function cardHTML(c, i, n) {
     var o = c.order, look = U.orderLook(o), main = c.reasons[0];
     var more = c.reasons.slice(1).map(function (r) {
-      return '<li class="rem-item__more rem-lv-' + r.level + '">' + esc(reasonText(r)) + '</li>';
+      return '<li class="rem-item__more rem-lv-' + r.level + (r.kind === 'response' ? ' rem-resp' : '') + '">' + esc(reasonText(r)) + '</li>';
     }).join('');
+    var hasResp = c.reasons.some(function (r) { return r.kind === 'response'; });
     var cust = '';
     if (ADMIN) {
       var cu = customerOf(o);
@@ -117,6 +119,7 @@
     } else {
       acts.push('<button class="btn btn--warn" data-contact="' + o.id + '">' + I.flag + 'ליצור קשר עם הלקוח</button>');
     }
+    if (hasResp) acts.push('<button class="btn btn--ghost" data-hide-resp="' + o.id + '">' + I.check + 'הבנתי, להסתיר את התגובה</button>');
     if (ADMIN) {
       var ph = customerOf(o).phone;
       if (ph) acts.push('<button class="btn btn--wa" data-wa="' + o.id + '">' + I.wa + 'וואטסאפ</button>' +
@@ -132,7 +135,7 @@
           '<span class="rem-item__level rem-lv-' + c.level + '">' + esc(LEVEL_TXT[c.level]) + '</span>' +
           '<span class="rem-item__age">' + esc(ageText(main.since)) + '</span>' + cust +
         '</div>' +
-        '<div class="rem-item__reason">' + (main.kind === 'flag' ? I.flag : '') + esc(reasonText(main)) + '</div>' +
+        '<div class="rem-item__reason' + (main.kind === 'response' ? ' rem-resp' : '') + '">' + (main.kind === 'flag' ? I.flag : '') + esc(reasonText(main)) + '</div>' +
         (more ? '<ul class="rem-item__mores">' + more + '</ul>' : '') +
         '<div class="rem-item__actions">' + acts.join('') + '</div>' +
       '</div>' +
@@ -208,6 +211,11 @@
     if (t.closest('[data-up]')) { move(card.getAttribute('data-id'), -1); return; }
     if (t.closest('[data-down]')) { move(card.getAttribute('data-id'), 1); return; }
     if ((el = t.closest('[data-open]'))) { Gallery.openOrder(el.getAttribute('data-open')); return; }
+    if ((el = t.closest('[data-hide-resp]'))) {
+      var ro = D.orders.peekOne(el.getAttribute('data-hide-resp'));
+      if (ro) { D.orders.hideResponse(ro); Gallery.toast('התגובה הוסתרה במכשיר הזה'); }
+      return;
+    }
     if ((el = t.closest('[data-resolve]'))) { Gallery.openBlockedFlag(el.getAttribute('data-resolve')); return; }
     if ((el = t.closest('[data-contact]'))) { Gallery.openBlockedFlag(el.getAttribute('data-contact'), { kind: 'contact_client' }); return; }
     if ((el = t.closest('[data-wa]'))) {
@@ -417,7 +425,7 @@
     Gallery.openModal(node, { onClose: opts.onClose, focus: false });
   };
 
-  Gallery.Reminders = { mount: mount, onShow: render };
+  Gallery.Reminders = { mount: mount, onShow: render, render: render };
   Gallery.registerView('reminders', Gallery.Reminders);
 
 })(window);

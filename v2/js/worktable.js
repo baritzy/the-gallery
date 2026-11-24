@@ -7,7 +7,11 @@
  * עמודות כמו הדף הפיזי: מס' הזמנה | מס' תמונה | הדבקה | מט | תיאור תמונה | חומר |
  * מידות | סוג מסגרת | בוצע | הערות. שורה לכל תמונה, הזמנות פתוחות בלבד.
  * X בחומר = גיליון "כמה להזמין" -> שורה ברשימת הספק (C17). V = מוחק אותה.
- * "בוצע" = orders.setItemDone -> הסטטוס נגזר (כולן בוצעו = מוכנה, ירוק) (C18).
+ * "בוצע" = orders.setItemDone (C18). סבב 4 (A2): לכל הזמנה שורת כותרת עם בורר סטטוס
+ * חדשה / בעבודה / מוכנה. מגע ראשון בשורות מעביר חדשה לבעבודה. כשהשורה האחרונה בוצעה
+ * לא הופכים לירוק אוטומטית: שואלים (Gallery.askOrderReady, order-status-ui.js).
+ * B2: תגובת הלקוח לדגל שנפתר מוצגת בשורת הכותרת עד שההזמנה מוכנה (או "הסתר").
+ * B7: הערת המלאי של הפרופיל מוצגת בחלון ה-X ליד בחירת המוטות.
  * ========================================================================== */
 
 (function (global) {
@@ -103,6 +107,32 @@
       '</div></td></tr>';
   }
 
+  var ST_BTNS = [['new', 'blue', 'חדשה'], ['in_progress', 'yellow', 'בעבודה'], ['ready', 'green', 'מוכנה']];
+
+  /* A2: שורת כותרת להזמנה. בורר סטטוס גדול לסדנה + התקדמות + תגובת לקוח (B2) */
+  function groupHeadHTML(o) {
+    var items = o.items || [];
+    var done = items.filter(function (it) { return it.done; }).length;
+    var resp = D.orders.visibleResponse ? D.orders.visibleResponse(o) : null;
+    var safe = D.reminders && D.reminders.safeText ? D.reminders.safeText : function (t) { return t; };
+    return '<tr class="wt-ghead" data-order="' + esc(o.id) + '"><td colspan="' + COLS + '">' +
+      '<div class="wt-gh">' +
+        '<span class="wt-gh__lbl">הזמנה <b class="mono">' + esc(o.number) + '</b></span>' +
+        '<div class="wt-st" role="group" aria-label="סטטוס הזמנה ' + esc(o.number) + '">' +
+          ST_BTNS.map(function (b) {
+            var on = o.status === b[0];
+            return '<button type="button" class="wt-st__btn wt-st__btn--' + b[1] + (on ? ' is-on' : '') + '" data-wtstatus="' + b[0] +
+              '" aria-pressed="' + on + '"><span class="dot"></span>' + esc(b[2]) + '</button>';
+          }).join('') +
+        '</div>' +
+        '<span class="wt-gh__prog' + (items.length && done === items.length ? ' is-all' : '') + '">' +
+          (items.length ? 'בוצעו ' + done + ' מתוך ' + items.length : '') + '</span>' +
+        (resp ? '<div class="wt-resp" data-resp-box><span class="wt-resp__txt"><b>תגובת הלקוח</b> <span class="wt-resp__date">(' +
+          esc(U.fmtDateShort(resp.resolvedAt)) + ')</span>: ' + esc(safe(resp.response)) + '</span>' +
+          '<button type="button" class="wt-resp__x" data-hide-resp aria-label="הסתר את התגובה">הסתר</button></div>' : '') +
+      '</div></td></tr>';
+  }
+
   function noCellHTML(o, span) {
     var look = U.orderLook(o);
     var blocked = U.isBlocked(o);
@@ -110,7 +140,6 @@
     var late = o.dueDate && U.daysUntil(o.dueDate) < 0 && o.status !== 'ready';
     return '<td class="wt-no wt-no--' + look.color + '" rowspan="' + span + '">' +
       '<div class="wt-no__num mono">' + esc(o.number) + '</div>' +
-      '<span class="pill pill--lg is-' + (look.color === 'yellow' ? 'yellow' : look.color) + ' wt-no__pill"><span class="dot"></span>' + esc(look.label) + '</span>' +
       (due ? '<div class="wt-no__due' + (late ? ' is-late' : '') + '">' + I.clock + esc(due) + '</div>' : '') +
       '<button type="button" class="wt-flagbtn' + (blocked ? ' is-on' : '') + '" data-flag aria-label="' +
         (blocked ? 'הסרת דגל אדום' : 'סימון בדגל אדום') + '">' + I.flag + '<span>' + (blocked ? 'דגל פעיל' : 'דגל') + '</span></button>' +
@@ -162,6 +191,7 @@
     list.forEach(function (o) {
       var rows = rowsFor(o);
       if (!rows.length) return;
+      html += groupHeadHTML(o);
       if (U.isBlocked(o)) html += flagRowHTML(o);
       rows.forEach(function (it, i) { html += itemRowHTML(o, it, i === 0, rows.length); });
       html += '<tr class="wt-gap" aria-hidden="true"><td colspan="' + COLS + '"></td></tr>';
@@ -189,18 +219,19 @@
     D.orders.setItemDone(orderId, itemId, done).then(function (o) {
       if (!o) return;
       var msg = [];
-      if (o.status === 'ready' && before && before.status !== 'ready') msg.push('הזמנה ' + o.number + ' מוכנה. כל התמונות בוצעו.');
       // C38: הודעה על הורדת המלאי (רק כשבאמת ירד)
       var use = done && D.frameUsage ? D.frameUsage.forItem(itemId) : null;
       var f = use ? D.frames.peekOne(use.profileId) : null;
       if (use && f) msg.push('ירדו ' + (Number(use.amount) / 100) + ' מ\' מ-' + f.sku + ', נשאר ' + D.frames.remainingMeters(f) + ' מ\'.' + (D.frames.isLow(f) ? ' מלאי נמוך, כדאי להזמין.' : ''));
       if (msg.length) Gallery.toast(msg.join(' '));
+      // A2: השורה האחרונה בוצעה = שואלים, לא הופכים לירוק לבד
+      if (done && before && D.orders.allDone(o) && o.status !== 'ready' && o.status !== 'delivered') Gallery.askOrderReady(o.id);
     });
   }
 
   function onMaterialV(o, it) {
     var next = it.material === 'V' ? null : 'V';
-    D.orders.updateItem(o.id, it.id, { material: next }).then(function () {
+    D.orders.updateItem(o.id, it.id, { material: next }, { start: true }).then(function () {
       return D.supplierOrderLines.removeForRow(o.id, it.id);
     }).then(function (removed) {
       if (removed) Gallery.toast('הוסר מרשימת ההזמנה של ' + supplierName(removed.supplierId));
@@ -247,6 +278,7 @@
             '<output class="wt-step__val mono" data-qty>' + qty + '</output>' +
             '<button type="button" class="wt-step__btn" data-step="-1" aria-label="פחות מוט">' + I.minus + '</button>' +
           '</div>' +
+          (f.note ? '<div class="wt-step__fnote" data-fnote>' + I.note + '<span><b>הערה במלאי:</b> ' + esc(D.reminders ? D.reminders.safeText(f.note) : f.note) + '</span></div>' : '') +
           (existing ? '<div class="wt-step__note">כבר ברשימה של ' + esc(supplierName(existing.supplierId)) + '. שינוי הכמות יעדכן את אותה שורה.</div>' : '') +
         '</div></div>';
     }
@@ -268,13 +300,13 @@
         return;
       }
       if (e.target.closest('[data-xonly]')) {
-        D.orders.updateItem(o.id, it.id, { material: 'X' }).then(function () { Gallery.closeModal(); });
+        D.orders.updateItem(o.id, it.id, { material: 'X' }, { start: true }).then(function () { Gallery.closeModal(); });
         return;
       }
       if (e.target.closest('[data-add]')) {
         var btn = e.target.closest('[data-add]');
         btn.disabled = true;
-        D.orders.updateItem(o.id, it.id, { material: 'X' }).then(function () {
+        D.orders.updateItem(o.id, it.id, { material: 'X' }, { start: true }).then(function () {
           return Gallery.addSupplierLine({ itemType: 'frame', itemId: f.id, qtyRods: qty, source: 'worktable', orderId: o.id, itemRowId: it.id });
         }).then(function (line) {
           Gallery.closeModal();
@@ -302,7 +334,7 @@
     });
     node.classList.add('wt-modal');
     function save(text) {
-      D.orders.updateItem(o.id, it.id, { note: text }).then(function () { Gallery.closeModal(); });
+      D.orders.updateItem(o.id, it.id, { note: text }, { start: true }).then(function () { Gallery.closeModal(); });
     }
     node.addEventListener('click', function (e) {
       var q = e.target.closest('[data-q]');
@@ -331,6 +363,9 @@
     if (!o) return;
 
     if (e.target.closest('[data-flag]')) { Gallery.openBlockedFlag(o.id); return; }
+    var st = e.target.closest('[data-wtstatus]');
+    if (st) { Gallery.changeOrderStatus(o.id, st.getAttribute('data-wtstatus')); return; }
+    if (e.target.closest('[data-hide-resp]')) { D.orders.hideResponse(o); return; }
 
     var itemId = tr.getAttribute('data-item');
     var it = (o.items || []).filter(function (x) { return x.id === itemId; })[0];
@@ -340,7 +375,7 @@
     if (tog) {
       var key = tog.getAttribute('data-toggle');
       var patch = {}; patch[key] = !it[key];
-      D.orders.updateItem(o.id, it.id, patch);
+      D.orders.updateItem(o.id, it.id, patch, { start: true });
       return;
     }
     var m = e.target.closest('[data-mat]');
@@ -375,6 +410,7 @@
       var node = Gallery.modalNode({
         title: 'הזמנה <span class="mono">' + esc(o.number) + '</span> <span class="pill is-' + look.color + '"><span class="dot"></span>' + esc(look.label) + '</span>',
         body: (U.isBlocked(o) ? '<div class="flag-current"><div class="flag-current__reason">' + esc(o.blocked.reason) + '</div></div>' : '') +
+          (Gallery.flagHistoryHTML ? Gallery.flagHistoryHTML(o) : '') +
           (o.dueDate ? '<p>מועד מסירה: <b>' + esc(U.fmtDate(o.dueDate)) + '</b> (' + esc(U.dueText(o.dueDate)) + ')</p>' : '') +
           '<div class="tablewrap"><table class="wtable"><thead><tr><th class="c">מס\' תמונה</th><th>תיאור</th><th class="c">מידות</th><th>מסגרת</th><th class="c">בוצע</th><th>הערות</th></tr></thead>' +
           '<tbody>' + items + '</tbody></table></div>' +
@@ -394,6 +430,7 @@
     D.orders.subscribe(queue);
     D.frames.subscribe(queue);
     D.supplierOrderLines.subscribe(queue);
+    global.addEventListener('gallery:resp-hidden', queue);
   }
 
   Gallery.registerView('worktable', { mount: mount, onShow: render });

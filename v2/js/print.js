@@ -80,7 +80,7 @@
       if (sku && name.indexOf(sku) === 0) name = name.slice(sku.length).trim();
       return '<tr><td class="prn-c">' + (i + 1) + '</td>' +
         '<td class="prn-sku">' + esc(sku || '') + '</td>' +
-        '<td>' + esc(name) + '</td>' +
+        '<td>' + esc(name) + '</td>' +  /* הערות מלאי פנימיות לא מודפסות: הגיליון הולך לספק */
         '<td class="prn-c prn-qty">' + esc(qtyOf(l)) + '</td>' +
         '<td class="prn-c">' + esc(unitOf(l)) + '</td>' +
         '<td class="prn-c"><span class="prn-box"></span></td></tr>';

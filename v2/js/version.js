@@ -6,14 +6,14 @@
  *  - טוענים דינמיים (inventory.js, data-firestore.js) מוסיפים ?v=Gallery.VERSION.
  *  - ה-service worker נרשם כ-sw.js?v=VERSION, ושם המטמון שלו נגזר מזה.
  * בפריסה: מעלים את המספר כאן, ובאותו מספר את כל ה-?v= ב-3 קובצי ה-HTML:
- *   sed -i '' 's/?v=24/?v=25/g' index.html admin.html workshop.html && sed -i '' "s/VERSION = '24'/VERSION = '25'/" js/version.js
+ *   sed -i '' 's/?v=26/?v=27/g' index.html admin.html workshop.html && sed -i '' "s/VERSION = '26'/VERSION = '27'/" js/version.js
  * ========================================================================== */
 
 (function (global) {
   'use strict';
 
   var Gallery = global.Gallery = global.Gallery || {};
-  var VERSION = '24';
+  var VERSION = '26';
   Gallery.VERSION = VERSION;
 
   /* PWA offline-first: network-first לקבצי האפליקציה, מטמון כשאין רשת (sw.js). */

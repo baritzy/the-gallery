@@ -105,3 +105,30 @@
   .rem-item__cust { margin-inline-start: 0; }
   .rem-item__arrow { width: 48px; }
 }
+
+/* =============================================================================
+ * סבב 4: תגובת לקוח (B2) ותזכורת קופצת (B6)
+ * ========================================================================== */
+.rem-item__reason.rem-resp, .rem-item__more.rem-resp { color: var(--ink-secondary); font-weight: var(--fw-regular); }
+
+.rem-pop-host {
+  position: fixed; top: calc(var(--s-3) + env(safe-area-inset-top)); inset-inline: 0; z-index: 90;
+  display: flex; flex-direction: column; align-items: center; gap: var(--s-2); padding: 0 var(--s-4); pointer-events: none;
+}
+.rem-pop {
+  pointer-events: auto; width: min(640px, 100%); display: flex; align-items: center; flex-wrap: wrap; gap: var(--s-2) var(--s-3);
+  background: var(--bg-surface); color: var(--ink); border-radius: var(--r-lg); box-shadow: var(--e4);
+  border: 1px solid var(--line); border-inline-start: 8px solid var(--rem-pop-c, var(--st-blue)); padding: var(--s-3) var(--s-4);
+  animation: rem-pop-in .28s ease-out;
+}
+.rem-pop--red { --rem-pop-c: var(--st-red); }
+.rem-pop--orange { --rem-pop-c: var(--st-orange); }
+.rem-pop--blue { --rem-pop-c: var(--st-blue); }
+.rem-pop__icon { color: var(--rem-pop-c, var(--st-blue)); flex: none; display: inline-flex; }
+.rem-pop__icon .ico { width: 28px; height: 28px; }
+.rem-pop__text { flex: 1 1 220px; min-width: 0; font-size: var(--fs-lg); font-weight: var(--fw-bold); line-height: 1.3; overflow-wrap: anywhere; }
+.rem-pop__acts { display: flex; gap: var(--s-2); flex: none; margin-inline-start: auto; }
+.rem-pop__acts .btn { min-height: var(--touch); min-width: 88px; }
+@keyframes rem-pop-in { from { transform: translateY(-16px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .rem-pop { animation: none; } }
+@media print { .rem-pop-host { display: none !important; } }

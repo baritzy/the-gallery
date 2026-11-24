@@ -14,9 +14,12 @@
  * item { id, idx (1..n), mount (הדבקה) bool, mat (מט) bool, desc, material: null|'V'|'X',
  *        widthCm, heightCm, profileSku, done bool, note }
  *
- * סטטוס נגזר (deriveStatus): כל השורות בוצעו = ready. חלק בוצעו = in_progress.
- * אף אחת = נשאר new או in_progress (אם כבר התחילה). delivered נשאר delivered.
+ * סטטוס נגזר (deriveStatus, סבב 4 / A2): "מוכנה" רק בפעולה מפורשת (setStatus('ready')).
+ * כל השורות בוצעו = עדיין in_progress (עבודה שיורדת לתיקון פינות לא נהיית ירוקה).
+ * שורה אחת או יותר בוצעה = in_progress. ready שבוטל בה "בוצע" = חוזר ל-in_progress.
+ * אף אחת = נשאר new או in_progress. delivered נשאר delivered.
  * הנגזרת מופעלת אוטומטית רק בפונקציות שמשנות שורות (setItemDone / updateItem).
+ * "מגע ראשון" (setItemDone, או updateItem עם { start:true }) מעביר new ל-in_progress.
  * save() רגיל לא משנה סטטוס. setStatus() הוא המעבר הידני.
  * ========================================================================== */
 
@@ -45,23 +48,46 @@
     return (items || []).map(function (it, i) { var x = newItem(it); x.idx = i + 1; return x; });
   }
 
+  function allDone(order) {
+    var items = (order && order.items) || [];
+    return items.length > 0 && items.every(function (i) { return i.done; });
+  }
+
+  /* A2: כל השורות בוצעו לא הופך ל-ready. ready נקבע רק ב-setStatus('ready'). */
   function deriveStatus(order) {
     if (!order) return 'new';
     if (order.status === 'delivered') return 'delivered';
     var items = order.items || [];
     var done = items.filter(function (i) { return i.done; }).length;
-    if (items.length && done === items.length) return 'ready';
+    if (order.status === 'ready') return allDone(order) ? 'ready' : 'in_progress';
     if (done > 0) return 'in_progress';
-    if (order.status === 'in_progress' || order.status === 'ready') return 'in_progress';
+    if (order.status === 'in_progress') return 'in_progress';
     return 'new';
   }
 
   function applyDerived(o) {
-    var prev = o.status;
     o.status = deriveStatus(o);
-    if (o.status === 'ready' && prev !== 'ready') o.readyAt = now();
     if (o.status !== 'ready' && o.status !== 'delivered') o.readyAt = null;
     return o;
+  }
+
+  /* מגע ראשון בשורות (מתג, V/X, הערה, בוצע) = ההזמנה בעבודה */
+  function startWork(o) {
+    if (o.status === 'new') { o.status = 'in_progress'; o.readyAt = null; }
+    return o;
+  }
+
+  /* B2: התגובה האחרונה לדגל שנפתר (מתוך blockedLog). { kind, reason, response, since, resolvedAt } | null */
+  function lastResponse(o) {
+    if (!o) return null;
+    var log = (o.blockedLog || []).slice();
+    if (o.blocked && o.blocked.resolvedAt) log.push(o.blocked);
+    var best = null;
+    log.forEach(function (b) {
+      if (!b || !b.resolvedAt || !String(b.response || '').trim()) return;
+      if (!best || String(b.resolvedAt) > String(best.resolvedAt)) best = b;
+    });
+    return best ? { kind: best.kind, reason: best.reason || '', response: String(best.response).trim(), since: best.since, resolvedAt: best.resolvedAt } : null;
   }
 
   function isBlocked(o) { return !!(o && o.blocked && !o.blocked.resolvedAt); }
@@ -105,6 +131,8 @@
     newItem: newItem,
     reindex: reindex,
     deriveStatus: deriveStatus,
+    allDone: allDone,
+    lastResponse: lastResponse,
     isBlocked: isBlocked,
     paid: paid,
     balance: balance,
@@ -137,17 +165,21 @@
     },
 
     /* ---- שורות תמונה ---- */
+    /* סימון "בוצע" הוא תמיד מגע בעבודה: new -> in_progress. גם השורה האחרונה לא הופכת ל-ready (A2). */
     setItemDone: function (orderId, itemId, done) {
       return mutate(orderId, function (o) {
         o.items.forEach(function (it) { if (it.id === itemId) it.done = !!done; });
         applyDerived(o);
+        startWork(o);
       });
     },
-    /* עדכון חלקי לשורה (חומר V/X, הערה, מידות...). אם done בתוך patch, הסטטוס נגזר מחדש. */
-    updateItem: function (orderId, itemId, patch) {
+    /* עדכון חלקי לשורה (חומר V/X, הערה, מידות...). אם done בתוך patch, הסטטוס נגזר מחדש.
+       opts.start = מגע מטבלת העבודה: new -> in_progress. */
+    updateItem: function (orderId, itemId, patch, opts) {
       return mutate(orderId, function (o) {
         o.items.forEach(function (it, i) { if (it.id === itemId) o.items[i] = Object.assign({}, it, patch, { id: it.id }); });
         if (patch && Object.prototype.hasOwnProperty.call(patch, 'done')) applyDerived(o);
+        if (opts && opts.start) startWork(o);
       });
     },
 
@@ -160,6 +192,7 @@
       return mutate(orderId, function (o) {
         if (status === 'ready') { o.items.forEach(function (it) { it.done = true; }); if (o.status !== 'ready') o.readyAt = now(); }
         if (status === 'new') { o.items.forEach(function (it) { it.done = false; }); o.readyAt = null; }
+        if (status === 'in_progress') o.readyAt = null;
         if (status === 'delivered' && !o.deliveredAt) o.deliveredAt = now();
         if (status !== 'delivered') o.deliveredAt = null;
         o.status = status;

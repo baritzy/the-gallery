@@ -10,6 +10,10 @@
  *   מקורות: דגל פעיל (blocked), איחור במועד מסירה, וכללי reminderRules פעילים.
  * Gallery.data.reminderRules.describe(rule) -> טקסט קריא לכלל.
  * Gallery.data.reminders.sortWithOrder(cards, ids) -> סדר ידני (C26).
+ * סבב 4 (B2): סיבה מסוג 'response' = תגובת הלקוח לדגל שנפתר, עד שההזמנה מוכנה
+ *   או שהוסתרה במכשיר הזה (orders.hideResponse). לא קופצת (B6), רק מוצגת.
+ * Gallery.data.orders.responseHidden(o) / hideResponse(o): הסתרה לפי מכשיר (localStorage).
+ * Gallery.data.reminders.safeText(text): בסדנה מסתיר טלפונים וסכומים (B2 / B6).
  * ========================================================================== */
 
 (function (global) {
@@ -45,6 +49,37 @@
     return 'blue';
   }
 
+  /* ---- B2: הסתרת תגובה לפי מכשיר. המפתח = orderId, הערך = resolvedAt של התגובה ---- */
+  var RESP_KEY = 'respHidden';
+  function hiddenMap() {
+    try { return JSON.parse(S.deviceGet(RESP_KEY) || '{}') || {}; } catch (e) { return {}; }
+  }
+  data.orders.responseHidden = function (o) {
+    var r = data.orders.lastResponse(o);
+    return !!r && hiddenMap()[o.id] === r.resolvedAt;
+  };
+  data.orders.hideResponse = function (o) {
+    var r = data.orders.lastResponse(o);
+    if (!r) return;
+    var m = hiddenMap();
+    m[o.id] = r.resolvedAt;
+    S.deviceSet(RESP_KEY, JSON.stringify(m));
+    try { global.dispatchEvent(new CustomEvent('gallery:resp-hidden', { detail: { orderId: o.id } })); } catch (e) {}
+  };
+  /* תגובה להצגה: קיימת, ההזמנה עוד לא מוכנה, ולא הוסתרה במכשיר הזה */
+  data.orders.visibleResponse = function (o) {
+    if (!o || o.status === 'ready' || o.status === 'delivered') return null;
+    if (data.orders.responseHidden(o)) return null;
+    return data.orders.lastResponse(o);
+  };
+
+  /* בסדנה: בלי טלפונים ובלי סכומים בטקסט חופשי */
+  function safeText(t) {
+    t = String(t == null ? '' : t);
+    if (Gallery.role === 'admin') return t;
+    return t.replace(/₪\s*[\d.,]+|[\d.,]+\s*₪|₪/g, '...').replace(/\+?\d[\d\s-]{6,}\d/g, '...');
+  }
+
   function compute(now) {
     now = now || Date.now();
     var rules = S.all('reminderRules').filter(function (r) { return r.active; });
@@ -68,6 +103,10 @@
         var at = data.reminderRules.fireAt(r, o);
         reasons.push({ kind: 'rule', ruleId: r.id, text: r.label || data.reminderRules.describe(r), since: at ? at.toISOString() : o.createdAt, level: ruleLevel(r) });
       });
+      var resp = data.orders.visibleResponse(o);
+      if (resp) {
+        reasons.push({ kind: 'response', text: 'תגובת הלקוח (' + shortDate(resp.resolvedAt) + '): ' + safeText(resp.response), since: resp.resolvedAt, level: 'blue' });
+      }
       if (!reasons.length) return;
       reasons.sort(function (a, b) { return LEVEL_RANK[a.level] - LEVEL_RANK[b.level] || new Date(a.since) - new Date(b.since); });
       var main = reasons[0];
@@ -92,5 +131,5 @@
     return fresh.concat(placed);
   }
 
-  data.reminders = { compute: compute, sortWithOrder: sortWithOrder, LEVEL_RANK: LEVEL_RANK };
+  data.reminders = { compute: compute, sortWithOrder: sortWithOrder, safeText: safeText, LEVEL_RANK: LEVEL_RANK };
 })(window);
