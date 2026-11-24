@@ -2,6 +2,8 @@
  * inventory-raw.js  -  מלאי > חומרי גלם (C20.2). OWNER: agent B (wave 3).
  * נטען דינמית מתוך inventory.js. שם, כמות + יחידה, מינימום -> מלאי נמוך,
  * ספק, הערה, כפתורי +/-. לחיצה על פריט = "למי להתקשר". הוספה / עריכה / מחיקה.
+ * סבב 5: הפרדה ברורה בין "במלאי" (מה שיש בפועל, עם +/-) לבין "להזמין" (שורות ספק פתוחות,
+ * או הצעה = מינימום × 2 פחות הכמות כשנמוך ואין שורה, מסומן "מוצע"). סיכום למעלה.
  * אין כסף בקובץ הזה (נטען גם בסדנה).
  * ========================================================================== */
 
@@ -19,7 +21,9 @@
 
   function rowHTML(r) {
     var low = D.rawMaterials.isLow(r);
-    var pend = Inv.pendingText('raw', r.id, r.unit);
+    var to = Inv.toOrder('raw', r);
+    var unit = r.unit || 'יחידות';
+    var hasOpen = Inv.openQty('raw', r.id) > 0;
     return '<article class="inv-item inv-raw' + (low ? ' is-low' : '') + '" data-rid="' + esc(r.id) + '" style="--spine:var(--st-' + (low ? 'red' : 'green') + ')">' +
       '<div class="inv-raw__top">' +
         '<button type="button" class="inv-raw__main" data-contact aria-label="פרטי ספק עבור ' + esc(r.name) + '">' +
@@ -27,20 +31,38 @@
           '<span class="inv-item__sup">' + I.phone + esc(Inv.supplierName(r.supplierId)) + ' · מינימום ' + num(r.minQty) + ' ' + esc(r.unit || '') + '</span>' +
           (Inv.isFrameSupplier(r.supplierId) ? '<span class="inv-suphint">' + I.alert + 'זה ספק מסגרות. כדאי לבחור ספק חומרי גלם בעריכה</span>' : '') +
         '</button>' +
-        (low ? '<span class="pill is-red pill--lg"><span class="dot"></span>נגמר / נמוך</span>' : '') +
-        '<div class="inv-step">' +
-          '<button type="button" class="inv-step__btn" data-adj="-1" aria-label="הורד אחד">' + I.minus + '</button>' +
-          '<span class="inv-step__show"><b>' + num(r.qty) + '</b><small>' + esc(r.unit || 'יחידות') + '</small></span>' +
-          '<button type="button" class="inv-step__btn" data-adj="1" aria-label="הוסף אחד">' + I.plus + '</button>' +
+        '<div class="inv-raw__qtys">' +
+          '<div class="inv-raw__box inv-raw__stock' + (low ? ' is-low' : '') + '">' +
+            '<span class="inv-raw__k">במלאי בפועל' + (low ? ' <span class="pill is-red"><span class="dot"></span>נמוך</span>' : '') + '</span>' +
+            '<div class="inv-step">' +
+              '<button type="button" class="inv-step__btn" data-adj="-1" aria-label="הורד אחד">' + I.minus + '</button>' +
+              '<span class="inv-step__show" data-stock><b>' + num(r.qty) + '</b><small>' + esc(unit) + '</small></span>' +
+              '<button type="button" class="inv-step__btn" data-adj="1" aria-label="הוסף אחד">' + I.plus + '</button>' +
+            '</div>' +
+          '</div>' +
+          '<div class="inv-raw__box inv-raw__order' + (to.qty ? (to.suggested ? ' is-suggested' : ' is-open') : ' is-none') + '">' +
+            '<span class="inv-raw__k">להזמין' + (to.suggested ? ' <span class="inv-raw__sugg">מוצע</span>' : (to.qty ? ' <span class="inv-raw__sugg is-open">ברשימת ספק</span>' : '')) + '</span>' +
+            '<span class="inv-raw__ordv" data-toorder><b>' + (to.qty ? num(to.qty) : 'אין') + '</b>' + (to.qty ? '<small>' + esc(unit) + '</small>' : '') + '</span>' +
+            '<button type="button" class="btn btn--primary btn--sm inv-raw__ordbtn" data-line>' + (hasOpen ? I.edit + 'עדכן הזמנה' : I.plus + 'הוסף להזמנה') + '</button>' +
+          '</div>' +
         '</div>' +
       '</div>' +
       '<div class="inv-item__bar">' + Inv.noteHTML('rawMaterials', r) +
-        (pend ? '<span class="inv-pend">' + I.suppliers + esc(pend) + '</span>' : '') +
         '<button type="button" class="btn btn--ghost inv-act" data-edit>' + I.edit + 'עריכה</button>' +
-        '<button type="button" class="btn btn--primary inv-act" data-line>' + I.plus + 'הוסף לרשימת ספק</button>' +
         '<button type="button" class="iconbtn inv-del-ico" data-del aria-label="מחיקת ' + esc(r.name) + '" title="מחיקה">' + I.trash + '</button>' +
       '</div>' +
     '</article>';
+  }
+
+  /* סיכום למעלה: כמה נמוכים, וכמה שורות חומרי גלם פתוחות להזמנה */
+  function summaryHTML() {
+    var lowN = dat.raw.filter(D.rawMaterials.isLow).length;
+    var openN = dat.lines.filter(function (x) { return !x.sentAt && x.itemType === 'raw'; }).length;
+    return '<div class="inv-raw__sum" data-raw-sum>' +
+      '<span class="inv-raw__sumi' + (lowN ? ' is-low' : '') + '">פריטים במלאי נמוך: <b>' + lowN + '</b></span>' +
+      '<span class="inv-raw__sumsep" aria-hidden="true">·</span>' +
+      '<span class="inv-raw__sumi">שורות להזמנה פתוחות: <b>' + openN + '</b></span>' +
+    '</div>';
   }
 
   function editModal(id) {
@@ -139,8 +161,8 @@
         var la = D.rawMaterials.isLow(a) ? 0 : 1, lb = D.rawMaterials.isLow(b) ? 0 : 1;
         return la - lb || String(a.name).localeCompare(String(b.name), 'he');
       });
-      if (!list.length) return Inv.emptyHTML('לא נמצא פריט תואם', 'נסו מילה אחרת.');
-      return '<div class="inv-list">' + list.map(rowHTML).join('') + '</div>';
+      if (!list.length) return summaryHTML() + Inv.emptyHTML('לא נמצא פריט תואם', 'נסו מילה אחרת.');
+      return summaryHTML() + '<div class="inv-list">' + list.map(rowHTML).join('') + '</div>';
     },
     onClick: function (e) {
       var t = e.target, row = t.closest('[data-rid]');

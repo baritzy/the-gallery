@@ -131,7 +131,9 @@
 
   function nameChip(c, visits) {
     var tone = U.visitTone(visits);
-    return '<span class="cus-name' + (tone ? ' tone-' + tone : '') + '">' + esc(c.name || 'ללא שם') + '</span>';
+    /* סבב 5: שם ירוק (3+ ביקורים) = תווית "לקוח חוזר" משמאלו. צהוב (2) בלי תווית. */
+    return '<span class="cus-namewrap"><span class="cus-name' + (tone ? ' tone-' + tone : '') + '">' + esc(c.name || 'ללא שם') + '</span>' +
+      U.returningTag(visits) + '</span>';
   }
 
   function rowHTML(c, sm) {

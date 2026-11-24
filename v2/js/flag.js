@@ -1,7 +1,15 @@
 /* =============================================================================
- * flag.js  -  דגל אדום על הזמנה (C7 / C28 / D2): Gallery.openBlockedFlag(orderId)
- * OWNER: foundation (wave 2). מימוש ברירת מחדל עובד, נטען גם בסדנה.
- * agent C רשאי להחליף אותו מתוך reminders.js (פשוט להגדיר מחדש את הפונקציה).
+ * flag.js  -  הערת "ליצור קשר עם הלקוח" (סבב 5, במקום הדגל האדום). נטען בשני התפקידים.
+ * -----------------------------------------------------------------------------
+ * "ליצור קשר עם הלקוח" הוא לא סטטוס ולא דגל: זו הערה על ההזמנה (אפשר גם משורת תמונה
+ * בטבלת העבודה). הערה פעילה = תזכורת פעילה, עד שמישהו רושם את תגובת הלקוח.
+ *   Gallery.openContactNote(orderId, { itemId?, text?, onDone? })
+ *     אין הערה פעילה: יוצר אחת (טקסט + קיצורים). יש: רושמים את תגובת הלקוח (חובה) וזה נסגר.
+ *     נפתח כשכבה מעל המודל הפתוח (Gallery.layerPrompt), כך שכרטיס ההזמנה נשאר פתוח.
+ *   Gallery.contactBoxHTML(o)  תיבה להצגה (כרטיס הזמנה / טבלת עבודה) עם "רשום תגובת לקוח".
+ *   Gallery.openBlockedFlag  תאימות: מפנה ל-openContactNote.
+ * לחיצות על [data-contact-resp] / [data-contact-new] מטופלות כאן (document).
+ * בחנות: וואטסאפ / התקשר ללקוח. בסדנה: בלי שם, טלפון וסכומים.
  * ========================================================================== */
 
 (function (global) {
@@ -10,81 +18,111 @@
   var Gallery = global.Gallery;
   var U = Gallery.util;
   var I = Gallery.icons;
+  var D = Gallery.data;
   var esc = U.esc;
-  var orders = Gallery.data.orders;
+  var ADMIN = Gallery.role === 'admin';
 
-  var QUICK = {
-    stuck: ['ממתינים לתמונה מהלקוח', 'חסר חומר, ממתינים לספק', 'ממתינים לאישור מידות'],
-    contact_client: ['המסגרת לא מתאימה', 'בעיה בפספרטו', 'לא לגעת בעבודה עד שהלקוח מגיע']
+  var PHONE = '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>';
+  I.phoneCall = I.phoneCall || PHONE;
+
+  var QUICK = ['המסגרת לא מתאימה', 'בעיה בפספרטו', 'לא לגעת בעבודה עד שהלקוח מגיע', 'לאשר מידות עם הלקוח'];
+
+  function safe(t) { return D.reminders && D.reminders.safeText ? D.reminders.safeText(t) : String(t || ''); }
+  function customerOf(o) { return ADMIN && D.customers ? (D.customers.peekOne(o.customerId) || {}) : {}; }
+  function ageText(iso) {
+    var d = U.daysSince(iso);
+    return d <= 0 ? 'היום' : (d === 1 ? 'מאתמול' : 'מזה ' + d + ' ימים');
+  }
+
+  function contactMsg(o) {
+    var c = customerOf(o), s = (D.settings.peek() || {}).shop || {};
+    return 'שלום ' + (c.name || '') + ', כאן ' + (s.name || 'הגלריה') + '. רצינו לדבר איתך לגבי ההזמנה שלך (מס\' ' + o.number + '). ' +
+      'אפשר לחזור אלינו או לקפוץ לחנות? תודה. ' + (s.phone || '');
+  }
+
+  function contactBtnsHTML(o) {
+    var cu = customerOf(o);
+    if (!ADMIN || !cu.phone) return '';
+    return '<div class="rem-flag__contact">' +
+      '<button type="button" class="btn btn--wa btn--lg" data-cn-wa>' + I.wa + 'וואטסאפ ל' + esc(cu.name || 'לקוח') + '</button>' +
+      '<a class="btn btn--secondary btn--lg" href="tel:' + esc(String(cu.phone).replace(/[^\d+]/g, '')) + '">' + PHONE + 'התקשר ' + esc(cu.phone) + '</a>' +
+    '</div>';
+  }
+
+  function itemTag(o, itemId) {
+    var it = itemId ? (o.items || []).filter(function (x) { return x.id === itemId; })[0] : null;
+    return it ? ' (תמונה ' + D.orders.itemLabel(it, o) + ')' : '';
+  }
+
+  Gallery.contactBoxHTML = function (o) {
+    if (!U.hasContact(o)) return '';
+    var c = o.contact;
+    return '<div class="cnote" data-cnote="' + esc(o.id) + '">' +
+      '<span class="cnote__icon">' + PHONE + '</span>' +
+      '<div class="cnote__txt"><b>ליצור קשר עם הלקוח' + esc(itemTag(o, c.itemId)) + ':</b> ' + esc(safe(c.text || 'בלי פירוט')) +
+        '<small>' + esc(ageText(c.since)) + ' · תזכורת פעילה עד שנרשמת תגובה</small></div>' +
+      '<button type="button" class="btn btn--primary cnote__btn" data-contact-resp="' + esc(o.id) + '">' + I.check + 'רשום תגובת לקוח</button>' +
+    '</div>';
   };
 
-  Gallery.openBlockedFlag = function (orderId, opts) {
+  Gallery.openContactNote = function (orderId, opts) {
     opts = opts || {};
-    var o = orders.peekOne(orderId);
+    var o = D.orders.peekOne(orderId);
     if (!o) return;
-    var active = U.isBlocked(o);
-    var kind = active ? o.blocked.kind : (opts.kind || 'stuck');
-
-    function body() {
-      if (active) {
-        return '<div class="flag-current">' +
-            '<div class="flag-current__kind">' + I.flag + esc(U.BLOCK_KIND_LABEL[o.blocked.kind] || 'תקועה') + '</div>' +
-            '<div class="flag-current__reason">' + esc(o.blocked.reason || 'ללא סיבה') + '</div>' +
-            '<div class="flag-current__since">מאז ' + U.fmtDate(o.blocked.since) + ' (' + U.plural(U.daysSince(o.blocked.since), 'יום אחד', 'ימים') + ')</div>' +
-          '</div>' +
-          '<div class="form-field"><label for="flag-resp">מה קרה? (תגובת הלקוח / הפתרון)</label>' +
-            '<textarea id="flag-resp" data-resp rows="3" placeholder="למשל: הלקוח הביא את התמונה"></textarea></div>';
-      }
-      return '<div class="flag-kinds" role="radiogroup" aria-label="סוג הדגל">' +
-          kindBtn('stuck', 'תקועה / ממתינה') + kindBtn('contact_client', 'ליצור קשר עם הלקוח') +
-        '</div>' +
-        '<div class="form-field"><label for="flag-reason">למה? (חובה)</label>' +
-          '<textarea id="flag-reason" data-reason rows="3" placeholder="למשל: ביום שני הלקוח מביא את התמונה השנייה"></textarea></div>' +
-        '<div class="flag-quick" data-quick></div>';
+    var active = U.hasContact(o);
+    function wire(layer) {
+      var wa = layer.querySelector('[data-cn-wa]');
+      if (wa) wa.addEventListener('click', function () { Gallery.whatsapp(customerOf(o).phone, contactMsg(o)); });
     }
-    function kindBtn(k, label) {
-      return '<button type="button" class="flag-kind" role="radio" data-kind="' + k + '" aria-checked="' + (k === kind) + '">' + I.flag + esc(label) + '</button>';
+    if (active) {
+      Gallery.layerPrompt({
+        title: 'תגובת הלקוח · הזמנה <span class="mono">' + esc(o.number) + '</span>',
+        above: '<div class="flag-current cnote-current">' +
+            '<div class="flag-current__kind">' + PHONE + 'ליצור קשר עם הלקוח' + esc(itemTag(o, o.contact.itemId)) + '</div>' +
+            '<div class="flag-current__reason">' + esc(safe(o.contact.text || 'בלי פירוט')) + '</div>' +
+            '<div class="flag-current__since">מאז ' + esc(U.fmtDate(o.contact.since)) + ' (' + esc(ageText(o.contact.since)) + ')</div>' +
+          '</div>' + contactBtnsHTML(o),
+        label: 'מה הלקוח ענה? (חובה)',
+        placeholder: 'למשל: הלקוח הגיע ובחר מסגרת אחרת',
+        yes: 'נרשמה תגובה, לסגור את התזכורת',
+        required: true, requiredMsg: 'צריך לרשום מה הלקוח ענה',
+        onOpen: wire,
+        onSave: function (text) {
+          return D.orders.resolveContact(o.id, text).then(function () {
+            Gallery.toast('נרשמה תגובת הלקוח להזמנה ' + o.number);
+            if (opts.onDone) opts.onDone();
+          });
+        }
+      });
+      return;
     }
-    function quickHTML() {
-      return (QUICK[kind] || []).map(function (q) { return '<button type="button" class="fchip" data-q="' + esc(q) + '">' + esc(q) + '</button>'; }).join('');
-    }
-
-    var node = Gallery.modalNode({
-      title: (active ? 'הסרת דגל אדום' : 'סימון בדגל אדום') + ' · הזמנה <span class="mono">' + esc(o.number) + '</span>',
-      body: body(),
-      foot: active ?
-        '<button class="btn btn--primary btn--lg" data-resolve>' + I.check + 'נפתר, להסיר את הדגל</button>' +
-        '<button class="btn btn--ghost" data-close>ביטול</button>' :
-        '<button class="btn btn--danger-solid btn--lg" data-set>' + I.flag + 'לסמן באדום</button>' +
-        '<button class="btn btn--ghost" data-close>ביטול</button>'
-    });
-    node.classList.add('modal--flag');
-
-    var quick = node.querySelector('[data-quick]');
-    if (quick) quick.innerHTML = quickHTML();
-    node.addEventListener('click', function (e) {
-      var k = e.target.closest('[data-kind]');
-      if (k) {
-        kind = k.getAttribute('data-kind');
-        Array.prototype.forEach.call(node.querySelectorAll('[data-kind]'), function (b) { b.setAttribute('aria-checked', String(b === k)); });
-        quick.innerHTML = quickHTML();
-        return;
-      }
-      var q = e.target.closest('[data-q]');
-      if (q) { var ta = node.querySelector('[data-reason]'); ta.value = q.getAttribute('data-q'); ta.focus(); return; }
-      if (e.target.closest('[data-set]')) {
-        var reason = node.querySelector('[data-reason]').value.trim();
-        if (!reason) { node.querySelector('[data-reason]').focus(); Gallery.toast('צריך לכתוב למה מחכים'); return; }
-        orders.setBlocked(o.id, { kind: kind, reason: reason }).then(function () { Gallery.closeModal(); if (opts.onDone) opts.onDone(); });
-        return;
-      }
-      if (e.target.closest('[data-resolve]')) {
-        var resp = node.querySelector('[data-resp]').value.trim();
-        orders.resolveBlocked(o.id, resp).then(function () { Gallery.closeModal(); if (opts.onDone) opts.onDone(); });
+    Gallery.layerPrompt({
+      title: 'הערה: ליצור קשר עם הלקוח · הזמנה <span class="mono">' + esc(o.number) + '</span>',
+      label: 'על מה צריך לדבר עם הלקוח?' + itemTag(o, opts.itemId),
+      value: opts.text || '',
+      placeholder: 'למשל: המסגרת שנבחרה צרה מדי לתעודה',
+      quick: QUICK, yes: 'שמור הערה והפעל תזכורת',
+      required: true, requiredMsg: 'צריך לכתוב על מה ליצור קשר',
+      below: '<p class="field-note">התזכורת נשארת פעילה (גם בטבלת העבודה ובתזכורות) עד שמישהו רושם את תגובת הלקוח.</p>' + contactBtnsHTML(o),
+      onOpen: wire,
+      onSave: function (text) {
+        return D.orders.setContact(o.id, { text: text, itemId: opts.itemId || null }).then(function () {
+          Gallery.toast('נוספה הערה "ליצור קשר עם הלקוח" להזמנה ' + o.number);
+          if (opts.onDone) opts.onDone();
+        });
       }
     });
-
-    Gallery.openModal(node, { onClose: opts.onClose });
   };
+
+  /* תאימות: הקריאות הישנות (דגל אדום) פותחות את הערת יצירת הקשר */
+  Gallery.openBlockedFlag = function (orderId, opts) { return Gallery.openContactNote(orderId, opts); };
+
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest) return;
+    var r = e.target.closest('[data-contact-resp]');
+    if (r) { Gallery.openContactNote(r.getAttribute('data-contact-resp')); return; }
+    var n = e.target.closest('[data-contact-new]');
+    if (n) Gallery.openContactNote(n.getAttribute('data-contact-new'), { itemId: n.getAttribute('data-item-id') || null });
+  });
 
 })(window);

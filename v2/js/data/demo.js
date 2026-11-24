@@ -127,17 +127,17 @@
       { id: 'demo-or-3', c: 'demo-cu-dana', ago: 1, status: 'new', price: 190,
         items: [item('demo-it-3a', 1, 'תעודת בגרות', 21, 30, '5')],
         pays: [['demo-pay-3a', 'deposit', 90, 1, 'cash']],
-        blocked: { kind: 'contact_client', reason: 'המסגרת שנבחרה צרה מדי לתעודה. לא לגעת בעבודה עד שהלקוחה מגיעה', sinceAgo: 1 } },
+        contact: { text: 'המסגרת שנבחרה צרה מדי לתעודה. לא לגעת בעבודה עד שהלקוחה מגיעה', sinceAgo: 1 } },
       { id: 'demo-or-4', c: 'demo-cu-yossi', ago: 8, status: 'in_progress', price: 540,
         items: [item('demo-it-4a', 1, 'תמונת חתונה', 50, 70, '7', { mat: true, material: 'V', done: true }),
                 item('demo-it-4b', 2, 'תמונת חתונה קטנה', 20, 30, '7', { material: 'V' }),
                 item('demo-it-4c', 3, 'ציור שמן קטן', 30, 40, '4', { material: 'X', note: 'חסר חומר, הוזמנו 2 מוטות' })],
         pays: [['demo-pay-4a', 'deposit', 200, 8, 'cash']] },
-      { id: 'demo-or-5', c: 'demo-cu-yossi', ago: 11, status: 'in_progress', price: 260,
+      { id: 'demo-or-5', c: 'demo-cu-yossi', ago: 11, status: 'stuck', price: 260,
         items: [item('demo-it-5a', 1, 'תעודת הוקרה', 21, 30, '3', { material: 'V', note: 'צריך לתקן פינות' }),
                 item('demo-it-5b', 2, 'תעודה שנייה', 21, 30, '3', { material: 'V' })],
         pays: [['demo-pay-5a', 'deposit', 100, 11, 'credit']],
-        blocked: { kind: 'stuck', reason: 'ביום שני הלקוח מביא את התמונה השנייה', sinceAgo: 2 } },
+        stuck: { reason: 'ביום שני הלקוח מביא את התמונה השנייה', sinceAgo: 2 } },
       { id: 'demo-or-6', c: 'demo-cu-michal', ago: 0, status: 'new', price: 360,
         items: [item('demo-it-6a', 1, 'פוסטר קונצרט', 50, 70, '6', { mount: true }),
                 item('demo-it-6b', 2, 'פוסטר קטן', 30, 40, '6', { mount: true })],
@@ -152,11 +152,13 @@
         var created = daysAgo(cfg.ago, 9 + (orders.length % 6));
         var o = {
           id: cfg.id, number: num, customerId: cfg.c, createdAt: created, dueDate: plusDays(created, 10),
-          status: cfg.status, blocked: null, items: cfg.items, notes: '', price: cfg.price, payments: []
+          status: cfg.status, stuck: null, contact: null, items: cfg.items, notes: '', price: cfg.price, payments: []
         };
         if (cfg.status === 'ready') o.readyAt = daysAgo(1);
         if (cfg.status === 'delivered') { o.readyAt = plusDays(created, 7); o.deliveredAt = plusDays(created, 8); }
-        if (cfg.blocked) o.blocked = { kind: cfg.blocked.kind, reason: cfg.blocked.reason, since: daysAgo(cfg.blocked.sinceAgo), resolvedAt: null, response: null };
+        /* סבב 5: "תקועה" = סטטוס עם סיבה, "ליצור קשר" = הערה עם תזכורת (לא דגל) */
+        if (cfg.stuck) o.stuck = { reason: cfg.stuck.reason, since: daysAgo(cfg.stuck.sinceAgo), from: 'in_progress' };
+        if (cfg.contact) o.contact = { text: cfg.contact.text, since: daysAgo(cfg.contact.sinceAgo), itemId: null, resolvedAt: null, response: null };
         cfg.pays.forEach(function (p) {
           o.payments.push({ id: p[0], amount: p[2], type: p[1], at: daysAgo(p[3], 12), receiptId: null, _method: p[4] });
         });

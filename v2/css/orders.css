@@ -4,7 +4,7 @@
  * ========================================================================== */
 
 .chips--orders { margin-bottom: var(--s-4); }
-.fchip--blocked[aria-pressed="true"] { background: var(--st-red-soft); color: var(--st-red-text); }
+.fchip--stuck[aria-pressed="true"] { background: var(--st-red-soft); color: var(--st-red-text); }
 
 /* ---------- רשימה ---------- */
 .olist { display: flex; flex-direction: column; background: var(--bg-surface); border: 1px solid var(--line); border-radius: var(--r-md); overflow: hidden; box-shadow: var(--e1); }
@@ -14,10 +14,9 @@
   align-items: center; gap: var(--s-3);
 }
 .olist__head {
-  padding-block: 10px; padding-inline-start: 22px; padding-inline-end: 72px; border-bottom: 1px solid var(--line);
+  padding-block: 10px; padding-inline-start: 22px; padding-inline-end: var(--s-4); border-bottom: 1px solid var(--line);
   font-size: var(--fs-xs); font-weight: var(--fw-bold); color: var(--ink-muted);
 }
-.olist__head span:last-child { display: none; }
 .orow { position: relative; display: flex; align-items: stretch; border-bottom: 1px solid var(--line); }
 .orow:last-child { border-bottom: 0; }
 .orow::before { content: ""; position: absolute; top: 0; bottom: 0; right: 0; width: 6px; background: var(--spine); }
@@ -39,15 +38,7 @@
 .orow__bal { font-weight: var(--fw-semibold); color: var(--st-green-text); font-variant-numeric: tabular-nums; }
 .orow__bal.is-owed { color: var(--ink); }
 .orow__cust { justify-self: end; font-size: var(--fs-sm); color: var(--ink-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-.orow__flag, .orow__flag-sp { flex: none; width: 56px; }
-.orow__flag {
-  border: 0; border-inline-start: 1px solid var(--line); background: transparent; color: var(--ink-muted); cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-}
-.orow__flag .ico { width: 24px; height: 24px; }
-.orow__flag:hover { background: var(--st-red-soft); color: var(--st-red); }
-.orow__flag.is-on { color: var(--st-red); background: var(--st-red-soft); }
-.orow.is-blocked { background: #FFF8F9; }
+.orow.is-stuck { background: #FFF8F9; }
 
 /* W4: אייפד 1024-1180 לרוחב (לצד ה-rail): עמודות צרות יותר, כדי שהשורה לא תגלוש שמאלה מעל ה-rail */
 @media (min-width: 901px) and (max-width: 1279px) {
@@ -179,3 +170,25 @@
 .rcpt__row span { color: var(--ink-secondary); }
 .known.tone-yellow { background: var(--st-yellow); color: var(--on-status-yellow); }
 .known.tone-green { background: var(--st-green); color: #fff; }
+
+/* =============================================================================
+ * סבב 5: רשימה וכרטיס עם כפתור סטטוס אחד, הערת "ליצור קשר", "לקוח חוזר"
+ * ========================================================================== */
+.orow__main { display: grid; }
+.orow__status .spill-wrap { flex-direction: column; align-items: flex-start; gap: 4px; max-width: 100%; }
+.orow__status .spill { max-width: 100%; }
+.orow__contact { display: inline-flex; align-items: center; gap: 4px; font-size: var(--fs-xs); font-weight: var(--fw-bold); color: var(--st-orange-text); }
+.orow__contact .ico { width: 14px; height: 14px; }
+.orow__cust { display: inline-flex; align-items: center; gap: 6px; justify-content: flex-end; min-width: 0; }
+.orow__custname { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ocard__custrow { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.ocard__headmid .spill-wrap { align-items: flex-start; }
+.ocard__contactadd { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; }
+.ocard__contactadd small { color: var(--ink-muted); font-size: var(--fs-sm); }
+@media (min-width: 901px) and (max-width: 1279px) {
+  .orow__status .spill { white-space: normal; }
+  .orow__cust { flex-wrap: wrap; row-gap: 2px; }
+}
+@media (max-width: 900px) {
+  .orow__status .spill-reason { max-width: 46vw; }
+}

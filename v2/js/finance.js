@@ -150,7 +150,43 @@
     var all = incomeEvents(r);
     var shown = state.split === 'all' ? all : all.filter(function (e) { return e.kind === state.split; });
     var exps = D.expenses.peek().filter(function (e) { return inR(e.date, r); });
-    bodyEl.innerHTML = periodBar(r) + splitTiles(all, exps) + eodSection(r, shown, all) + txnSection(shown, exps);
+    /* סבב 5: אריח "הוצאות" לחיץ, ומציג את פירוט ההוצאות לתקופה במקום התנועות */
+    bodyEl.innerHTML = periodBar(r) + splitTiles(all, exps) +
+      (state.split === 'expenses' ? expensesSection(r, exps) : eodSection(r, shown, all) + txnSection(shown, exps));
+  }
+
+  function expensesSection(r, exps) {
+    var list = exps.slice().sort(function (a, b) { return new Date(b.date) - new Date(a.date); });
+    var byCat = {};
+    list.forEach(function (e) { var k = e.category || 'אחר'; byCat[k] = byCat[k] || { amount: 0, n: 0 }; byCat[k].amount += Number(e.amount || 0); byCat[k].n += 1; });
+    var cats = Object.keys(byCat).sort(function (a, b) { return byCat[b].amount - byCat[a].amount; });
+    var total = sum(list);
+    return '<section class="fin-sec fin-exp" data-exp-sec>' +
+      '<h2 class="fin-sec__title">' + I.coins + 'הוצאות · ' + esc(r.label) + ' <span class="fin-sec__n">' + list.length + '</span>' +
+        '<button type="button" class="btn btn--ghost btn--sm fin-exp__back" data-split="all">חזרה להכנסות</button></h2>' +
+      (list.length ?
+        '<div class="fin-expcats">' + cats.map(function (k) {
+          var b = byCat[k];
+          return '<div class="fin-expcat"><span class="fin-expcat__k">' + esc(k) + '</span><span class="fin-expcat__v">' + U.fmtMoney(b.amount) + '</span>' +
+            '<span class="fin-expcat__n">' + (b.n === 1 ? 'הוצאה אחת' : b.n + ' הוצאות') + (total ? ' · ' + Math.round(b.amount * 100 / total) + '%' : '') + '</span></div>';
+        }).join('') +
+          '<div class="fin-expcat is-total"><span class="fin-expcat__k">סך הכל הוצאות</span><span class="fin-expcat__v">' + U.fmtMoney(total) + '</span>' +
+            '<span class="fin-expcat__n">' + (list.length === 1 ? 'הוצאה אחת' : list.length + ' הוצאות') + '</span></div>' +
+        '</div>' +
+        '<div class="fin-explist" role="table" aria-label="פירוט הוצאות">' +
+          '<div class="fin-exprow fin-exprow--head" role="row"><span>תאריך</span><span>קטגוריה</span><span>תיאור</span><span class="fin-exprow__amt">סכום</span><span></span></div>' +
+          list.map(function (e) {
+            return '<div class="fin-exprow" role="row" data-exp="' + esc(e.id) + '">' +
+              '<span class="fin-exprow__date">' + U.fmtDate(e.date) + '</span>' +
+              '<span class="fin-exprow__cat">' + esc(e.category || 'אחר') + '</span>' +
+              '<span class="fin-exprow__note">' + esc(e.note || '') + '</span>' +
+              '<span class="fin-exprow__amt">' + U.fmtMoney(e.amount) + '</span>' +
+              '<button class="iconbtn" data-del-expense="' + esc(e.id) + '" aria-label="מחיקת הוצאה" title="מחיקה">' + I.trash + '</button></div>';
+          }).join('') +
+        '</div>' :
+        '<div class="empty"><p>אין הוצאות בתקופה הזו. אפשר לעבור לתקופה אחרת או להוסיף הוצאה.</p>' +
+          '<button class="btn btn--secondary" data-add-expense>' + I.plus + 'הוסף הוצאה</button></div>') +
+    '</section>';
   }
 
   function segHTML(attr, opts, cur, label) {
@@ -187,8 +223,9 @@
         tile('order', 'מהזמנות מסגור', all.filter(function (e) { return e.kind === 'order'; }), 'blue') +
         tile('sale', 'ממכירת מוצרים', sal, 'green') +
         tile('all', 'סך הכל הכנסות', all, 'primary') +
-        '<div class="fin-tile fin-c-orange is-static"><span class="fin-tile__k">הוצאות</span><span class="fin-tile__v">' + U.fmtMoney(ex) + '</span>' +
-          '<span class="fin-tile__s">רווח: ' + U.fmtMoney(inc - ex) + '</span></div>' +
+        '<button type="button" class="fin-tile fin-c-orange' + (state.split === 'expenses' ? ' is-on' : '') + '" data-split="expenses" aria-pressed="' + (state.split === 'expenses') + '">' +
+          '<span class="fin-tile__k">הוצאות</span><span class="fin-tile__v">' + U.fmtMoney(ex) + '</span>' +
+          '<span class="fin-tile__s">' + (exps.length === 1 ? 'הוצאה אחת' : exps.length + ' הוצאות') + ' · רווח: ' + U.fmtMoney(inc - ex) + '</span></button>' +
       '</div>' +
       (ord.length + sal.length ? '' : '<p class="fin-muted">אין הכנסות בתקופה הזו.</p>') +
     '</div>';

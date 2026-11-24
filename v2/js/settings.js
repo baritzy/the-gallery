@@ -162,21 +162,39 @@
     });
   }
 
+  /* סבב 5: יש במכשיר הזה נתונים מקומיים אמיתיים (לא דוגמה)? רק אז מציגים "העלה את הנתונים המקומיים לענן".
+     קורא ישירות את המפתחות המקומיים (gallery:v3:<col>), בלי ספקים וכללי תזכורות (נזרעים תמיד). */
+  var LOCAL_COLS = ['orders', 'customers', 'frames', 'rawMaterials', 'products', 'sales', 'receipts', 'expenses', 'usage', 'supplierOrderLines'];
+  function localRealCount() {
+    var n = 0;
+    LOCAL_COLS.forEach(function (c) {
+      try {
+        var arr = JSON.parse(global.localStorage.getItem(S.NS + c) || '[]');
+        if (Array.isArray(arr)) arr.forEach(function (r) { if (r && r.id && r.demo !== true) n++; });
+      } catch (e) {}
+    });
+    return n;
+  }
+
   function syncSection() {
     var b = B();
     if (!b) return '';
     var cloud = isCloud();
+    var localN = cloud ? localRealCount() : 0;
     return section('סנכרון בין האייפדים', I.upload,
+      '<p class="set__explain">קוד החנות מחבר את שני האייפדים לאותם נתונים. מקלידים אותו פעם אחת בכל מכשיר, ולא צריך לגעת בו שוב.</p>' +
       '<dl class="set__facts"><dt>מצב</dt><dd>' + (cloud ? 'מסונכרן בענן (חנות וסדנה רואים אותם נתונים)' : 'מקומי: הנתונים נשמרים רק במכשיר הזה') + '</dd>' +
         (cloud ? '<dt>קוד חנות</dt><dd class="mono" dir="ltr">' + esc(shopCode()) + '</dd>' : '') + '</dl>' +
-      '<div class="set__btns">' +
-        (cloud
-          ? '<button class="btn btn--secondary btn--lg" data-sync-change>החלף קוד חנות</button>' +
-            '<button class="btn btn--secondary btn--lg" data-sync-migrate>' + I.upload + 'העלה את הנתונים המקומיים לענן</button>'
-          : '<button class="btn btn--primary btn--lg" data-sync-change>חבר לסנכרון ענן</button>') +
-      '</div>' +
-      (cloud ? '<p class="field-note">"העלה את הנתונים המקומיים לענן" מיועד לפעם אחת: אחרי שעבדתם על המכשיר הזה במצב מקומי.</p>' : ''));
+      (cloud ?
+        (localN ? '<div class="set__btns"><button class="btn btn--secondary btn--lg" data-sync-migrate>' + I.upload + 'העלה את הנתונים המקומיים לענן</button></div>' +
+          '<p class="field-note">במכשיר הזה נשמרו ' + localN + ' רשומות במצב מקומי. ההעלאה מיועדת לפעם אחת.</p>' : '') +
+        '<details class="set__adv" data-sync-adv><summary>מתקדם</summary>' +
+          '<p class="field-note">החלפת קוד מחברת את המכשיר הזה לחנות אחרת. בדרך כלל לא צריך.</p>' +
+          '<div class="set__btns"><button class="btn btn--secondary" data-sync-change>החלף קוד חנות</button></div>' +
+        '</details>'
+        : '<div class="set__btns"><button class="btn btn--primary btn--lg" data-sync-change>חבר לסנכרון ענן</button></div>'));
   }
+
 
   /* הצעה יומית (פעם ביום, במכשיר מנהל, רק אם יש אינטרנט) */
   function dailyPrompt() {

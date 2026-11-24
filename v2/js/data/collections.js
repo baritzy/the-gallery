@@ -271,9 +271,9 @@
 
   /* =========================================================================
    * כללי תזכורות (C27)
-   * { id, label, status:'new'|'in_progress'|'ready'|'open', anchor:'created'|'due',
+   * { id, label, status:'new'|'in_progress'|'stuck'|'ready'|'open', anchor:'created'|'due',
    *   offset:{ value (חתום: שלילי = לפני העוגן, חיובי = אחרי), unit:'hours'|'days' }, active }
-   * status 'open' = חדשה או בעבודה (לא מוכנה ולא נמסרה).
+   * status 'open' = חדשה, בעבודה או תקועה (לא מוכנה ולא נמסרה).
    * ======================================================================= */
   data.reminderRules = makeCollection('reminderRules', {
     defaults: function () {
@@ -293,7 +293,8 @@
     },
     statusMatches: function (rule, order) {
       if (order.status === 'delivered') return false;
-      if (rule.status === 'open') return order.status === 'new' || order.status === 'in_progress';
+      /* סבב 5: 'open' = חדשה, בעבודה או תקועה (כל מה שעוד לא מוכן) */
+      if (rule.status === 'open') return order.status === 'new' || order.status === 'in_progress' || order.status === 'stuck';
       return order.status === rule.status;
     },
     /* האם הכלל פעיל כרגע על ההזמנה */

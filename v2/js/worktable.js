@@ -7,10 +7,12 @@
  * עמודות כמו הדף הפיזי: מס' הזמנה | מס' תמונה | הדבקה | מט | תיאור תמונה | חומר |
  * מידות | סוג מסגרת | בוצע | הערות. שורה לכל תמונה, הזמנות פתוחות בלבד.
  * X בחומר = גיליון "כמה להזמין" -> שורה ברשימת הספק (C17). V = מוחק אותה.
- * "בוצע" = orders.setItemDone (C18). סבב 4 (A2): לכל הזמנה שורת כותרת עם בורר סטטוס
- * חדשה / בעבודה / מוכנה. מגע ראשון בשורות מעביר חדשה לבעבודה. כשהשורה האחרונה בוצעה
- * לא הופכים לירוק אוטומטית: שואלים (Gallery.askOrderReady, order-status-ui.js).
- * B2: תגובת הלקוח לדגל שנפתר מוצגת בשורת הכותרת עד שההזמנה מוכנה (או "הסתר").
+ * "בוצע" = orders.setItemDone (C18). סבב 5: לכל הזמנה שורת כותרת עם כפתור סטטוס אחד
+ * ("סטטוס: בעבודה ▾", Gallery.statusPillHTML) שפותח תפריט של 5 הסטטוסים, בלי שאלת אישור.
+ * מגע ראשון בשורות מעביר חדשה לבעבודה. כשהשורה האחרונה בוצעה שואלים (Gallery.askOrderReady).
+ * סינון למעלה לפי סטטוס: הכל / חדשות / בעבודה / תקועות / מוכנות / ממתין לחומר (עם מספרים).
+ * הערת "ליצור קשר עם הלקוח" (flag.js) מוצגת בשורת הכותרת עד שנרשמת תגובה. אפשר לסמן אותה
+ * מתוך הערה בשורת תמונה. B2: תגובת הלקוח מוצגת עד שההזמנה מוכנה (או "הסתר").
  * B7: הערת המלאי של הפרופיל מוצגת בחלון ה-X ליד בחירת המוטות.
  * ========================================================================== */
 
@@ -29,9 +31,11 @@
 
   var FILTERS = [
     { id: 'all', label: 'הכל' },
-    { id: 'material', label: 'ממתין לחומר' },
-    { id: 'undone', label: 'לא בוצע' },
-    { id: 'blocked', label: 'תקועות' }
+    { id: 'new', label: 'חדשות' },
+    { id: 'in_progress', label: 'בעבודה' },
+    { id: 'stuck', label: 'תקועות' },
+    { id: 'ready', label: 'מוכנות' },
+    { id: 'material', label: 'ממתין לחומר' }
   ];
   var COLS = 10;
 
@@ -42,22 +46,22 @@
   /* ---------------------------------------------------------------------------
    * עזרים
    * ------------------------------------------------------------------------- */
-  function rowsFor(o) {
-    var items = (o.items || []).slice().sort(function (a, b) { return (a.idx || 0) - (b.idx || 0); });
-    if (filter === 'material') return items.filter(function (it) { return it.material === 'X'; });
-    if (filter === 'undone') return items.filter(function (it) { return !it.done; });
-    if (filter === 'blocked') return U.isBlocked(o) ? items : [];
+  function sortedItems(o) {
+    return (o.items || []).slice().sort(function (a, b) { return (a.idx || 0) - (b.idx || 0); });
+  }
+  function rowsFor(o, f) {
+    f = f || filter;
+    var items = sortedItems(o);
+    if (f === 'material') return items.filter(function (it) { return it.material === 'X'; });
+    if (f !== 'all' && o.status !== f) return [];
     return items;
   }
 
+  /* מספר ההזמנות שכל סינון מציג (טבלת העבודה לא כוללת הזמנות שנמסרו) */
   function counts(list) {
-    var c = { all: 0, material: 0, undone: 0, blocked: 0 };
-    list.forEach(function (o) {
-      var items = o.items || [];
-      c.all += items.length;
-      c.material += items.filter(function (it) { return it.material === 'X'; }).length;
-      c.undone += items.filter(function (it) { return !it.done; }).length;
-      if (U.isBlocked(o)) c.blocked += 1;
+    var c = {};
+    FILTERS.forEach(function (f) {
+      c[f.id] = list.filter(function (o) { return rowsFor(o, f.id).length > 0; }).length;
     });
     return c;
   }
@@ -91,58 +95,39 @@
 
   function filtersHTML(c) {
     return FILTERS.map(function (f) {
-      return '<button type="button" class="fchip wt-fchip' + (f.id === 'blocked' ? ' wt-fchip--red' : '') + '" data-filter="' + f.id +
+      return '<button type="button" class="fchip wt-fchip wt-fchip--' + f.id + '" data-filter="' + f.id +
         '" aria-pressed="' + (filter === f.id) + '">' + esc(f.label) + '<span class="cnt">' + c[f.id] + '</span></button>';
     }).join('');
   }
 
-  function flagRowHTML(o) {
-    var b = o.blocked;
-    return '<tr class="wt-flagrow" data-order="' + esc(o.id) + '"><td colspan="' + COLS + '">' +
-      '<div class="wt-flag">' +
-        '<span class="wt-flag__icon">' + I.flag + '</span>' +
-        '<span class="wt-flag__txt"><b>' + esc(U.BLOCK_KIND_LABEL[b.kind] || 'תקועה') + ' · הזמנה ' + esc(o.number) + ':</b> ' +
-          esc(b.reason || 'ללא סיבה') + ' <span class="wt-flag__since">(מאז ' + esc(U.fmtDateShort(b.since)) + ')</span></span>' +
-        '<button type="button" class="btn btn--sm btn--secondary wt-flag__btn" data-flag>' + I.check + 'נפתר</button>' +
-      '</div></td></tr>';
-  }
-
-  var ST_BTNS = [['new', 'blue', 'חדשה'], ['in_progress', 'yellow', 'בעבודה'], ['ready', 'green', 'מוכנה']];
-
-  /* A2: שורת כותרת להזמנה. בורר סטטוס גדול לסדנה + התקדמות + תגובת לקוח (B2) */
+  /* שורת כותרת להזמנה: כפתור סטטוס אחד (+ סיבה כשתקועה) + התקדמות + הערת יצירת קשר + תגובת לקוח (B2) */
   function groupHeadHTML(o) {
     var items = o.items || [];
     var done = items.filter(function (it) { return it.done; }).length;
     var resp = D.orders.visibleResponse ? D.orders.visibleResponse(o) : null;
     var safe = D.reminders && D.reminders.safeText ? D.reminders.safeText : function (t) { return t; };
-    return '<tr class="wt-ghead" data-order="' + esc(o.id) + '"><td colspan="' + COLS + '">' +
+    return '<tr class="wt-ghead wt-ghead--' + (U.STATUS_COLOR[o.status] || 'grey') + '" data-order="' + esc(o.id) + '"><td colspan="' + COLS + '">' +
       '<div class="wt-gh">' +
         '<span class="wt-gh__lbl">הזמנה <b class="mono">' + esc(o.number) + '</b></span>' +
-        '<div class="wt-st" role="group" aria-label="סטטוס הזמנה ' + esc(o.number) + '">' +
-          ST_BTNS.map(function (b) {
-            var on = o.status === b[0];
-            return '<button type="button" class="wt-st__btn wt-st__btn--' + b[1] + (on ? ' is-on' : '') + '" data-wtstatus="' + b[0] +
-              '" aria-pressed="' + on + '"><span class="dot"></span>' + esc(b[2]) + '</button>';
-          }).join('') +
-        '</div>' +
+        Gallery.statusPillHTML(o, { lg: true }) +
         '<span class="wt-gh__prog' + (items.length && done === items.length ? ' is-all' : '') + '">' +
           (items.length ? 'בוצעו ' + done + ' מתוך ' + items.length : '') + '</span>' +
+        (U.hasContact(o) ? '' : '<button type="button" class="btn btn--ghost btn--sm wt-gh__contact" data-contact-new="' + esc(o.id) + '">' + (I.phoneCall || '') + 'ליצור קשר עם הלקוח</button>') +
         (resp ? '<div class="wt-resp" data-resp-box><span class="wt-resp__txt"><b>תגובת הלקוח</b> <span class="wt-resp__date">(' +
           esc(U.fmtDateShort(resp.resolvedAt)) + ')</span>: ' + esc(safe(resp.response)) + '</span>' +
           '<button type="button" class="wt-resp__x" data-hide-resp aria-label="הסתר את התגובה">הסתר</button></div>' : '') +
-      '</div></td></tr>';
+      '</div>' +
+      (U.hasContact(o) ? Gallery.contactBoxHTML(o) : '') +
+      '</td></tr>';
   }
 
   function noCellHTML(o, span) {
     var look = U.orderLook(o);
-    var blocked = U.isBlocked(o);
     var due = o.dueDate ? U.dueText(o.dueDate) : '';
     var late = o.dueDate && U.daysUntil(o.dueDate) < 0 && o.status !== 'ready';
     return '<td class="wt-no wt-no--' + look.color + '" rowspan="' + span + '">' +
       '<div class="wt-no__num mono">' + esc(o.number) + '</div>' +
       (due ? '<div class="wt-no__due' + (late ? ' is-late' : '') + '">' + I.clock + esc(due) + '</div>' : '') +
-      '<button type="button" class="wt-flagbtn' + (blocked ? ' is-on' : '') + '" data-flag aria-label="' +
-        (blocked ? 'הסרת דגל אדום' : 'סימון בדגל אדום') + '">' + I.flag + '<span>' + (blocked ? 'דגל פעיל' : 'דגל') + '</span></button>' +
     '</td>';
   }
 
@@ -175,7 +160,8 @@
         (info ? '<div class="wt-frame__info">' + esc(info) + '</div>' : '') + '</td>' +
       '<td class="c"><label class="bigcheck wt-done"><input type="checkbox" data-done' + (it.done ? ' checked' : '') + ' aria-label="בוצע"><span></span></label></td>' +
       '<td class="wt-notecell"><button type="button" class="wt-note' + (it.note ? ' has-note' : '') + '" data-note>' +
-        (it.note ? esc(it.note) : I.note + '<span>הערה</span>') + '</button></td>' +
+        (it.note ? esc(it.note) : I.note + '<span>הערה</span>') + '</button>' +
+        (U.hasContact(o) && o.contact.itemId === it.id ? '<span class="wt-note__contact">' + (I.phoneCall || '') + 'ליצור קשר</span>' : '') + '</td>' +
     '</tr>';
   }
 
@@ -192,7 +178,6 @@
       var rows = rowsFor(o);
       if (!rows.length) return;
       html += groupHeadHTML(o);
-      if (U.isBlocked(o)) html += flagRowHTML(o);
       rows.forEach(function (it, i) { html += itemRowHTML(o, it, i === 0, rows.length); });
       html += '<tr class="wt-gap" aria-hidden="true"><td colspan="' + COLS + '"></td></tr>';
     });
@@ -202,7 +187,7 @@
         (filter === 'all' ? 'כשתיפתח הזמנה חדשה, התמונות שלה יופיעו כאן.' : 'אפשר לחזור ל"הכל" כדי לראות את כל העבודות.') + '</p></div></td></tr>';
     }
     bodyEl.innerHTML = html;
-    Gallery.updateBadge('worktable', list.filter(function (o) { return o.status === 'new' || o.status === 'in_progress'; }).length);
+    Gallery.updateBadge('worktable', list.filter(function (o) { return o.status === 'new' || o.status === 'in_progress' || o.status === 'stuck'; }).length);
   }
 
   function queue() {
@@ -321,20 +306,35 @@
   }
 
   function openNote(o, it) {
+    var hasC = U.hasContact(o);
+    var contactHTML = hasC ?
+      '<div class="wt-note-contact is-on">' + (I.phoneCall || '') + '<span>יש להזמנה הערת "ליצור קשר עם הלקוח" פעילה' +
+        (o.contact.text ? ': ' + esc(D.reminders ? D.reminders.safeText(o.contact.text) : o.contact.text) : '') + '</span>' +
+        '<button type="button" class="btn btn--sm btn--primary" data-contact-resp="' + esc(o.id) + '">' + I.check + 'רשום תגובת לקוח</button></div>' :
+      '<label class="wt-note-contact"><span class="bigcheck"><input type="checkbox" data-contact-mark><span></span></span>' +
+        '<span><b>ליצור קשר עם הלקוח</b><small>יוצר תזכורת פעילה, בחנות ובסדנה, עד שנרשמת תגובת הלקוח</small></span></label>';
     var node = Gallery.modalNode({
       title: 'הערה · הזמנה <span class="mono">' + esc(o.number) + '</span> תמונה <span class="mono">' + esc(D.orders.itemLabel(it, o)) + '</span>',
       body: '<div class="form-field"><label for="wt-note">ההערה מופיעה גם בכרטיס ההזמנה</label>' +
         '<textarea id="wt-note" class="wt-notearea" rows="3" data-text placeholder="למשל: צריך לתקן פינות">' + esc(it.note || '') + '</textarea></div>' +
         '<div class="wt-quick">' + ['צריך לתקן פינות', 'זכוכית שבורה, להחליף', 'ממתין לחומר'].map(function (q) {
           return '<button type="button" class="fchip" data-q="' + esc(q) + '">' + esc(q) + '</button>';
-        }).join('') + '</div>',
+        }).join('') + '</div>' + contactHTML,
       foot: '<button class="btn btn--primary btn--lg" data-save>' + I.check + 'שמור הערה</button>' +
         (it.note ? '<button class="btn btn--danger" data-clear>מחק הערה</button>' : '') +
         '<button class="btn btn--ghost" data-close>ביטול</button>'
     });
     node.classList.add('wt-modal');
     function save(text) {
-      D.orders.updateItem(o.id, it.id, { note: text }, { start: true }).then(function () { Gallery.closeModal(); });
+      var mark = node.querySelector('[data-contact-mark]');
+      var wantContact = !!(mark && mark.checked);
+      if (wantContact && !text) { node.querySelector('[data-text]').focus(); Gallery.toast('צריך לכתוב על מה ליצור קשר עם הלקוח'); return; }
+      D.orders.updateItem(o.id, it.id, { note: text }, { start: true }).then(function () {
+        return wantContact ? D.orders.setContact(o.id, { text: text, itemId: it.id }) : null;
+      }).then(function () {
+        Gallery.closeModal();
+        if (wantContact) Gallery.toast('נוספה הערה "ליצור קשר עם הלקוח" להזמנה ' + o.number + '. התזכורת פעילה עד שנרשמת תגובה.');
+      });
     }
     node.addEventListener('click', function (e) {
       var q = e.target.closest('[data-q]');
@@ -362,9 +362,7 @@
     var o = D.orders.peekOne(tr.getAttribute('data-order'));
     if (!o) return;
 
-    if (e.target.closest('[data-flag]')) { Gallery.openBlockedFlag(o.id); return; }
-    var st = e.target.closest('[data-wtstatus]');
-    if (st) { Gallery.changeOrderStatus(o.id, st.getAttribute('data-wtstatus')); return; }
+    if (e.target.closest('[data-spill], [data-stuck-edit], [data-contact-new], [data-contact-resp]')) return;   // order-status-ui.js / flag.js
     if (e.target.closest('[data-hide-resp]')) { D.orders.hideResponse(o); return; }
 
     var itemId = tr.getAttribute('data-item');
@@ -398,26 +396,38 @@
    * פירוט הזמנה בסדנה (בלי שם לקוח ובלי מחירים). ב-admin נשאר orders.js.
    * ------------------------------------------------------------------------- */
   if (Gallery.role === 'workshop') {
-    Gallery.openOrder = function (orderId) {
-      var o = D.orders.peekOne(orderId);
-      if (!o) return;
-      var look = U.orderLook(o);
+    var wsBody = function (o) {
       var items = (o.items || []).map(function (it) {
         return '<tr' + (it.done ? ' class="is-done"' : '') + '><td class="c mono">' + esc(D.orders.itemLabel(it, o)) + '</td>' +
           '<td>' + esc(it.desc || 'תמונה') + '</td><td class="c mono">' + esc(U.fmtSize(it.widthCm, it.heightCm) || '-') + '</td>' +
           '<td class="mono">' + esc(it.profileSku || '-') + '</td><td class="c">' + (it.done ? 'בוצע' : '') + '</td><td>' + esc(it.note || '') + '</td></tr>';
       }).join('');
+      return '<div class="wt-ocard__status">' + Gallery.statusPillHTML(o, { lg: true }) + '</div>' +
+        (U.hasContact(o) ? Gallery.contactBoxHTML(o) : '<p><button type="button" class="btn btn--ghost" data-contact-new="' + esc(o.id) + '">' + (I.phoneCall || '') + 'ליצור קשר עם הלקוח</button></p>') +
+        (Gallery.flagHistoryHTML ? Gallery.flagHistoryHTML(o) : '') +
+        (o.dueDate ? '<p>מועד מסירה: <b>' + esc(U.fmtDate(o.dueDate)) + '</b> (' + esc(U.dueText(o.dueDate)) + ')</p>' : '') +
+        '<div class="tablewrap"><table class="wtable"><thead><tr><th class="c">מס\' תמונה</th><th>תיאור</th><th class="c">מידות</th><th>מסגרת</th><th class="c">בוצע</th><th>הערות</th></tr></thead>' +
+        '<tbody>' + items + '</tbody></table></div>' +
+        (o.notes ? '<p class="wt-ordnotes">' + esc(o.notes) + '</p>' : '');
+    };
+    Gallery.openOrder = function (orderId) {
+      var o = D.orders.peekOne(orderId);
+      if (!o) return;
       var node = Gallery.modalNode({
-        title: 'הזמנה <span class="mono">' + esc(o.number) + '</span> <span class="pill is-' + look.color + '"><span class="dot"></span>' + esc(look.label) + '</span>',
-        body: (U.isBlocked(o) ? '<div class="flag-current"><div class="flag-current__reason">' + esc(o.blocked.reason) + '</div></div>' : '') +
-          (Gallery.flagHistoryHTML ? Gallery.flagHistoryHTML(o) : '') +
-          (o.dueDate ? '<p>מועד מסירה: <b>' + esc(U.fmtDate(o.dueDate)) + '</b> (' + esc(U.dueText(o.dueDate)) + ')</p>' : '') +
-          '<div class="tablewrap"><table class="wtable"><thead><tr><th class="c">מס\' תמונה</th><th>תיאור</th><th class="c">מידות</th><th>מסגרת</th><th class="c">בוצע</th><th>הערות</th></tr></thead>' +
-          '<tbody>' + items + '</tbody></table></div>' +
-          (o.notes ? '<p class="wt-ordnotes">' + esc(o.notes) + '</p>' : ''),
+        title: 'הזמנה <span class="mono">' + esc(o.number) + '</span>',
+        body: wsBody(o),
         foot: '<button class="btn btn--secondary" data-close>סגירה</button>'
       });
-      Gallery.openModal(node, { wide: true });
+      node.classList.add('wt-ocard');
+      /* מתעדכן בזמן אמת (שינוי סטטוס מה-pill, מהאייפד השני) */
+      var unsub = D.orders.subscribe(function () {
+        if (!document.body.contains(node)) return;
+        var cur = D.orders.peekOne(orderId);
+        if (!cur) { Gallery.closeModal(); return; }
+        var body = node.querySelector('.modal__body');
+        if (body) body.innerHTML = wsBody(cur);
+      });
+      Gallery.openModal(node, { wide: true, onClose: function () { unsub(); } });
     };
   }
 

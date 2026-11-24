@@ -260,3 +260,46 @@
   .inv-head__acts { width: 100%; }
   .inv-head__acts .btn { flex: 1 1 auto; justify-content: center; }
 }
+
+/* =============================================================================
+ * סבב 5: "במלאי בפועל" מול "להזמין" (חומרי גלם, ובמסגרות תגית "להזמין")
+ * ========================================================================== */
+.inv-raw__sum {
+  display: flex; align-items: center; gap: var(--s-2) var(--s-3); flex-wrap: wrap; margin-bottom: var(--s-3);
+  padding: var(--s-3) var(--s-4); background: var(--bg-surface); border: 1px solid var(--line); border-radius: var(--r-md);
+  font-size: var(--fs-md); color: var(--ink-secondary);
+}
+.inv-raw__sum b { color: var(--ink); font-size: var(--fs-lg); }
+.inv-raw__sumi.is-low b { color: var(--st-red-text); }
+.inv-raw__sumsep { color: var(--ink-muted); }
+.inv-raw__qtys { display: flex; gap: var(--s-2); flex-wrap: wrap; margin-inline-start: auto; }
+.inv-raw__box {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-width: 150px;
+  padding: var(--s-2) var(--s-3); border-radius: var(--r-md); border: 2px solid var(--line); background: var(--bg-surface);
+}
+.inv-raw__k { font-size: var(--fs-sm); font-weight: var(--fw-bold); color: var(--ink-secondary); display: inline-flex; align-items: center; gap: 6px; }
+.inv-raw__stock.is-low { border-color: var(--st-red); background: var(--st-red-soft); }
+.inv-raw__order.is-open { border-color: var(--st-blue); background: var(--st-blue-soft); }
+.inv-raw__order.is-suggested { border-style: dashed; border-color: var(--st-orange); background: var(--st-orange-soft); }
+.inv-raw__order.is-none { background: var(--bg-surface-alt); }
+.inv-raw__ordv { display: flex; align-items: baseline; gap: 6px; line-height: 1.1; }
+.inv-raw__ordv b { font-family: var(--font-mono); font-size: var(--fs-2xl); color: var(--ink); }
+.inv-raw__order.is-none .inv-raw__ordv b { font-family: var(--font-ui); font-size: var(--fs-lg); color: var(--ink-muted); }
+.inv-raw__ordv small { font-size: var(--fs-xs); color: var(--ink-secondary); }
+.inv-raw__sugg { font-size: var(--fs-xs); padding: 1px 6px; border-radius: var(--r-pill); background: var(--st-orange); color: #fff; }
+.inv-raw__sugg.is-open { background: var(--st-blue); }
+.inv-raw__ordbtn { min-height: 44px; }
+.inv-toorder {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 var(--s-3); border-radius: var(--r-pill);
+  font-size: var(--fs-sm); background: var(--bg-surface-alt); color: var(--ink-secondary);
+}
+.inv-toorder .ico { width: 18px; height: 18px; }
+.inv-toorder b { color: var(--ink); }
+.inv-toorder.is-open { background: var(--st-blue-soft); color: var(--st-blue-text); }
+.inv-toorder.is-suggested { background: var(--st-orange-soft); color: var(--st-orange-text); border: 1px dashed var(--st-orange); }
+.inv-toorder small { font-size: var(--fs-xs); font-weight: var(--fw-bold); }
+.inv-bar__num small { font-family: var(--font-ui); font-size: var(--fs-xs); color: var(--ink-secondary); font-weight: var(--fw-semibold); }
+@media (max-width: 900px) {
+  .inv-raw__qtys { width: 100%; margin-inline-start: 0; }
+  .inv-raw__box { flex: 1 1 140px; min-width: 0; }
+}

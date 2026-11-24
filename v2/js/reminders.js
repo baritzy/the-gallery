@@ -7,8 +7,8 @@
  * - סדר ידני (C26 / D7): ידית גרירה ב-pointer events (עובד באייפד) + חצים.
  *   נשמר ב-Gallery.data.reminderOrder.
  * - "הגדרות תזכורות" (C27): הוספה, עריכה, מחיקה והפעלה של כללים.
- * - דגל "ליצור קשר עם הלקוח" (C28): מחליף את Gallery.openBlockedFlag (אותה חתימה),
- *   תגובת לקוח חובה בהסרה, ובחנות כפתור התקשר / וואטסאפ.
+ * - סבב 5: "ליצור קשר עם הלקוח" = הערה עם תזכורת (flag.js, Gallery.openContactNote),
+ *   "תקועה" = סטטוס עם סיבה. ה-pill בכל כרטיס פותח את תפריט הסטטוסים (order-status-ui.js).
  * בסדנה: בלי כסף, בלי שמות לקוחות ובלי טלפונים.
  * ========================================================================== */
 
@@ -44,14 +44,15 @@
     return 'מזה ' + (d === 1 ? 'יום' : d + ' ימים');
   }
   function reasonText(r) {
-    if (r.kind === 'flag') return (U.BLOCK_KIND_LABEL[r.flagKind] || 'תקועה') + (r.text ? ': ' + r.text : '');
+    if (r.kind === 'contact') return 'ליצור קשר עם הלקוח' + (r.text ? ': ' + r.text : '');
+    if (r.kind === 'stuck') return 'תקועה' + (r.text ? ': ' + r.text : '');
     return r.text;
   }
   function customerOf(o) { return ADMIN && D.customers ? (D.customers.peekOne(o.customerId) || {}) : {}; }
   function followupMsg(o) {
     var c = customerOf(o), s = D.settings.peek().shop;
     if (o.status === 'ready') return U.msgReady(o);
-    if (U.isBlocked(o) && o.blocked.kind === 'contact_client') {
+    if (U.hasContact(o)) {
       return 'שלום ' + (c.name || '') + ', כאן ' + (s.name || 'הגלריה') + '. רצינו לדבר איתך לגבי ההזמנה שלך (מס\' ' + o.number + '). ' +
         'אפשר לחזור אלינו או לקפוץ לחנות? תודה. ' + (s.phone || '');
     }
@@ -113,11 +114,10 @@
       if (cu.name) cust = '<span class="rem-item__cust">' + esc(cu.name) + '</span>';
     }
     var acts = [];
-    if (c.flag) {
-      acts.push('<button class="btn btn--primary" data-resolve="' + o.id + '">' + I.check +
-        (o.blocked.kind === 'contact_client' ? 'תגובת הלקוח' : 'נפתר') + '</button>');
+    if (c.contact) {
+      acts.push('<button class="btn btn--primary" data-contact-resp="' + esc(o.id) + '">' + I.check + 'רשום תגובת לקוח</button>');
     } else {
-      acts.push('<button class="btn btn--warn" data-contact="' + o.id + '">' + I.flag + 'ליצור קשר עם הלקוח</button>');
+      acts.push('<button class="btn btn--warn" data-contact-new="' + esc(o.id) + '">' + (I.phoneCall || '') + 'ליצור קשר עם הלקוח</button>');
     }
     if (hasResp) acts.push('<button class="btn btn--ghost" data-hide-resp="' + o.id + '">' + I.check + 'הבנתי, להסתיר את התגובה</button>');
     if (ADMIN) {
@@ -131,11 +131,11 @@
       '<div class="rem-item__body">' +
         '<div class="rem-item__top">' +
           '<button type="button" class="rem-item__num mono" data-open="' + o.id + '" title="פתח את ההזמנה">' + esc(o.number) + '</button>' +
-          '<span class="pill is-' + U.STATUS_COLOR[o.status] + '">' + esc(U.STATUS_LABEL[o.status] || '') + '</span>' +
+          Gallery.statusPillHTML(o, { reason: false }) +
           '<span class="rem-item__level rem-lv-' + c.level + '">' + esc(LEVEL_TXT[c.level]) + '</span>' +
           '<span class="rem-item__age">' + esc(ageText(main.since)) + '</span>' + cust +
         '</div>' +
-        '<div class="rem-item__reason' + (main.kind === 'response' ? ' rem-resp' : '') + '">' + (main.kind === 'flag' ? I.flag : '') + esc(reasonText(main)) + '</div>' +
+        '<div class="rem-item__reason' + (main.kind === 'response' ? ' rem-resp' : '') + '">' + (main.kind === 'contact' ? (I.phoneCall || '') : '') + esc(reasonText(main)) + '</div>' +
         (more ? '<ul class="rem-item__mores">' + more + '</ul>' : '') +
         '<div class="rem-item__actions">' + acts.join('') + '</div>' +
       '</div>' +
@@ -216,8 +216,6 @@
       if (ro) { D.orders.hideResponse(ro); Gallery.toast('התגובה הוסתרה במכשיר הזה'); }
       return;
     }
-    if ((el = t.closest('[data-resolve]'))) { Gallery.openBlockedFlag(el.getAttribute('data-resolve')); return; }
-    if ((el = t.closest('[data-contact]'))) { Gallery.openBlockedFlag(el.getAttribute('data-contact'), { kind: 'contact_client' }); return; }
     if ((el = t.closest('[data-wa]'))) {
       var o = D.orders.peekOne(el.getAttribute('data-wa'));
       if (o) Gallery.whatsapp(customerOf(o).phone, followupMsg(o));
@@ -229,7 +227,7 @@
   /* =========================================================================
    * C27: הגדרות תזכורות
    * ======================================================================= */
-  var STATUS_OPTS = [['new', 'חדשה'], ['in_progress', 'בעבודה'], ['open', 'פתוחה'], ['ready', 'מוכנה שלא נאספה']];
+  var STATUS_OPTS = [['new', 'חדשה'], ['in_progress', 'בעבודה'], ['stuck', 'תקועה'], ['open', 'פתוחה'], ['ready', 'מוכנה שלא נאספה']];
   var ANCHOR_OPTS = [['created', 'מיום הקבלה'], ['due-before', 'לפני מועד המסירה'], ['due-after', 'אחרי מועד המסירה']];
 
   function openRules() {
@@ -338,92 +336,7 @@
     Gallery.openModal(node, { wide: true, focus: false, onClose: function () { if (unsub) unsub(); } });
   }
 
-  /* =========================================================================
-   * C28: דגל אדום / ליצור קשר עם הלקוח. מחליף את ברירת המחדל של flag.js
-   * (אותה חתימה: openBlockedFlag(orderId, { onClose?, onDone?, kind? })).
-   * ======================================================================= */
-  var QUICK = {
-    stuck: ['ממתינים לתמונה מהלקוח', 'חסר חומר, ממתינים לספק', 'ממתינים לאישור מידות'],
-    contact_client: ['לא לגעת בעבודה עד שהלקוח יגיע', 'המסגרת לא מתאימה', 'בעיה בפספרטו']
-  };
-
-  Gallery.openBlockedFlag = function (orderId, opts) {
-    opts = opts || {};
-    var o = D.orders.peekOne(orderId);
-    if (!o) return;
-    var active = U.isBlocked(o);
-    var kind = active ? o.blocked.kind : (opts.kind || 'stuck');
-    var cu = customerOf(o);
-    var contactBtns = (ADMIN && cu.phone) ?
-      '<div class="rem-flag__contact">' +
-        '<button type="button" class="btn btn--wa btn--lg" data-fwa>' + I.wa + 'וואטסאפ ל' + esc(cu.name || 'לקוח') + '</button>' +
-        '<a class="btn btn--secondary btn--lg" href="tel:' + esc(String(cu.phone).replace(/[^\d+]/g, '')) + '">' + PHONE + 'התקשר ' + esc(cu.phone) + '</a>' +
-      '</div>' : '';
-
-    function kindBtn(k, label) {
-      return '<button type="button" class="flag-kind" role="radio" data-kind="' + k + '" aria-checked="' + (k === kind) + '">' + I.flag + esc(label) + '</button>';
-    }
-    function quickHTML() {
-      return (QUICK[kind] || []).map(function (q) { return '<button type="button" class="fchip" data-q="' + esc(q) + '">' + esc(q) + '</button>'; }).join('');
-    }
-    var body, foot;
-    if (active) {
-      var needResp = o.blocked.kind === 'contact_client';
-      body = '<div class="flag-current">' +
-          '<div class="flag-current__kind">' + I.flag + esc(U.BLOCK_KIND_LABEL[o.blocked.kind] || 'תקועה') + '</div>' +
-          '<div class="flag-current__reason">' + esc(o.blocked.reason || 'ללא הערה') + '</div>' +
-          '<div class="flag-current__since">מאז ' + U.fmtDate(o.blocked.since) + ' (' + esc(ageText(o.blocked.since)) + ')</div>' +
-        '</div>' + contactBtns +
-        '<div class="form-field"><label for="flag-resp">' + (needResp ? 'תגובת הלקוח (חובה)' : 'מה קרה? (הפתרון)') + '</label>' +
-          '<textarea id="flag-resp" data-resp rows="3" placeholder="' + (needResp ? 'למשל: הלקוח הגיע ובחר מסגרת אחרת' : 'למשל: הלקוח הביא את התמונה') + '"></textarea></div>';
-      foot = '<button class="btn btn--primary btn--lg" data-resolve-flag>' + I.check + (needResp ? 'נרשמה תגובה, להסיר את הדגל' : 'נפתר, להסיר את הדגל') + '</button>' +
-        '<button class="btn btn--ghost" data-close>ביטול</button>';
-    } else {
-      body = '<div class="flag-kinds" role="radiogroup" aria-label="סוג הדגל">' +
-          kindBtn('stuck', 'תקועה / ממתינה') + kindBtn('contact_client', 'ליצור קשר עם הלקוח') +
-        '</div>' +
-        '<div class="form-field"><label for="flag-reason">הערה (חובה)</label>' +
-          '<textarea id="flag-reason" data-reason rows="3" placeholder="למשל: לא לגעת בעבודה עד שהלקוח יגיע">' +
-          (kind === 'contact_client' ? esc(QUICK.contact_client[0]) : '') + '</textarea></div>' +
-        '<div class="flag-quick" data-quick>' + quickHTML() + '</div>' +
-        '<p class="field-note rem-flag__note">הדגל נשאר פעיל (גם בטבלת העבודה) עד שנרשמת תגובה.</p>' + contactBtns;
-      foot = '<button class="btn btn--danger-solid btn--lg" data-set-flag>' + I.flag + 'לסמן באדום</button>' +
-        '<button class="btn btn--ghost" data-close>ביטול</button>';
-    }
-
-    var node = Gallery.modalNode({
-      title: (active ? 'דגל פעיל' : 'סימון בדגל אדום') + ' · הזמנה <span class="mono">' + esc(o.number) + '</span>',
-      body: body, foot: foot
-    });
-    node.classList.add('modal--flag');
-
-    node.addEventListener('click', function (e) {
-      var t = e.target;
-      var k = t.closest('[data-kind]');
-      if (k) {
-        kind = k.getAttribute('data-kind');
-        Array.prototype.forEach.call(node.querySelectorAll('[data-kind]'), function (b) { b.setAttribute('aria-checked', String(b === k)); });
-        node.querySelector('[data-quick]').innerHTML = quickHTML();
-        return;
-      }
-      var q = t.closest('[data-q]');
-      if (q) { var ta = node.querySelector('[data-reason]'); ta.value = q.getAttribute('data-q'); ta.focus(); return; }
-      if (t.closest('[data-fwa]')) { Gallery.whatsapp(cu.phone, followupMsg(Object.assign({}, o, { blocked: { kind: 'contact_client' } }))); return; }
-      if (t.closest('[data-set-flag]')) {
-        var reason = node.querySelector('[data-reason]').value.trim();
-        if (!reason) { node.querySelector('[data-reason]').focus(); Gallery.toast('צריך לכתוב הערה: למה מחכים'); return; }
-        D.orders.setBlocked(o.id, { kind: kind, reason: reason }).then(function () { Gallery.closeModal(); if (opts.onDone) opts.onDone(); });
-        return;
-      }
-      if (t.closest('[data-resolve-flag]')) {
-        var resp = node.querySelector('[data-resp]').value.trim();
-        if (!resp && o.blocked.kind === 'contact_client') { node.querySelector('[data-resp]').focus(); Gallery.toast('צריך לרשום מה הלקוח ענה'); return; }
-        D.orders.resolveBlocked(o.id, resp).then(function () { Gallery.closeModal(); Gallery.toast('הדגל הוסר'); if (opts.onDone) opts.onDone(); });
-      }
-    });
-
-    Gallery.openModal(node, { onClose: opts.onClose, focus: false });
-  };
+  /* C28 (סבב 5): הדגל האדום הוסר. "ליצור קשר עם הלקוח" = הערה + תזכורת, ב-flag.js (Gallery.openContactNote). */
 
   Gallery.Reminders = { mount: mount, onShow: render, render: render };
   Gallery.registerView('reminders', Gallery.Reminders);

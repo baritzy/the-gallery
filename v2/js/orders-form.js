@@ -191,7 +191,12 @@
             o.dueDate = dueIso; o.notes = val('notes');
             var doneAfter = o.items.map(function (x) { return x.id + ':' + !!x.done; }).join('|');
             // סטטוס נגזר מחדש רק אם סימוני "בוצע" השתנו בטופס
-            if (doneBefore !== doneAfter && o.status !== 'delivered') o.status = D.orders.deriveStatus(o);
+            if (doneBefore !== doneAfter && o.status !== 'delivered') {
+              /* סבב 5: מוכנה נשארת מוכנה, אלא אם בוטל "בוצע" בשורה (חוזרת לבעבודה) */
+              var unticked = doneBefore.split('|').some(function (k) { return /:true$/.test(k) && doneAfter.split('|').indexOf(k.replace(/:true$/, ':false')) !== -1; });
+              if (o.status === 'ready' && unticked) { o.status = 'in_progress'; o.readyAt = null; }
+              else o.status = D.orders.deriveStatus(o);
+            }
             return D.orders.save(o);
           }
           return D.orders.create({ customerId: c.id, items: clean, price: price, dueDate: dueIso, notes: val('notes') });

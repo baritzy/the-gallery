@@ -5,9 +5,10 @@
  * Gallery.data.reminders.compute(now?) -> [card]
  *   כרטיס אחד לכל הזמנה שדורשת תשומת לב (C26 עד C28):
  *   { id:'order:<orderId>', orderId, order, level:'red'|'orange'|'blue', rank,
- *     reasons:[{ kind:'flag'|'overdue'|'rule', ruleId?, text, since:ISO, level }],
- *     since:ISO (הסיבה הראשית), flag:boolean }
- *   מקורות: דגל פעיל (blocked), איחור במועד מסירה, וכללי reminderRules פעילים.
+ *     reasons:[{ kind:'contact'|'stuck'|'overdue'|'rule'|'response', ruleId?, text, since:ISO, level }],
+ *     since:ISO (הסיבה הראשית), contact:boolean, stuck:boolean, flag (= contact, תאימות) }
+ *   מקורות (סבב 5): הערת "ליצור קשר עם הלקוח" פעילה, סטטוס "תקועה", איחור במועד מסירה,
+ *   וכללי reminderRules פעילים.
  * Gallery.data.reminderRules.describe(rule) -> טקסט קריא לכלל.
  * Gallery.data.reminders.sortWithOrder(cards, ids) -> סדר ידני (C26).
  * סבב 4 (B2): סיבה מסוג 'response' = תגובת הלקוח לדגל שנפתר, עד שההזמנה מוכנה
@@ -23,10 +24,11 @@
   var S = Gallery.store;
   var DAY = 86400000;
 
-  var STATUS_TXT = { 'new': 'חדשה', in_progress: 'בעבודה', open: 'פתוחה (חדשה או בעבודה)', ready: 'מוכנה שלא נאספה' };
+  var STATUS_TXT = { 'new': 'חדשה', in_progress: 'בעבודה', stuck: 'תקועה', open: 'פתוחה (חדשה, בעבודה או תקועה)', ready: 'מוכנה שלא נאספה' };
   var LEVEL_RANK = { red: 0, orange: 1, blue: 2 };
 
-  function isBlocked(o) { return !!(o && o.blocked && !o.blocked.resolvedAt); }
+  function isStuck(o) { return !!(o && o.status === 'stuck'); }
+  function hasContact(o) { return !!(o && o.contact && !o.contact.resolvedAt); }
   function startOfDay(d) { var x = new Date(d); x.setHours(0, 0, 0, 0); return x; }
   function p2(n) { return (n < 10 ? '0' : '') + n; }
   function shortDate(iso) { var d = new Date(iso); return p2(d.getDate()) + '.' + p2(d.getMonth() + 1); }
@@ -87,11 +89,15 @@
     S.all('orders').forEach(function (o) {
       if (o.status === 'delivered') return;
       var reasons = [];
-      if (isBlocked(o)) {
-        reasons.push({ kind: 'flag', text: o.blocked.reason || '', flagKind: o.blocked.kind, since: o.blocked.since || o.updatedAt, level: 'red' });
+      /* סבב 5: "תקועה" (סטטוס) ו"ליצור קשר עם הלקוח" (הערה פעילה) במקום הדגל האדום */
+      if (hasContact(o)) {
+        reasons.push({ kind: 'contact', text: o.contact.text || '', since: o.contact.since || o.updatedAt, level: 'red' });
+      }
+      if (isStuck(o)) {
+        reasons.push({ kind: 'stuck', text: (o.stuck && o.stuck.reason) || '', since: (o.stuck && o.stuck.since) || o.updatedAt, level: 'red' });
       }
       var overdue = false;
-      if ((o.status === 'new' || o.status === 'in_progress') && o.dueDate && startOfDay(o.dueDate).getTime() < startOfDay(now).getTime()) {
+      if ((o.status === 'new' || o.status === 'in_progress' || o.status === 'stuck') && o.dueDate && startOfDay(o.dueDate).getTime() < startOfDay(now).getTime()) {
         overdue = true;
         var late = Math.round((startOfDay(now) - startOfDay(o.dueDate)) / DAY);
         reasons.push({ kind: 'overdue', text: 'באיחור ' + (late === 1 ? 'יום' : late + ' ימים') + ' ממועד המסירה (' + shortDate(o.dueDate) + ')', since: o.dueDate, level: 'red' });
@@ -112,7 +118,7 @@
       var main = reasons[0];
       out.push({
         id: 'order:' + o.id, orderId: o.id, order: o, level: main.level, rank: LEVEL_RANK[main.level],
-        reasons: reasons, since: main.since, flag: isBlocked(o)
+        reasons: reasons, since: main.since, flag: hasContact(o), contact: hasContact(o), stuck: isStuck(o)
       });
     });
     /* ברירת מחדל: לפי דחיפות, ואז הוותיק ביותר קודם */

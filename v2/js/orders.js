@@ -2,7 +2,9 @@
  * orders.js  -  טאב "הזמנות" (admin בלבד): רשימה + כרטיס הזמנה
  * OWNER: foundation (wave 2).  קבצים נלווים: orders-form.js, orders-pay.js
  * C6: מספר ההזמנה הוא הדבר המרכזי. שם הלקוח משני, בקצה.
- * C7: חדשה=כחול, בעבודה=צהוב, מוכנה=ירוק. דגל אדום עם סיבה גובר על הצבע.
+ * C7 / סבב 5: 5 סטטוסים: חדשה=כחול, בעבודה=צהוב, תקועה=אדום (עם סיבה), מוכנה=ירוק, נמסרה=אפור.
+ *   כפתור סטטוס אחד (Gallery.statusPillHTML) ברשימה ובכרטיס. אין דגל אדום.
+ *   "ליצור קשר עם הלקוח" = הערה עם תזכורת (flag.js).
  * C10: אין "הדפסת כרטיס עבודה".
  * חושף: Gallery.openOrder(orderId)
  * ========================================================================== */
@@ -25,8 +27,8 @@
     { id: 'active', label: 'פתוחות' },
     { id: 'new', label: 'חדשות' },
     { id: 'in_progress', label: 'בעבודה' },
+    { id: 'stuck', label: 'תקועות' },
     { id: 'ready', label: 'מוכנות' },
-    { id: 'blocked', label: 'תקועות' },
     { id: 'delivered', label: 'נמסרו' }
   ];
 
@@ -61,6 +63,7 @@
       render();
     });
     listEl.addEventListener('click', onListClick);
+    listEl.addEventListener('keydown', onListKey);
 
     D.orders.subscribe(function (list) { orders = list; render(); refreshCard(); });
     D.customers.subscribe(function () { render(); refreshCard(); });
@@ -70,7 +73,6 @@
   /* ---------------------------------------------------------------- filters */
   function match(o, f) {
     if (f === 'active') return o.status !== 'delivered';
-    if (f === 'blocked') return U.isBlocked(o) && o.status !== 'delivered';
     if (f === 'delivered') return o.status === 'delivered';
     return o.status === f && o.status !== 'delivered';
   }
@@ -97,13 +99,14 @@
   function render() {
     if (!listEl) return;
     renderFilters();
-    var blockedCount = orders.filter(function (o) { return U.isBlocked(o) && o.status !== 'delivered'; }).length;
-    Gallery.updateBadge('orders', blockedCount);
+    /* מונה: תקועות + הערות "ליצור קשר" פעילות */
+    var attention = orders.filter(function (o) { return o.status !== 'delivered' && (o.status === 'stuck' || U.hasContact(o)); }).length;
+    Gallery.updateBadge('orders', attention);
 
     var rows = orders.filter(function (o) { return match(o, state.filter) && matchTerm(o); });
     rows.sort(function (a, b) {
       if (state.filter !== 'delivered') {
-        var ba = U.isBlocked(a), bb = U.isBlocked(b);
+        var ba = a.status === 'stuck', bb = b.status === 'stuck';
         if (ba !== bb) return ba ? -1 : 1;
       }
       if (state.sort === 'number' || state.filter === 'delivered') return b.number - a.number;
@@ -117,7 +120,7 @@
           '<h3>אין הזמנות פתוחות</h3><p>הזמנה חדשה תופיע כאן וגם בטבלת העבודה בסדנה.</p>') + '</div>';
       return;
     }
-    listEl.innerHTML = '<div class="olist__head" aria-hidden="true"><span>מס\' הזמנה</span><span>סטטוס</span><span>תמונות</span><span>מסירה</span><span class="money">יתרה</span><span>לקוח</span><span></span></div>' +
+    listEl.innerHTML = '<div class="olist__head" aria-hidden="true"><span>מס\' הזמנה</span><span>סטטוס</span><span>תמונות</span><span>מסירה</span><span class="money">יתרה</span><span>לקוח</span></div>' +
       rows.map(rowHTML).join('');
   }
 
@@ -132,31 +135,34 @@
     var bal = D.orders.balance(o);
     var firstDesc = items[0] && items[0].desc ? items[0].desc : '';
 
-    return '<div class="orow' + (look.key === 'blocked' ? ' is-blocked' : '') + '" style="--spine:' + U.statusVar(look.color) + '">' +
-      '<button class="orow__main" data-open="' + esc(o.id) + '" aria-label="הזמנה ' + esc(o.number) + '">' +
+    return '<div class="orow' + (o.status === 'stuck' ? ' is-stuck' : '') + '" style="--spine:' + U.statusVar(look.color) + '">' +
+      '<div class="orow__main" role="button" tabindex="0" data-open="' + esc(o.id) + '" aria-label="הזמנה ' + esc(o.number) + '">' +
         '<span class="orow__num">' + esc(o.number) + '</span>' +
-        '<span class="orow__status"><span class="pill is-' + look.color + '">' + esc(look.label) + '</span>' +
-          (look.reason ? '<span class="orow__reason">' + esc(look.reason) + '</span>' : '') + '</span>' +
+        '<span class="orow__status">' + Gallery.statusPillHTML(o) +
+          (U.hasContact(o) ? '<span class="orow__contact">' + (I.phoneCall || '') + 'ליצור קשר עם הלקוח</span>' : '') + '</span>' +
         '<span class="orow__items"><span><b>' + U.plural(items.length, 'תמונה אחת', 'תמונות') + '</b>' +
           (items.length > 1 && done ? ' · ' + done + ' בוצעו' : '') + '</span>' +
           (firstDesc ? '<span class="orow__desc">' + esc(firstDesc) + '</span>' : '') + '</span>' +
         '<span class="orow__due' + (late ? ' is-late' : '') + '">' +
           (o.status === 'delivered' ? 'נמסרה ' + U.fmtDateShort(o.deliveredAt) : U.fmtDateShort(o.dueDate) + '<small>' + esc(U.dueText(o.dueDate)) + '</small>') + '</span>' +
         '<span class="orow__bal money' + (bal > 0 ? ' is-owed' : '') + '">' + (bal > 0 ? U.fmtMoney(bal) : bal < 0 ? 'שולם ביתר' : 'שולם') + '</span>' +
-        '<span class="orow__cust' + (tone ? ' tone-' + tone : '') + '">' + esc(c.name || '') + '</span>' +
-      '</button>' +
-      (o.status !== 'delivered' ?
-        '<button class="orow__flag' + (U.isBlocked(o) ? ' is-on' : '') + '" data-flag="' + esc(o.id) + '" aria-label="' +
-          (U.isBlocked(o) ? 'הסרת דגל אדום' : 'סימון בדגל אדום') + '" title="' + (U.isBlocked(o) ? 'הסרת דגל אדום' : 'סימון בדגל אדום') + '">' + I.flag + '</button>' :
-        '<span class="orow__flag-sp"></span>') +
+        '<span class="orow__cust"><span class="orow__custname' + (tone ? ' tone-' + tone : '') + '">' + esc(c.name || '') + '</span>' +
+          U.returningTag(D.customers.visitCount(o.customerId)) + '</span>' +
+      '</div>' +
     '</div>';
   }
 
   function onListClick(e) {
-    var f = e.target.closest('[data-flag]');
-    if (f) { Gallery.openBlockedFlag(f.getAttribute('data-flag')); return; }
+    if (e.target.closest('[data-spill], [data-stuck-edit]')) return;   // order-status-ui.js
     var b = e.target.closest('[data-open]');
     if (b) openOrder(b.getAttribute('data-open'));
+  }
+  function onListKey(e) {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    var b = e.target.closest && e.target.closest('.orow__main[data-open]');
+    if (!b || e.target !== b) return;
+    e.preventDefault();
+    openOrder(b.getAttribute('data-open'));
   }
 
   /* ------------------------------------------------------------ order card */
@@ -191,34 +197,24 @@
     var visits = D.customers.visitCount(o.customerId);
     var tone = U.visitTone(visits);
     var paid = D.orders.paid(o), bal = D.orders.balance(o);
-    var blocked = U.isBlocked(o);
 
     var head =
       '<div class="ocard__head" style="--spine:' + U.statusVar(look.color) + '">' +
         '<div class="ocard__numwrap"><span class="ocard__numlbl">הזמנה מס\'</span><span class="ocard__num">' + esc(o.number) + '</span></div>' +
-        '<div class="ocard__headmid"><span class="pill pill--lg is-' + look.color + '">' + esc(look.label) + '</span>' +
-          (blocked ? '<span class="ocard__under">סטטוס: ' + esc(look.statusLabel) + '</span>' : '') + '</div>' +
+        '<div class="ocard__headmid">' + Gallery.statusPillHTML(o, { lg: true }) + '</div>' +
         '<div class="ocard__cust">' +
-          '<button class="ocard__custname link-cust' + (tone ? ' tone-' + tone : '') + '" data-cust="' + esc(o.customerId || '') + '">' + esc(c.name || 'לקוח') + '</button>' +
+          '<span class="ocard__custrow"><button class="ocard__custname link-cust' + (tone ? ' tone-' + tone : '') + '" data-cust="' + esc(o.customerId || '') + '">' + esc(c.name || 'לקוח') + '</button>' +
+            U.returningTag(visits) + '</span>' +
           '<span class="ocard__phone mono">' + esc(c.phone || '') + '</span>' +
           (visits > 1 ? '<span class="ocard__visits">ביקור ' + visits + '</span>' : '') +
         '</div>' +
         '<button class="modal__close" data-close aria-label="סגירה">×</button>' +
       '</div>';
 
-    var flag = blocked ?
-      '<div class="ocard__flag">' + I.flag +
-        '<div><b>' + esc(U.BLOCK_KIND_LABEL[o.blocked.kind] || 'תקועה') + ':</b> ' + esc(o.blocked.reason) +
-        '<small>מאז ' + U.fmtDate(o.blocked.since) + '</small></div>' +
-        '<button class="btn btn--secondary" data-flag>נפתר</button></div>' : '';
-
-    var statusBar = '<div class="ocard__statusbar" role="group" aria-label="שינוי סטטוס">' +
-      U.STATUS_LIST.map(function (s) {
-        var on = o.status === s;
-        return '<button class="sbtn sbtn--' + U.STATUS_COLOR[s] + (on ? ' is-on' : '') + '" data-status="' + s + '" aria-pressed="' + on + '">' + esc(U.STATUS_LABEL[s]) + '</button>';
-      }).join('') +
-      (!blocked && o.status !== 'delivered' ? '<button class="sbtn sbtn--flag" data-flag>' + I.flag + 'דגל אדום</button>' : '') +
-      '</div>';
+    /* סבב 5: הערת "ליצור קשר עם הלקוח" (תזכורת עד שנרשמת תגובה) במקום הדגל האדום */
+    var contact = U.hasContact(o) ? Gallery.contactBoxHTML(o) : (o.status !== 'delivered' ?
+      '<div class="ocard__contactadd"><button type="button" class="btn btn--secondary" data-contact-new="' + esc(o.id) + '">' + (I.phoneCall || '') +
+        'הערה: ליצור קשר עם הלקוח</button><small>יוצר תזכורת עד שנרשמת תגובת הלקוח</small></div>' : '');
 
     var items = (o.items || []).map(function (it) {
       return '<tr class="' + (it.done ? 'is-done' : '') + '">' +
@@ -279,7 +275,7 @@
       '</div>';
 
     var history = Gallery.flagHistoryHTML ? Gallery.flagHistoryHTML(o) : '';
-    return head + '<div class="modal__body">' + flag + statusBar + itemsTable + dates + notes + history + money + '</div>' + foot;
+    return head + '<div class="modal__body">' + contact + itemsTable + dates + notes + history + money + '</div>' + foot;
   }
   function fact(k, v) { return '<div class="fact"><div class="fact__k">' + k + '</div><div class="fact__v">' + v + '</div></div>'; }
 
@@ -289,8 +285,7 @@
     var t = e.target;
     var el;
     if (t.closest('[data-close]')) { Gallery.closeModal(); return; }
-    if ((el = t.closest('[data-status]'))) { D.orders.setStatus(o.id, el.getAttribute('data-status')); return; }
-    if (t.closest('[data-flag]')) { reopenAfter(o.id, function (done) { Gallery.openBlockedFlag(o.id, { onClose: done }); }); return; }
+    if (t.closest('[data-spill], [data-stuck-edit], [data-contact-new], [data-contact-resp]')) return;   // order-status-ui.js / flag.js
     if ((el = t.closest('[data-cust]'))) { var cid = el.getAttribute('data-cust'); Gallery.closeModal(); Gallery.openCustomer(cid); return; }
     if (t.closest('[data-pay]')) { Gallery.OrdersPay.openPayment(o.id); return; }
     if ((el = t.closest('[data-issue]'))) { Gallery.OrdersPay.openReceiptStep(o.id, el.getAttribute('data-issue')); return; }

@@ -14,21 +14,21 @@
   /* =========================================================================
    * סטטוסים וצבעים (C7)
    * ======================================================================= */
-  var STATUS_LABEL = { 'new': 'חדשה', in_progress: 'בעבודה', 'in-work': 'בעבודה', ready: 'מוכנה', delivered: 'נמסרה' };
-  var STATUS_LIST = ['new', 'in_progress', 'ready', 'delivered'];
-  var STATUS_COLOR = { 'new': 'blue', in_progress: 'yellow', 'in-work': 'yellow', ready: 'green', delivered: 'grey' };
+  /* סבב 5: 5 סטטוסים אמיתיים. "תקועה" היא סטטוס (אדום) עם סיבה. אין יותר דגל אדום מעל הסטטוס. */
+  var STATUS_LABEL = { 'new': 'חדשה', in_progress: 'בעבודה', 'in-work': 'בעבודה', stuck: 'תקועה', ready: 'מוכנה', delivered: 'נמסרה' };
+  var STATUS_LIST = ['new', 'in_progress', 'stuck', 'ready', 'delivered'];
+  var STATUS_COLOR = { 'new': 'blue', in_progress: 'yellow', 'in-work': 'yellow', stuck: 'red', ready: 'green', delivered: 'grey' };
   var BLOCK_KIND_LABEL = { stuck: 'תקועה', contact_client: 'ליצור קשר עם הלקוח' };
 
-  function isBlocked(o) { return !!(o && o.blocked && !o.blocked.resolvedAt); }
+  /* תאימות: "חסומה" = תקועה */
+  function isBlocked(o) { return !!(o && o.status === 'stuck'); }
+  function hasContact(o) { return !!(o && o.contact && !o.contact.resolvedAt); }
 
-  /* מראה הזמנה: דגל אדום גובר על צבע הסטטוס */
+  /* מראה הזמנה: הצבע והתווית של הסטטוס. reason = למה תקועה */
   function orderLook(o) {
-    if (isBlocked(o)) {
-      return { key: 'blocked', color: 'red', label: BLOCK_KIND_LABEL[o.blocked.kind] || 'תקועה',
-        reason: o.blocked.reason || '', status: o.status, statusLabel: STATUS_LABEL[o.status] || '' };
-    }
-    return { key: o.status, color: STATUS_COLOR[o.status] || 'grey', label: STATUS_LABEL[o.status] || '',
-      reason: '', status: o.status, statusLabel: STATUS_LABEL[o.status] || '' };
+    var st = o && o.status;
+    return { key: st, color: STATUS_COLOR[st] || 'grey', label: STATUS_LABEL[st] || '',
+      reason: st === 'stuck' && o.stuck ? (o.stuck.reason || '') : '', status: st, statusLabel: STATUS_LABEL[st] || '' };
   }
   function statusVar(color) { return 'var(--st-' + color + ')'; }
 
@@ -97,6 +97,8 @@
 
   /* C37: צבע שם לקוח לפי מספר ביקורים. 2 = צהוב, 3+ = ירוק. */
   function visitTone(n) { return n >= 3 ? 'green' : (n === 2 ? 'yellow' : ''); }
+  /* סבב 5: שם ירוק (3+ ביקורים) מקבל תווית "לקוח חוזר" משמאלו (ב-RTL: אחריו ב-DOM). צהוב בלי תווית. */
+  function returningTag(n) { return n >= 3 ? '<span class="tag-return">לקוח חוזר</span>' : ''; }
 
   /* =========================================================================
    * תאימות v1 (המודולים הישנים): urgency, dayNumber, תשלומים שטוחים
@@ -250,7 +252,7 @@
 
   Gallery.util = {
     STATUS_LABEL: STATUS_LABEL, STATUS_LIST: STATUS_LIST, STATUS_COLOR: STATUS_COLOR, BLOCK_KIND_LABEL: BLOCK_KIND_LABEL,
-    isBlocked: isBlocked, orderLook: orderLook, statusVar: statusVar,
+    isBlocked: isBlocked, hasContact: hasContact, orderLook: orderLook, statusVar: statusVar, returningTag: returningTag,
     daysSince: daysSince, daysUntil: daysUntil, isToday: isToday, startOfDay: startOfDay, dueText: dueText,
     fmtDate: fmtDate, fmtDateShort: fmtDateShort, fmtTime: fmtTime, toDateInput: toDateInput, fromDateInput: fromDateInput,
     fmtMoney: fmtMoney, fmtSize: fmtSize, plural: plural, esc: esc, consumption: consumption, visitTone: visitTone,

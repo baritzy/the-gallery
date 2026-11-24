@@ -111,10 +111,28 @@
  * ========================================================================== */
 .rem-item__reason.rem-resp, .rem-item__more.rem-resp { color: var(--ink-secondary); font-weight: var(--fw-regular); }
 
+/* סבב 5: הבאנר לא מכסה תוכן. למטה במרכז (מעל הבר התחתון). כשמודל פתוח: בתוך השכבה, מתחת למודל. */
 .rem-pop-host {
-  position: fixed; top: calc(var(--s-3) + env(safe-area-inset-top)); inset-inline: 0; z-index: 90;
+  position: fixed; bottom: calc(var(--s-4) + env(safe-area-inset-bottom)); inset-inline: 0; z-index: 35;
   display: flex; flex-direction: column; align-items: center; gap: var(--s-2); padding: 0 var(--s-4); pointer-events: none;
 }
+.rem-pop-host:empty { display: none; }
+@media (max-width: 900px) {
+  .rem-pop-host { bottom: calc(var(--bottombar-h) + env(safe-area-inset-bottom) + var(--s-3)); }
+}
+@media (min-width: 901px) { .rem-pop-host { padding-inline-start: calc(var(--rail-w, 236px) + var(--s-4)); } }
+.rem-pop-host.rem-pop-host--inmodal {
+  position: static; flex: 0 0 100%; width: 100%; padding: var(--s-3) 0 var(--s-6); z-index: auto;
+}
+.modal-backdrop.has-rem-pop { flex-wrap: wrap; align-content: flex-start; }
+/* מקום לבאנר: התוכן והטוסטים עולים מעליו */
+body.has-rem-pop .toast-host { bottom: calc(var(--rem-pop-h, 0px) + var(--s-8)); }
+body.has-rem-pop .main { padding-bottom: calc(var(--rem-pop-h, 0px) + var(--s-6)); }
+@media (max-width: 900px) {
+  body.has-rem-pop .main { padding-bottom: calc(var(--bottombar-h) + env(safe-area-inset-bottom) + var(--rem-pop-h, 0px) + var(--s-6)); }
+  body.has-rem-pop .toast-host { bottom: calc(var(--bottombar-h) + env(safe-area-inset-bottom) + var(--rem-pop-h, 0px) + var(--s-5)); }
+}
+.rem-pop__more { display: block; font-size: var(--fs-sm); font-weight: var(--fw-semibold); color: var(--ink-muted); margin-top: 2px; }
 .rem-pop {
   pointer-events: auto; width: min(640px, 100%); display: flex; align-items: center; flex-wrap: wrap; gap: var(--s-2) var(--s-3);
   background: var(--bg-surface); color: var(--ink); border-radius: var(--r-lg); box-shadow: var(--e4);
@@ -129,6 +147,6 @@
 .rem-pop__text { flex: 1 1 220px; min-width: 0; font-size: var(--fs-lg); font-weight: var(--fw-bold); line-height: 1.3; overflow-wrap: anywhere; }
 .rem-pop__acts { display: flex; gap: var(--s-2); flex: none; margin-inline-start: auto; }
 .rem-pop__acts .btn { min-height: var(--touch); min-width: 88px; }
-@keyframes rem-pop-in { from { transform: translateY(-16px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes rem-pop-in { from { transform: translateY(16px); opacity: 0; } to { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .rem-pop { animation: none; } }
 @media print { .rem-pop-host { display: none !important; } }

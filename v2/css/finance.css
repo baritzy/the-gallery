@@ -212,3 +212,29 @@ button.fin-row__num:hover { color: var(--primary); }
   .sale-methods { grid-template-columns: 1fr; }
   .fin-nav__label { min-width: 0; }
 }
+
+/* =============================================================================
+ * סבב 5: אריח "הוצאות" לחיץ + פירוט הוצאות לתקופה
+ * ========================================================================== */
+.fin-exp .fin-sec__title { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; }
+.fin-exp__back { margin-inline-start: auto; min-height: var(--touch); }
+.fin-expcats { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: var(--s-2); margin-bottom: var(--s-4); }
+.fin-expcat { display: flex; flex-direction: column; gap: 2px; padding: var(--s-3); border: 1px solid var(--line); border-radius: var(--r-md); background: var(--bg-surface); border-top: 4px solid var(--st-orange); }
+.fin-expcat.is-total { border-top-color: var(--ink); background: var(--bg-surface-alt); }
+.fin-expcat__k { font-size: var(--fs-sm); color: var(--ink-secondary); font-weight: var(--fw-semibold); }
+.fin-expcat__v { font-size: var(--fs-xl); font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
+.fin-expcat__n { font-size: var(--fs-xs); color: var(--ink-muted); }
+.fin-explist { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: var(--r-md); overflow: hidden; background: var(--bg-surface); }
+.fin-exprow { display: grid; grid-template-columns: 110px minmax(90px, 140px) minmax(0, 1fr) 110px 48px; align-items: center; gap: var(--s-3); padding: var(--s-2) var(--s-4); border-bottom: 1px solid var(--line); min-height: 56px; }
+.fin-exprow:last-child { border-bottom: 0; }
+.fin-exprow--head { min-height: 0; padding-block: 8px; font-size: var(--fs-xs); font-weight: var(--fw-bold); color: var(--ink-muted); background: var(--bg-surface-alt); }
+.fin-exprow__date { color: var(--ink-secondary); font-size: var(--fs-sm); }
+.fin-exprow__cat { font-weight: var(--fw-semibold); }
+.fin-exprow__note { color: var(--ink-secondary); overflow-wrap: anywhere; min-width: 0; }
+.fin-exprow__amt { font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; text-align: end; }
+@media (max-width: 700px) {
+  .fin-exprow { grid-template-columns: 1fr auto 44px; grid-template-areas: "cat amt del" "note note note" "date date date"; row-gap: 2px; }
+  .fin-exprow--head { display: none; }
+  .fin-exprow__cat { grid-area: cat; } .fin-exprow__amt { grid-area: amt; } .fin-exprow .iconbtn { grid-area: del; }
+  .fin-exprow__note { grid-area: note; } .fin-exprow__date { grid-area: date; }
+}

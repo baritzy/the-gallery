@@ -79,6 +79,21 @@
     var q = l.reduce(function (s, x) { return s + num(type === 'frame' ? x.qtyRods : x.qty); }, 0);
     return type === 'frame' ? 'ברשימת ספק: ' + U.plural(q, 'מוט אחד', 'מוטות') : 'ברשימת ספק: ' + q + (unit ? ' ' + unit : '');
   };
+  /* סבב 5: "במלאי בפועל" מול "להזמין". כמה פתוח ברשימות הספק (שלא נשלח) לפריט הזה */
+  Inv.openLines = function (type, id) {
+    return dat.lines.filter(function (x) { return !x.sentAt && x.itemType === type && x.itemId === id; });
+  };
+  Inv.openQty = function (type, id) {
+    return Inv.openLines(type, id).reduce(function (s, x) { return s + num(type === 'frame' ? x.qtyRods : x.qty); }, 0);
+  };
+  /* { qty, suggested } : מה שפתוח בהזמנה, או (כשנמוך ואין שורה פתוחה) הצעה: מינימום × 2 פחות מה שיש */
+  Inv.toOrder = function (type, rec) {
+    var open = Inv.openQty(type, rec.id);
+    if (open > 0) return { qty: open, suggested: false };
+    if (type === 'raw' && D.rawMaterials.isLow(rec)) return { qty: Math.max(1, num(rec.minQty) * 2 - num(rec.qty)), suggested: true };
+    if (type === 'frame' && D.frames.isLow(rec)) return { qty: D.frames.recommendRods(rec), suggested: true };
+    return { qty: 0, suggested: false };
+  };
   /* addLabel = כפתור הוספה בתוך המצב הריק (R3) */
   Inv.emptyHTML = function (title, sub, addLabel) {
     return '<div class="empty">' + I.frameEmpty + '<h3>' + esc(title) + '</h3><p>' + esc(sub || '') + '</p>' +
@@ -113,16 +128,18 @@
     var col = itemType === 'frame' ? 'frames' : 'rawMaterials';
     var rec = D[col].peekOne(id);
     if (!rec) return;
-    var existing = D.supplierOrderLines.peek().filter(function (l) {
-      return !l.sentAt && l.itemType === itemType && l.itemId === id && l.source === 'manual' && !l.orderId;
-    })[0];
+    /* סבב 5: שורה פתוחה קיימת לפריט (ידנית או ממלאי נמוך) מתעדכנת במקום שורה חדשה */
+    var opens = D.supplierOrderLines.peek().filter(function (l) {
+      return !l.sentAt && l.itemType === itemType && l.itemId === id && !l.orderId;
+    });
+    var existing = opens.filter(function (l) { return l.source === 'manual'; })[0] || opens[0];
     var qty = existing ? num(itemType === 'frame' ? existing.qtyRods : existing.qty) :
       (itemType === 'frame' ? D.frames.recommendRods(rec) : Math.max(1, num(rec.minQty) * 2 - num(rec.qty)));
     var unit = itemType === 'frame' ? 'מוטות' : (rec.unit || 'יחידות');
     var label = itemType === 'frame' ? rec.sku + ' ' + (rec.woodType || '') + ' ' + (rec.color || '') : rec.name;
     var info = itemType === 'frame' ? 'במלאי עכשיו: ' + meters(rec.stockUnits) + ' מ\'' : 'במלאי עכשיו: ' + num(rec.qty) + ' ' + esc(rec.unit || '');
     var node = Gallery.modalNode({
-      title: I.suppliers + 'הוספה לרשימת ספק',
+      title: I.suppliers + (existing ? 'עדכון הכמות להזמנה' : 'הוספה לרשימת ספק'),
       body: '<div class="inv-line">' +
         '<div class="inv-line__item">' + esc(label) + '</div>' +
         '<div class="inv-line__sub">ספק: <b>' + esc(Inv.supplierName(rec.supplierId)) + '</b> · ' + info + '</div>' +
@@ -135,7 +152,7 @@
         (existing ? '<p class="inv-line__exist">כבר ברשימה. השמירה מחליפה את הכמות.</p>' : '') +
         (rec.supplierId ? '' : '<p class="inv-line__exist">לפריט אין ספק. כדאי לבחור ספק בעריכת הפריט.</p>') +
       '</div>',
-      foot: '<button class="btn btn--primary btn--lg" data-save>' + I.check + 'הוסף לרשימה</button>' +
+      foot: '<button class="btn btn--primary btn--lg" data-save>' + I.check + (existing ? 'עדכן כמות' : 'הוסף לרשימה') + '</button>' +
         '<button class="btn btn--ghost btn--lg" data-close>ביטול</button>'
     });
     var input = node.querySelector('.inv-step__val');
@@ -144,7 +161,7 @@
     });
     node.querySelector('[data-save]').addEventListener('click', function () {
       var q = Math.max(1, Math.round(num(input.value)));
-      var line = { itemType: itemType, itemId: id, source: 'manual', orderId: null };
+      var line = { itemType: itemType, itemId: id, source: existing ? existing.source : 'manual', orderId: null };
       if (itemType === 'frame') line.qtyRods = q; else line.qty = q;
       Gallery.addSupplierLine(line).then(function () {
         Gallery.closeModal();
@@ -372,7 +389,7 @@
 
   function frameRow(f) {
     var color = stockColor(f), low = D.frames.isLow(f), open = !!Inv.open['f' + f.id];
-    var pend = Inv.pendingText('frame', f.id);
+    var to = Inv.toOrder('frame', f);
     return '<article class="inv-item' + (low ? ' is-low' : '') + (open ? ' is-open' : '') + '" data-fid="' + esc(f.id) + '" style="--spine:var(--st-' + color + ')">' +
       '<button type="button" class="inv-item__main" data-toggle aria-expanded="' + open + '">' +
         thumbHTML(f, false) +
@@ -381,14 +398,15 @@
           '<span class="inv-item__sup">' + esc(Inv.supplierName(f.supplierId)) + '</span></span>' +
         '<span class="inv-bar"><span class="inv-bar__track"><span class="inv-bar__fill" style="--fillc:var(--st-' + color + ');width:' + fillPct(f) + '%"></span>' +
           '<span class="inv-bar__thr"></span></span>' +
-          '<span class="inv-bar__num">' + meters(f.stockUnits) + ' מ\'</span></span>' +
+          '<span class="inv-bar__num"><small>במלאי:</small> ' + meters(f.stockUnits) + ' מ\'</span></span>' +
         (low ? '<span class="pill is-red pill--lg"><span class="dot"></span>מלאי נמוך</span>' : '<span class="pill is-green"><span class="dot"></span>תקין</span>') +
         I.chevron +
       '</button>' +
       '<div class="inv-item__bar">' + Inv.noteHTML('frames', f) +
-        (pend ? '<span class="inv-pend">' + I.suppliers + esc(pend) + '</span>' : '') +
+        '<span class="inv-toorder' + (to.qty ? (to.suggested ? ' is-suggested' : ' is-open') : ' is-none') + '">' + I.suppliers +
+          'להזמין: <b>' + (to.qty ? esc(U.plural(to.qty, 'מוט אחד', 'מוטות')) : 'אין') + '</b>' + (to.suggested ? '<small>מוצע</small>' : '') + '</span>' +
         '<button type="button" class="btn btn--secondary inv-act" data-call>' + I.phone + 'ספק</button>' +
-        '<button type="button" class="btn btn--primary inv-act" data-line>' + I.plus + 'הוסף לרשימת ספק</button>' +
+        '<button type="button" class="btn btn--primary inv-act" data-line>' + I.plus + (Inv.openQty('frame', f.id) ? 'עדכן הזמנה' : 'הוסף להזמנה') + '</button>' +
         '<button type="button" class="btn btn--ghost inv-act" data-edit-frame>' + I.edit + 'עריכה</button>' +
         '<button type="button" class="iconbtn inv-del-ico" data-del-frame aria-label="מחיקת מסגרת ' + esc(f.sku) + '" title="מחיקה">' + I.trash + '</button>' +
       '</div>' +

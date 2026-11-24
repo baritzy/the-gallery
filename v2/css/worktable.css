@@ -13,7 +13,7 @@
 /* ---- סינון ---- */
 [data-view="worktable"] .wt-filters { display: flex; flex-wrap: wrap; gap: var(--s-2); margin: var(--s-4) 0; }
 [data-view="worktable"] .wt-fchip { height: var(--touch); padding: 0 var(--s-5); font-size: var(--fs-md); font-weight: var(--fw-semibold); }
-[data-view="worktable"] .wt-fchip--red[aria-pressed="true"] { background: var(--st-red-soft); color: var(--st-red-text); }
+[data-view="worktable"] .wt-fchip--stuck[aria-pressed="true"] { background: var(--st-red-soft); color: var(--st-red-text); }
 
 /* ---- טבלה ---- */
 [data-view="worktable"] .wt-wrap { box-shadow: var(--e1); }
@@ -45,23 +45,6 @@
 }
 [data-view="worktable"] .wt-no__due .ico { width: 16px; height: 16px; }
 [data-view="worktable"] .wt-no__due.is-late { color: var(--st-red-text); font-weight: var(--fw-bold); }
-
-[data-view="worktable"] .wt-flagbtn {
-  display: inline-flex; align-items: center; gap: 6px; min-height: var(--touch); padding: 0 var(--s-3);
-  border-radius: var(--r-md); border: 2px solid var(--line-strong); background: var(--bg-surface);
-  color: var(--ink-secondary); font: var(--fw-semibold) var(--fs-sm)/1 var(--font-ui); cursor: pointer; white-space: nowrap;
-}
-[data-view="worktable"] .wt-flagbtn .ico { width: 20px; height: 20px; }
-[data-view="worktable"] .wt-flagbtn:hover { border-color: var(--st-red); color: var(--st-red-text); }
-[data-view="worktable"] .wt-flagbtn.is-on { background: var(--st-red); border-color: var(--st-red); color: #fff; }
-
-/* שורת דגל אדום מעל הקבוצה */
-[data-view="worktable"] tr.wt-flagrow td { height: auto; padding: 0; background: var(--st-red); border-bottom: 0; }
-[data-view="worktable"] .wt-flag { display: flex; align-items: center; gap: var(--s-3); padding: var(--s-2) var(--s-4); color: #fff; }
-[data-view="worktable"] .wt-flag__icon .ico { width: 24px; height: 24px; }
-[data-view="worktable"] .wt-flag__txt { flex: 1; font-size: var(--fs-md); }
-[data-view="worktable"] .wt-flag__since { opacity: .85; font-size: var(--fs-sm); }
-[data-view="worktable"] .wt-flag__btn { background: #fff; border-color: #fff; color: var(--st-red-text); }
 
 /* רווח בין הזמנות */
 [data-view="worktable"] tr.wt-gap td { height: 10px; padding: 0; background: var(--bg-canvas); border-bottom: 1px solid var(--line); }
@@ -123,7 +106,6 @@
   [data-view="worktable"] .wt-table th.wt-c-no { width: auto; }
   [data-view="worktable"] td.wt-no { padding: var(--s-2); }
   [data-view="worktable"] .wt-no__num { font-size: 28px; }
-  [data-view="worktable"] .wt-flagbtn { padding: 0 var(--s-2); white-space: normal; }
   [data-view="worktable"] .wt-tog { min-width: 52px; }
   [data-view="worktable"] .wt-desc { min-width: 0; }
   [data-view="worktable"] .wt-matbtn { width: 48px; height: 48px; }
@@ -194,21 +176,6 @@
 [data-view="worktable"] .wt-gh { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-4); }
 [data-view="worktable"] .wt-gh__lbl { font-size: var(--fs-md); color: var(--ink-secondary); }
 [data-view="worktable"] .wt-gh__lbl b { font-size: var(--fs-lg); color: var(--ink); direction: ltr; display: inline-block; }
-[data-view="worktable"] .wt-st { display: inline-flex; gap: 6px; flex-wrap: wrap; }
-[data-view="worktable"] .wt-st__btn {
-  display: inline-flex; align-items: center; gap: 8px; min-height: var(--touch); min-width: 104px; padding: 0 var(--s-4);
-  border-radius: var(--r-md); border: 2px solid var(--line-strong); background: var(--bg-surface);
-  color: var(--ink-secondary); font: var(--fw-bold) var(--fs-md)/1 var(--font-ui); cursor: pointer; justify-content: center;
-}
-[data-view="worktable"] .wt-st__btn .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--wt-c); flex: none; }
-[data-view="worktable"] .wt-st__btn--blue   { --wt-c: var(--st-blue); }
-[data-view="worktable"] .wt-st__btn--yellow { --wt-c: var(--st-yellow); }
-[data-view="worktable"] .wt-st__btn--green  { --wt-c: var(--st-green); }
-[data-view="worktable"] .wt-st__btn:hover { border-color: var(--wt-c); color: var(--ink); }
-[data-view="worktable"] .wt-st__btn.is-on { background: var(--wt-c); border-color: var(--wt-c); color: #fff; }
-[data-view="worktable"] .wt-st__btn.is-on .dot { background: #fff; }
-[data-view="worktable"] .wt-st__btn--yellow.is-on { color: var(--on-status-yellow); }
-[data-view="worktable"] .wt-st__btn--yellow.is-on .dot { background: var(--on-status-yellow); }
 [data-view="worktable"] .wt-gh__prog { font-size: var(--fs-sm); color: var(--ink-secondary); }
 [data-view="worktable"] .wt-gh__prog.is-all { color: var(--st-green-text); font-weight: var(--fw-bold); }
 
@@ -228,7 +195,6 @@
 
 @media (max-width: 1100px) {
   [data-view="worktable"] tr.wt-ghead td { padding: var(--s-2); }
-  [data-view="worktable"] .wt-st__btn { min-width: 92px; padding: 0 var(--s-3); }
 }
 
 /* B7: הערת מלאי בחלון ה-X */
@@ -256,3 +222,33 @@
 .wt-fhist__resp.is-empty { color: var(--ink-muted); font-style: italic; }
 .wt-fhist { margin-top: var(--s-4); }
 .wt-fhist > .ocard__sechead { font-size: var(--fs-md); font-weight: var(--fw-bold); margin-bottom: var(--s-2); }
+
+/* =============================================================================
+ * סבב 5: כפתור סטטוס אחד בשורת הכותרת, הערת "ליצור קשר", סימון בשורת תמונה
+ * ========================================================================== */
+[data-view="worktable"] tr.wt-ghead td { border-inline-start: 6px solid var(--wt-gc, var(--st-grey)); }
+[data-view="worktable"] tr.wt-ghead--blue   { --wt-gc: var(--st-blue); }
+[data-view="worktable"] tr.wt-ghead--yellow { --wt-gc: var(--st-yellow); }
+[data-view="worktable"] tr.wt-ghead--red    { --wt-gc: var(--st-red); }
+[data-view="worktable"] tr.wt-ghead--red td { background: var(--st-red-soft); }
+[data-view="worktable"] tr.wt-ghead--green  { --wt-gc: var(--st-green); }
+[data-view="worktable"] tr.wt-ghead--grey   { --wt-gc: var(--st-grey); }
+[data-view="worktable"] .wt-gh .spill-wrap { flex: 0 1 auto; min-width: 0; }
+[data-view="worktable"] .wt-gh__contact { min-height: var(--touch); }
+[data-view="worktable"] tr.wt-ghead .cnote { margin-top: var(--s-2); }
+[data-view="worktable"] .wt-note__contact {
+  display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; padding: 2px 8px; border-radius: var(--r-pill, 999px);
+  background: var(--st-orange-soft); color: var(--st-orange-text); font-size: var(--fs-xs); font-weight: var(--fw-bold);
+}
+[data-view="worktable"] .wt-note__contact .ico { width: 14px; height: 14px; }
+.wt-note-contact {
+  display: flex; align-items: center; gap: var(--s-3); margin-top: var(--s-4); padding: var(--s-3);
+  border: 2px dashed var(--st-orange); border-radius: var(--r-md); background: var(--bg-surface); cursor: pointer;
+}
+.wt-note-contact > span:last-child { display: flex; flex-direction: column; gap: 2px; }
+.wt-note-contact small { color: var(--ink-secondary); font-size: var(--fs-sm); }
+.wt-note-contact.is-on { border-style: solid; background: var(--st-orange-soft); cursor: default; flex-wrap: wrap; }
+.wt-note-contact.is-on > span { flex: 1 1 200px; }
+.wt-note-contact .ico { width: 22px; height: 22px; flex: none; color: var(--st-orange-text); }
+.wt-ocard__status { margin-bottom: var(--s-3); }
+.wt-fhist__item--contact { border-inline-start-color: var(--st-orange); }

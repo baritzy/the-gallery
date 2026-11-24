@@ -104,3 +104,6 @@
 /* W4: מכירת מוצר מתוך כרטיס הלקוח (admin) */
 [data-view="customers"] .cus-sell { margin: 0 0 var(--s-4); display: flex; gap: var(--s-2); flex-wrap: wrap; align-items: center; }
 [data-view="customers"] .cus-del { margin-inline-start: auto; min-height: var(--touch); }
+
+/* סבב 5: "לקוח חוזר" ליד שם ירוק */
+.cus-namewrap { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; min-width: 0; }

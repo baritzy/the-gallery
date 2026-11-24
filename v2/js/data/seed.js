@@ -120,15 +120,15 @@
       { c: 'טל בן דוד', ago: 16, status: 'delivered', price: 280, items: [it('קולאז׳ טיול', 25, 35, '5322-60')], pays: [['deposit', 100, 16, 'cash'], ['final', 180, 7, 'cash']] },
       // ---- פעילות ----
       { c: 'רון גבאי', ago: 13, status: 'in_progress', price: 420, items: [it('תמונת חתונה', 40, 50, '4805-77', { mat: true, material: 'V', done: true }), it('תמונת חתונה קטנה', 20, 30, '4805-77', { material: 'V' })], pays: [['deposit', 150, 13, 'credit']] },
-      { c: 'מרים אברהם', ago: 11, status: 'in_progress', price: 260, items: [it('תעודת הוקרה', 21, 30, '3511', { material: 'V', note: 'צריך לתקן פינות' })], pays: [['deposit', 100, 11, 'cash']],
-        blocked: { kind: 'stuck', reason: 'ביום שני הלקוחה מביאה את התמונה השנייה', sinceAgo: 2 } },
+      { c: 'מרים אברהם', ago: 11, status: 'stuck', price: 260, items: [it('תעודת הוקרה', 21, 30, '3511', { material: 'V', note: 'צריך לתקן פינות' })], pays: [['deposit', 100, 11, 'cash']],
+        stuck: { reason: 'ביום שני הלקוחה מביאה את התמונה השנייה', sinceAgo: 2 } },
       { c: 'יוסי לוי', ago: 9, status: 'in_progress', price: 480, items: [it('ציור שמן, נוף גליל', 50, 70, '5322-225', { material: 'X', note: 'חסר חומר, הוזמנו 2 מוטות' })], pays: [['deposit', 200, 9, 'cash']] },
       { c: 'עדן כרמל', ago: 8, status: 'in_progress', price: 390, items: [it('קולאז׳ משפחה', 50, 50, '1328-1', { mat: true, material: 'V' }), it('תמונה זוגית', 30, 40, '1328-1', { material: 'V', done: true }), it('תמונת ילדים', 30, 40, '1328-1', { material: 'V', done: true })], pays: [['deposit', 150, 8, 'credit']] },
       { c: 'טל בן דוד', ago: 7, status: 'ready', price: 650, items: [it('מפת עולם וינטג׳', 70, 100, '5322-33', { mount: true, material: 'V', done: true })], pays: [['deposit', 300, 7, 'cash']] },
       { c: 'דנה כהן', ago: 6, status: 'ready', price: 320, items: [it('צילום משפחתי', 30, 40, '2323-55', { mat: true, material: 'V', done: true }), it('צילום משפחתי 2', 30, 40, '2323-55', { mat: true, material: 'V', done: true })], pays: [['deposit', 200, 6, 'credit'], ['final', 120, 0, null]] },
       { c: 'נועה פרידמן', ago: 4, status: 'in_progress', price: 300, items: [it('איור בצבעי מים', 25, 35, '5322-60', { mat: true, material: 'V' })], pays: [['deposit', 150, 4, 'cash']] },
       { c: 'שירה גולן', ago: 3, status: 'new', price: 190, items: [it('תעודת בגרות', 21, 30, '5322-18')], pays: [['deposit', 90, 3, 'cash']],
-        blocked: { kind: 'contact_client', reason: 'המסגרת שנבחרה צרה מדי לתעודה. לא לגעת בעבודה עד שהלקוחה מגיעה', sinceAgo: 1 } },
+        contact: { text: 'המסגרת שנבחרה צרה מדי לתעודה. לא לגעת בעבודה עד שהלקוחה מגיעה', sinceAgo: 1 } },
       { c: 'אבי שרון', ago: 1, status: 'new', price: 540, items: [it('פוסטר קונצרט', 60, 90, '2323-11', { mount: true })], pays: [['deposit', 250, 1, 'credit']] },
       { c: 'עומר שלו', ago: 0, status: 'new', price: 360, items: [it('רקמה', 40, 40, '1320-10', { mat: true }), it('רקמה קטנה', 20, 20, '1320-10')], pays: [['deposit', 150, 0, 'cash']] }
     ];
@@ -148,13 +148,12 @@
       var o = {
         number: orderNo, customerId: cust.id, createdAt: iso(created),
         dueDate: iso(plusDays(created, 10)), status: cfg.status,
-        blocked: null, items: items, notes: '', price: cfg.price, payments: []
+        stuck: null, contact: null, items: items, notes: '', price: cfg.price, payments: []
       };
       if (cfg.status === 'ready') o.readyAt = iso(daysAgo(Math.max(0, cfg.ago - 5)));
       if (cfg.status === 'delivered') { o.readyAt = iso(plusDays(created, 7)); o.deliveredAt = iso(plusDays(created, 8)); }
-      if (cfg.blocked) {
-        o.blocked = { kind: cfg.blocked.kind, reason: cfg.blocked.reason, since: iso(daysAgo(cfg.blocked.sinceAgo)), resolvedAt: null, response: null };
-      }
+      if (cfg.stuck) o.stuck = { reason: cfg.stuck.reason, since: iso(daysAgo(cfg.stuck.sinceAgo)), from: 'in_progress' };
+      if (cfg.contact) o.contact = { text: cfg.contact.text, since: iso(daysAgo(cfg.contact.sinceAgo)), itemId: null, resolvedAt: null, response: null };
       cfg.pays.forEach(function (p) {
         var pay = { id: S.uid(), amount: p[1], type: p[0], at: iso(daysAgo(p[2], 12 + (orderNo % 5))), receiptId: null };
         o.payments.push(pay);

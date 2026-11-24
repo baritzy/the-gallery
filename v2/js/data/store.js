@@ -147,9 +147,22 @@
   var ready = new Promise(function (res) { readyResolve = res; });
   var started = false;
 
+  /* R5: מיגרציה בקריאה. migrators[col](rec) מקבל עותק ומחזיר אותו בצורה החדשה.
+     כל קריאה (all / find / subscribe / export) עוברת דרכו, וכל כתיבה (find -> put) שומרת את הצורה החדשה. */
+  var migrators = {};
+  function migrate(col, rec) {
+    var fn = migrators[col];
+    if (!fn || !rec) return rec;
+    try { return fn(rec) || rec; } catch (e) { if (global.console) global.console.error('[gallery] migrate failed on ' + col, e); return rec; }
+  }
+  function setMigrator(col, fn) { migrators[col] = fn; }
+
   function snapshot(key) {
     var v = backend ? backend.read(key) : null;
-    if (COLLECTIONS.indexOf(key) !== -1) return clone(v || []);
+    if (COLLECTIONS.indexOf(key) !== -1) {
+      var arr = clone(v || []);
+      return migrators[key] ? arr.map(function (r) { return migrate(key, r); }) : arr;
+    }
     return clone(v);
   }
 
@@ -186,13 +199,13 @@
   function find(col, id) {
     assertCol(col);
     var a = (backend && backend.read(col)) || [];
-    for (var i = 0; i < a.length; i++) { if (a[i].id === id) return clone(a[i]); }
+    for (var i = 0; i < a.length; i++) { if (a[i].id === id) return migrate(col, clone(a[i])); }
     return null;
   }
   function put(col, record) {
     assertCol(col);
     var now = new Date().toISOString();
-    var rec = clone(record) || {};
+    var rec = migrate(col, clone(record) || {});
     if (!rec.id) rec.id = uid();
     var prev = find(col, rec.id);
     rec.createdAt = (prev && prev.createdAt) || rec.createdAt || now;
@@ -319,7 +332,7 @@
     NS: NS, SCHEMA_VERSION: SCHEMA_VERSION,
     COLLECTIONS: COLLECTIONS, SINGLETONS: SINGLETONS,
     uid: uid, clone: clone,
-    all: all, find: find, put: put, del: del,
+    all: all, find: find, put: put, del: del, setMigrator: setMigrator,
     getDoc: getDoc, setDoc: setDoc,
     subscribe: subscribe, notify: notify,
     nextNumber: nextNumber, nextNumberAsync: nextNumberAsync, peekNumber: peekNumber, setNextNumber: setNextNumber,

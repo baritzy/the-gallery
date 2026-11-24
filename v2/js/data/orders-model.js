@@ -4,9 +4,13 @@
  * -----------------------------------------------------------------------------
  * order {
  *   id, number (רץ, 1001+), customerId, createdAt, updatedAt, dueDate (ISO),
- *   status: 'new'|'in_progress'|'ready'|'delivered',
- *   blocked: null | { kind:'stuck'|'contact_client', reason, since, resolvedAt?, response? }   (D2)
- *     פעיל = blocked && !blocked.resolvedAt. אדום מעל הסטטוס, לא משנה אותו.
+ *   status: 'new'|'in_progress'|'stuck'|'ready'|'delivered'          (סבב 5: 5 סטטוסים אמיתיים)
+ *   stuck: null | { reason, since, from }       רק כש-status === 'stuck'. from = הסטטוס שלפני
+ *   contact: null | { text, since, itemId?, resolvedAt:null, response:null }
+ *     הערת "ליצור קשר עם הלקוח" פעילה = תזכורת עד שנרשמת תגובת הלקוח (resolveContact).
+ *   blockedLog?: [ { kind:'stuck'|'contact_client', reason, since, resolvedAt, response, to? } ]  היסטוריה
+ *   blocked: ישן (עד סבב 4). מומר בקריאה (migrateOrder): stuck פעיל -> status 'stuck',
+ *     contact_client פעיל -> contact, שנפתר -> blockedLog. כל כתיבה שומרת את הצורה החדשה.
  *   items: [ item ],  notes, price,
  *   payments: [ { id, amount, type:'deposit'|'final', at, receiptId|null } ]    (C9, בלי אמצעי)
  *   readyAt?, deliveredAt?
@@ -14,13 +18,12 @@
  * item { id, idx (1..n), mount (הדבקה) bool, mat (מט) bool, desc, material: null|'V'|'X',
  *        widthCm, heightCm, profileSku, done bool, note }
  *
- * סטטוס נגזר (deriveStatus, סבב 4 / A2): "מוכנה" רק בפעולה מפורשת (setStatus('ready')).
- * כל השורות בוצעו = עדיין in_progress (עבודה שיורדת לתיקון פינות לא נהיית ירוקה).
- * שורה אחת או יותר בוצעה = in_progress. ready שבוטל בה "בוצע" = חוזר ל-in_progress.
- * אף אחת = נשאר new או in_progress. delivered נשאר delivered.
- * הנגזרת מופעלת אוטומטית רק בפונקציות שמשנות שורות (setItemDone / updateItem).
+ * סטטוס נגזר (deriveStatus): "מוכנה" רק בפעולה מפורשת (setStatus('ready')).
+ * כל השורות בוצעו = עדיין in_progress. שורה אחת או יותר בוצעה = in_progress.
+ * ready שבוטל בה "בוצע" = חוזר ל-in_progress. סימון "בוצע" בהזמנה מוכנה משאיר אותה מוכנה.
+ * stuck ו-delivered לא משתנים מהשורות.
  * "מגע ראשון" (setItemDone, או updateItem עם { start:true }) מעביר new ל-in_progress.
- * save() רגיל לא משנה סטטוס. setStatus() הוא המעבר הידני.
+ * setStatus() ידני לא נוגע בשורות (סבב 5): "מוכנה" לא מסמנת בוצע, "חדשה" לא מנקה.
  * ========================================================================== */
 
 (function (global) {
@@ -31,7 +34,7 @@
   var data = Gallery.data;
 
   var ORDER_START = 1001;
-  var STATUSES = ['new', 'in_progress', 'ready', 'delivered'];
+  var STATUSES = ['new', 'in_progress', 'stuck', 'ready', 'delivered'];
   var PAYMENT_TYPES = { deposit: 'מקדמה', 'final': 'תשלום סופי' };
 
   function now() { return new Date().toISOString(); }
@@ -57,15 +60,18 @@
   function deriveStatus(order) {
     if (!order) return 'new';
     if (order.status === 'delivered') return 'delivered';
+    if (order.status === 'stuck') return 'stuck';
     var items = order.items || [];
     var done = items.filter(function (i) { return i.done; }).length;
-    if (order.status === 'ready') return allDone(order) ? 'ready' : 'in_progress';
+    if (order.status === 'ready') return 'ready';   // סבב 5: מוכנה ידנית לא תלויה בסימוני השורות
     if (done > 0) return 'in_progress';
     if (order.status === 'in_progress') return 'in_progress';
     return 'new';
   }
 
-  function applyDerived(o) {
+  /* doneVal = הערך החדש של "בוצע" בשורה שהשתנתה. ביטול "בוצע" בהזמנה מוכנה = חוזרת לבעבודה (תיקון). */
+  function applyDerived(o, doneVal) {
+    if (o.status === 'ready' && doneVal === false) { o.status = 'in_progress'; o.readyAt = null; return o; }
     o.status = deriveStatus(o);
     if (o.status !== 'ready' && o.status !== 'delivered') o.readyAt = null;
     return o;
@@ -77,20 +83,57 @@
     return o;
   }
 
-  /* B2: התגובה האחרונה לדגל שנפתר (מתוך blockedLog). { kind, reason, response, since, resolvedAt } | null */
+  /* ---- סבב 5: מיגרציה בקריאה מהצורה הישנה (blocked) לחדשה (status 'stuck' / contact) ---- */
+  function sameEntry(a, b) { return a && b && a.since === b.since && a.resolvedAt === b.resolvedAt && a.kind === b.kind; }
+  function migrateOrder(o) {
+    if (!o || typeof o !== 'object') return o;
+    var b = o.blocked;
+    if (b && typeof b === 'object') {
+      var since = b.since || o.updatedAt || o.createdAt || now();
+      if (!b.resolvedAt) {
+        if (b.kind === 'contact_client') {
+          if (!(o.contact && !o.contact.resolvedAt)) o.contact = { text: b.reason || '', since: since, itemId: null, resolvedAt: null, response: null };
+        } else if (o.status !== 'delivered') {
+          if (o.status !== 'stuck') o.stuck = { reason: b.reason || '', since: since, from: o.status || 'in_progress' };
+          else if (!o.stuck) o.stuck = { reason: b.reason || '', since: since, from: 'in_progress' };
+          o.status = 'stuck';
+          o.readyAt = null;
+        } else {
+          o.blockedLog = (o.blockedLog || []).concat([{ kind: 'stuck', reason: b.reason || '', since: since, resolvedAt: o.deliveredAt || since, response: '' }]);
+        }
+      } else {
+        var log = o.blockedLog || [];
+        var entry = { kind: b.kind || 'stuck', reason: b.reason || '', since: since, resolvedAt: b.resolvedAt, response: b.response || '' };
+        if (!log.some(function (x) { return sameEntry(x, entry); })) o.blockedLog = log.concat([entry]);
+      }
+    }
+    if (Object.prototype.hasOwnProperty.call(o, 'blocked')) o.blocked = null;
+    if (o.status === 'stuck' && !o.stuck) o.stuck = { reason: '', since: o.updatedAt || now(), from: 'in_progress' };
+    if (o.status !== 'stuck' && o.stuck) o.stuck = null;
+    return o;
+  }
+  S.setMigrator('orders', migrateOrder);
+
+  /* יציאה מ"תקועה": הסיבה נשמרת בהיסטוריה (blockedLog) */
+  function leaveStuck(o, to) {
+    var st = o.stuck || {};
+    o.blockedLog = (o.blockedLog || []).concat([{ kind: 'stuck', reason: st.reason || '', since: st.since || o.updatedAt || now(), resolvedAt: now(), response: '', to: to }]);
+    o.stuck = null;
+  }
+
+  /* B2: התגובה האחרונה להערת "ליצור קשר" שנרשמה (מתוך blockedLog). { kind, reason, response, since, resolvedAt } | null */
   function lastResponse(o) {
     if (!o) return null;
-    var log = (o.blockedLog || []).slice();
-    if (o.blocked && o.blocked.resolvedAt) log.push(o.blocked);
     var best = null;
-    log.forEach(function (b) {
+    (o.blockedLog || []).forEach(function (b) {
       if (!b || !b.resolvedAt || !String(b.response || '').trim()) return;
       if (!best || String(b.resolvedAt) > String(best.resolvedAt)) best = b;
     });
     return best ? { kind: best.kind, reason: best.reason || '', response: String(best.response).trim(), since: best.since, resolvedAt: best.resolvedAt } : null;
   }
 
-  function isBlocked(o) { return !!(o && o.blocked && !o.blocked.resolvedAt); }
+  function isStuck(o) { return !!(o && o.status === 'stuck'); }
+  function hasContact(o) { return !!(o && o.contact && !o.contact.resolvedAt); }
 
   function paid(o) {
     return (o && o.payments || []).reduce(function (s, p) { return s + Number(p.amount || 0); }, 0);
@@ -133,7 +176,10 @@
     deriveStatus: deriveStatus,
     allDone: allDone,
     lastResponse: lastResponse,
-    isBlocked: isBlocked,
+    migrate: migrateOrder,
+    isStuck: isStuck,
+    isBlocked: isStuck,          // תאימות: "תקועה" היא עכשיו סטטוס
+    hasContact: hasContact,
     paid: paid,
     balance: balance,
     itemLabel: itemLabel,
@@ -150,7 +196,7 @@
       return S.ready.then(function () {
         var sla = data.settings.peek().slaDays || 10;
         var o = Object.assign({
-          customerId: null, notes: '', price: 0, payments: [], blocked: null,
+          customerId: null, notes: '', price: 0, payments: [], stuck: null, contact: null,
           dueDate: addDays(new Date(), sla).toISOString()
         }, draft || {});
         o.items = reindex(o.items && o.items.length ? o.items : [newItem()]);
@@ -169,7 +215,7 @@
     setItemDone: function (orderId, itemId, done) {
       return mutate(orderId, function (o) {
         o.items.forEach(function (it) { if (it.id === itemId) it.done = !!done; });
-        applyDerived(o);
+        applyDerived(o, !!done);
         startWork(o);
       });
     },
@@ -178,46 +224,77 @@
     updateItem: function (orderId, itemId, patch, opts) {
       return mutate(orderId, function (o) {
         o.items.forEach(function (it, i) { if (it.id === itemId) o.items[i] = Object.assign({}, it, patch, { id: it.id }); });
-        if (patch && Object.prototype.hasOwnProperty.call(patch, 'done')) applyDerived(o);
+        if (patch && Object.prototype.hasOwnProperty.call(patch, 'done')) applyDerived(o, !!patch.done);
         if (opts && opts.start) startWork(o);
       });
     },
 
-    /* ---- סטטוס ידני ----
-       ready: מסמן את כל השורות כבוצעו.  new: מנקה את כל ה"בוצע".
-       in_progress: לא נוגע בשורות (למשל עבודה שירדה לתיקון פינות).
-       delivered: חותם deliveredAt. */
-    setStatus: function (orderId, status) {
+    /* ---- סטטוס ידני (סבב 5) ----
+       לא נוגע בשורות: "מוכנה" לא מסמנת בוצע, "חדשה" לא מנקה (המלאי נשאר כמו שהוא).
+       stuck: opts.reason = למה תקועה (נשמר ב-o.stuck). יציאה מ-stuck = הסיבה עוברת ל-blockedLog.
+       ready: חותם readyAt.  delivered: חותם deliveredAt. */
+    setStatus: function (orderId, status, opts) {
+      opts = opts || {};
       if (STATUSES.indexOf(status) === -1) return Promise.reject(new Error('bad status ' + status));
       return mutate(orderId, function (o) {
-        if (status === 'ready') { o.items.forEach(function (it) { it.done = true; }); if (o.status !== 'ready') o.readyAt = now(); }
-        if (status === 'new') { o.items.forEach(function (it) { it.done = false; }); o.readyAt = null; }
-        if (status === 'in_progress') o.readyAt = null;
+        var from = o.status;
+        if (status === 'stuck') {
+          var prev = from === 'stuck' ? (o.stuck || {}) : null;
+          var reason = String(opts.reason == null ? '' : opts.reason).trim();
+          o.stuck = { reason: reason || (prev && prev.reason) || '', since: (prev && prev.since) || now(), from: prev ? (prev.from || 'in_progress') : from };
+          o.readyAt = null;
+        } else if (from === 'stuck') {
+          leaveStuck(o, status);
+        }
+        if (status === 'ready' && from !== 'ready') o.readyAt = now();
+        if (status === 'new' || status === 'in_progress') o.readyAt = null;
         if (status === 'delivered' && !o.deliveredAt) o.deliveredAt = now();
         if (status !== 'delivered') o.deliveredAt = null;
         o.status = status;
       });
     },
-
-    /* ---- דגל אדום (D2 / C7 / C28) ---- */
-    setBlocked: function (orderId, flag) {
+    /* עריכת הסיבה של הזמנה תקועה */
+    setStuckReason: function (orderId, reason) {
       return mutate(orderId, function (o) {
-        var prev = isBlocked(o) ? o.blocked : null;
-        o.blocked = {
-          kind: (flag && flag.kind) || 'stuck',
-          reason: (flag && flag.reason) || '',
-          since: prev ? prev.since : now(),
-          resolvedAt: null, response: null
-        };
+        if (o.status !== 'stuck') return;
+        o.stuck = Object.assign({ since: now(), from: 'in_progress' }, o.stuck || {}, { reason: String(reason || '').trim() });
       });
     },
-    resolveBlocked: function (orderId, response) {
+
+    /* ---- הערת "ליצור קשר עם הלקוח" (סבב 5, במקום הדגל האדום) ----
+       פעילה = תזכורת עד שמישהו רושם את תגובת הלקוח. */
+    setContact: function (orderId, c) {
+      c = c || {};
       return mutate(orderId, function (o) {
-        if (!o.blocked) return;
-        o.blocked.resolvedAt = now();
-        o.blocked.response = response || '';
-        o.blockedLog = (o.blockedLog || []).concat([o.blocked]);
+        var prev = hasContact(o) ? o.contact : null;
+        o.contact = { text: String(c.text || '').trim(), itemId: c.itemId || (prev && prev.itemId) || null,
+          since: prev ? prev.since : now(), resolvedAt: null, response: null };
       });
+    },
+    resolveContact: function (orderId, response) {
+      return mutate(orderId, function (o) {
+        if (!hasContact(o)) return;
+        var c = o.contact;
+        o.blockedLog = (o.blockedLog || []).concat([{ kind: 'contact_client', reason: c.text || '', since: c.since, resolvedAt: now(),
+          response: String(response || '').trim(), itemId: c.itemId || null }]);
+        o.contact = null;
+      });
+    },
+
+    /* ---- תאימות (עד סבב 4): setBlocked / resolveBlocked ממופים למודל החדש ---- */
+    setBlocked: function (orderId, flag) {
+      flag = flag || {};
+      if (flag.kind === 'contact_client') return orders.setContact(orderId, { text: flag.reason });
+      return orders.setStatus(orderId, 'stuck', { reason: flag.reason });
+    },
+    resolveBlocked: function (orderId, response) {
+      var o = S.find('orders', orderId);
+      if (hasContact(o)) return orders.resolveContact(orderId, response);
+      if (isStuck(o)) {
+        var to = o.stuck && o.stuck.from && o.stuck.from !== 'stuck' && o.stuck.from !== 'delivered' ? o.stuck.from : 'in_progress';
+        return orders.setStatus(orderId, to);
+      }
+      return Promise.resolve(o);
     },
 
     /* ---- תשלומים (C9) ----

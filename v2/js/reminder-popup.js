@@ -1,12 +1,15 @@
 /* =============================================================================
  * reminder-popup.js  -  תזכורת "קופצת" (סבב 4, B6). נטען בשני התפקידים.
  * -----------------------------------------------------------------------------
- * כשתזכורת נדלקת (כלל עבר את הסף, דגל חדש, איחור חדש) קופץ באנר בראש המסך,
- * בכל טאב שפתוח: "תזכורת: הזמנה 1012, 3 ימים למועד המסירה" + "פתח" / "הבנתי".
+ * כשתזכורת נדלקת (כלל עבר את הסף, הערת "ליצור קשר" חדשה, הזמנה שעברה לתקועה, איחור חדש)
+ * קופץ באנר: "תזכורת: הזמנה 1012, 3 ימים למועד המסירה" + "פתח" / "הבנתי".
+ * סבב 5: הבאנר לא מכסה תוכן. בלי מודל: למטה במרכז, מעל הבר התחתון (ובמסך רחב בתחתית).
+ *   כשמודל פתוח: הבאנר עובר לתוך שכבת המודל, מתחת למודל (בזרימה, לא מעליו).
+ *   באנר אחד בכל פעם. הבא בתור מופיע אחרי "הבנתי" / "פתח" ("עוד N בתור").
  * - כל תזכורת קופצת פעם אחת למכשיר (localStorage: gallery:dev:reminderSeen).
  * - בדיקה בטעינה, כל דקה, ובכל שינוי בהזמנות או בכללים.
  * - יותר מ-3 חדשות בבת אחת = באנר מסכם אחד שמוביל לטאב התזכורות.
- * - דגל שסומן במכשיר הזה לא קופץ בו (מי שסימן כבר יודע).
+ * - הערת "ליצור קשר" / "תקועה" שנוצרו במכשיר הזה לא קופצות בו (מי שסימן כבר יודע).
  * - Notification API: רק אם כבר יש הרשאה והחלון ברקע. לא מבקשים הרשאה.
  * - תגובת לקוח (reason 'response') לא קופצת, רק מוצגת.
  * בסדנה: בלי טלפונים ובלי סכומים (reminders.safeText).
@@ -44,16 +47,19 @@
 
   function dayKey(iso) { var d = new Date(iso); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
 
-  /* מפתח יציב לכל תזכורת: ruleId:orderId:<מועד ההפעלה>, flag:orderId:<since>, overdue:orderId:<מועד> */
+  /* מפתח יציב לכל תזכורת: ruleId:orderId:<מועד ההפעלה>, flag:orderId:<since> (ליצור קשר / תקועה,
+     אותו מפתח כמו הדגל הישן כדי שמה שכבר נראה לא יקפוץ שוב אחרי המיגרציה), overdue:orderId:<מועד> */
   function keyOf(r, o) {
-    if (r.kind === 'flag') return 'flag:' + o.id + ':' + (o.blocked && o.blocked.since || '');
+    if (r.kind === 'contact') return 'flag:' + o.id + ':' + (o.contact && o.contact.since || '');
+    if (r.kind === 'stuck') return 'flag:' + o.id + ':' + (o.stuck && o.stuck.since || '');
     if (r.kind === 'overdue') return 'overdue:' + o.id + ':' + dayKey(o.dueDate);
     return r.ruleId + ':' + o.id + ':' + String(r.since || '').slice(0, 16);
   }
 
   function textOf(r, o) {
     var safe = D.reminders.safeText;
-    if (r.kind === 'flag') return (U.BLOCK_KIND_LABEL[r.flagKind] || 'דגל אדום') + (r.text ? ': ' + safe(r.text) : '');
+    if (r.kind === 'contact') return 'ליצור קשר עם הלקוח' + (r.text ? ': ' + safe(r.text) : '');
+    if (r.kind === 'stuck') return 'תקועה' + (r.text ? ': ' + safe(r.text) : '');
     if (r.kind === 'overdue') return safe(r.text);
     var rule = D.reminderRules.peekOne(r.ruleId);
     if (rule && rule.anchor === 'due' && Number(rule.offset && rule.offset.value || 0) <= 0 && o.dueDate) {
@@ -78,42 +84,70 @@
     return out;
   }
 
+  /* ---- מיקום: בלי מודל = קבוע למטה. עם מודל = בתוך שכבת המודל, מתחת למודל ---- */
+  var queueList = [];
+  function backdrop() {
+    var all = document.querySelectorAll('.modal-backdrop');
+    return all.length ? all[all.length - 1] : null;
+  }
+  function placeHost() {
+    if (!host) return;
+    var bd = backdrop();
+    if (bd && host.childNodes.length) {
+      if (host.parentNode !== bd) { bd.appendChild(host); }
+      bd.classList.add('has-rem-pop');
+      host.classList.add('rem-pop-host--inmodal');
+    } else {
+      if (host.parentNode !== document.body) document.body.appendChild(host);
+      host.classList.remove('rem-pop-host--inmodal');
+    }
+    var h = (!host.classList.contains('rem-pop-host--inmodal') && host.childNodes.length) ? host.offsetHeight : 0;
+    document.documentElement.style.setProperty('--rem-pop-h', h + 'px');
+    document.body.classList.toggle('has-rem-pop', h > 0);
+  }
+
   function ensureHost() {
-    if (host && document.body.contains(host)) return host;
+    if (host) { if (!host.parentNode) placeHost(); return host; }
     host = document.createElement('div');
     host.className = 'rem-pop-host';
     host.setAttribute('aria-live', 'assertive');
     document.body.appendChild(host);
     host.addEventListener('click', onHostClick);
+    /* מודל נפתח / נסגר: מזיזים את הבאנר (וכשהשכבה נמחקת, מחזירים אותו ל-body) */
+    try {
+      new MutationObserver(function () { placeHost(); }).observe(document.body, { childList: true });
+    } catch (e) {}
     return host;
   }
 
-  function bannerHTML(p) {
+  function bannerHTML(p, more) {
     return '<div class="rem-pop rem-pop--' + esc(p.level || 'blue') + '" role="alert" data-pop' + (p.orderId ? ' data-order="' + esc(p.orderId) + '"' : '') + '>' +
       '<span class="rem-pop__icon">' + (I.reminders || I.clock || '') + '</span>' +
-      '<div class="rem-pop__text">' + esc(p.text) + '</div>' +
+      '<div class="rem-pop__text">' + esc(p.text) + (more ? '<small class="rem-pop__more">עוד ' + more + ' בתור</small>' : '') + '</div>' +
       '<div class="rem-pop__acts">' +
         '<button type="button" class="btn btn--primary rem-pop__open" data-pop-open>פתח</button>' +
         '<button type="button" class="btn btn--secondary rem-pop__ok" data-pop-ok>הבנתי</button>' +
       '</div></div>';
   }
 
+  /* מקסימום באנר אחד על המסך */
+  function renderQueue() {
+    var h = ensureHost();
+    h.innerHTML = queueList.length ? bannerHTML(queueList[0], queueList.length - 1) : '';
+    placeHost();
+  }
+
   function show(list) {
     if (!list.length) return;
-    var h = ensureHost();
-    var items;
-    if (list.length > MAX_SINGLE) {
-      items = [{ text: 'יש ' + list.length + ' תזכורות חדשות. כדאי להציץ בטאב התזכורות.', level: list.some(function (p) { return p.level === 'red'; }) ? 'red' : 'orange' }];
-    } else {
-      items = list.map(function (p) { return { text: p.text, level: p.level, orderId: p.order.id }; });
-    }
+    var items = list.map(function (p) { return { text: p.text, level: p.level, orderId: p.order.id }; });
     items.forEach(function (p) {
-      if (p.orderId && h.querySelector('[data-order="' + p.orderId + '"]')) {
-        var old = h.querySelector('[data-order="' + p.orderId + '"]');
-        old.parentNode.removeChild(old);
-      }
-      h.insertAdjacentHTML('beforeend', bannerHTML(p));
+      queueList = queueList.filter(function (q) { return !(q.orderId && q.orderId === p.orderId); });
+      queueList.push(p);
     });
+    if (queueList.length > MAX_SINGLE) {
+      queueList = [{ text: 'יש ' + queueList.length + ' תזכורות חדשות. כדאי להציץ בטאב התזכורות.', level: queueList.some(function (p) { return p.level === 'red'; }) ? 'red' : 'orange' }];
+    }
+    renderQueue();
     markSeen(list.map(function (p) { return p.key; }));
     notify(items);
   }
@@ -128,15 +162,16 @@
   function onHostClick(e) {
     var pop = e.target.closest('[data-pop]');
     if (!pop) return;
+    e.stopPropagation();
     var orderId = pop.getAttribute('data-order');
     if (e.target.closest('[data-pop-open]')) {
-      pop.parentNode.removeChild(pop);
+      queueList.shift(); renderQueue();
       if (orderId && D.orders.peekOne(orderId) && Gallery.role === 'admin') { Gallery.openOrder(orderId); return; }
       if (Gallery.hasView('reminders')) Gallery.switchTab('reminders');
       if (orderId && Gallery.role === 'workshop') Gallery.openOrder(orderId);
       return;
     }
-    if (e.target.closest('[data-pop-ok]')) pop.parentNode.removeChild(pop);
+    if (e.target.closest('[data-pop-ok]')) { queueList.shift(); renderQueue(); }
   }
 
   function check() {
@@ -149,16 +184,24 @@
     timer = global.setTimeout(check, 600);
   }
 
-  /* דגל שסומן במכשיר הזה: מסמנים כנראה, כדי שלא יקפוץ למי שסימן אותו */
-  var origSetBlocked = D.orders.setBlocked;
-  D.orders.setBlocked = function () {
-    return origSetBlocked.apply(this, arguments).then(function (o) {
-      if (o && o.blocked && !o.blocked.resolvedAt) markSeen(['flag:' + o.id + ':' + (o.blocked.since || '')]);
+  /* הערת "ליצור קשר" / "תקועה" שנוצרו במכשיר הזה: מסמנים כנראו, כדי שלא יקפצו למי שסימן */
+  var origSetContact = D.orders.setContact;
+  D.orders.setContact = function () {
+    return origSetContact.apply(this, arguments).then(function (o) {
+      if (o && o.contact && !o.contact.resolvedAt) markSeen(['flag:' + o.id + ':' + (o.contact.since || '')]);
+      return o;
+    });
+  };
+  var origSetStatus = D.orders.setStatus;
+  D.orders.setStatus = function () {
+    return origSetStatus.apply(this, arguments).then(function (o) {
+      if (o && o.status === 'stuck' && o.stuck) markSeen(['flag:' + o.id + ':' + (o.stuck.since || '')]);
       return o;
     });
   };
 
-  Gallery.reminderPopup = { check: check, pending: pending, seen: seenMap, reset: function () { S.deviceSet(SEEN_KEY, '{}'); } };
+  Gallery.reminderPopup = { check: check, pending: pending, seen: seenMap, queue: function () { return queueList.slice(); },
+    clear: function () { queueList = []; if (host) renderQueue(); }, reset: function () { S.deviceSet(SEEN_KEY, '{}'); } };
 
   Gallery.onReady(function () {
     started = true;

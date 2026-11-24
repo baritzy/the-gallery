@@ -270,3 +270,95 @@ body { background: var(--bg-canvas); }
 .trash__meta { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; color: var(--ink-muted); font-size: var(--fs-sm); }
 .trash__acts { display: flex; gap: var(--s-2); flex-wrap: wrap; }
 .trash__acts .btn { min-height: var(--touch); }
+
+/* =============================================================================
+ * סבב 5: כפתור סטטוס אחד (order-status-ui.js), תפריט 5 סטטוסים, חלון טקסט מעל מודל,
+ * הערת "ליצור קשר עם הלקוח" (flag.js), תווית "לקוח חוזר", הסבר בסנכרון
+ * ========================================================================== */
+.spill-wrap { display: inline-flex; align-items: center; gap: 6px var(--s-2); flex-wrap: wrap; min-width: 0; }
+.spill {
+  --sp-bg: var(--st-grey); --sp-fg: #fff;
+  display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 var(--s-3) 0 var(--s-3);
+  border-radius: var(--r-pill); border: 0; background: var(--sp-bg); color: var(--sp-fg); cursor: pointer;
+  font: var(--fw-semibold) var(--fs-md)/1.15 var(--font-ui); white-space: nowrap; box-shadow: var(--e1);
+  -webkit-tap-highlight-color: transparent;
+}
+.spill:hover { filter: brightness(.96); }
+.spill:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.spill[aria-expanded="true"] { box-shadow: 0 0 0 3px var(--bg-surface), 0 0 0 5px var(--sp-bg); }
+.spill__k { font-weight: var(--fw-regular); opacity: .9; }
+.spill__v { font-weight: var(--fw-bold); }
+.spill__caret { font-size: .8em; margin-inline-start: 2px; }
+.spill--lg { min-height: var(--touch); padding: 0 var(--s-4); font-size: var(--fs-lg); }
+.spill--blue   { --sp-bg: var(--st-blue); }
+.spill--yellow { --sp-bg: var(--st-yellow); --sp-fg: var(--on-status-yellow); }
+.spill--red    { --sp-bg: var(--st-red); }
+.spill--green  { --sp-bg: var(--st-green); }
+.spill--grey   { --sp-bg: var(--st-grey); }
+.spill-reason {
+  display: inline-block; min-height: 36px; max-width: 100%; padding: 6px var(--s-2);
+  border: 1px dashed var(--st-red); border-radius: var(--r-sm); background: var(--bg-surface); color: var(--st-red-text);
+  font: var(--fw-semibold) var(--fs-sm)/1.25 var(--font-ui); cursor: pointer; text-align: start; overflow-wrap: anywhere;
+}
+.spill-reason .ico { width: 14px; height: 14px; opacity: .7; vertical-align: -2px; margin-inline-start: 4px; }
+.spill-reason__k { font-weight: var(--fw-bold); }
+.spill-reason i { color: var(--ink-muted); }
+
+.spill-menu {
+  position: fixed; z-index: 95; min-width: 220px; max-width: calc(100vw - 16px); padding: var(--s-2);
+  background: var(--bg-surface); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--e4);
+  display: flex; flex-direction: column; gap: 4px; animation: modalIn var(--dur-base) var(--ease-out) both;
+}
+.spill-menu__head { padding: 4px var(--s-2) 6px; font-size: var(--fs-sm); color: var(--ink-secondary); }
+.spill-menu__item {
+  --mi-c: var(--st-grey);
+  display: flex; align-items: center; gap: var(--s-3); min-height: 52px; padding: 0 var(--s-3);
+  border: 2px solid transparent; border-radius: var(--r-md); background: transparent; color: var(--ink);
+  font: var(--fw-semibold) var(--fs-lg)/1 var(--font-ui); cursor: pointer; text-align: start;
+}
+.spill-menu__item:hover, .spill-menu__item:focus-visible { background: var(--bg-surface-alt); outline: none; border-color: var(--mi-c); }
+.spill-menu__item.is-on { background: var(--bg-surface-alt); border-color: var(--mi-c); }
+.spill-menu__dot { width: 18px; height: 18px; border-radius: 50%; background: var(--mi-c); flex: none; }
+.spill-menu__lbl { flex: 1; }
+.spill-menu__now { font-size: var(--fs-xs); color: var(--ink-muted); font-weight: var(--fw-semibold); }
+.spill-menu__item--blue   { --mi-c: var(--st-blue); }
+.spill-menu__item--yellow { --mi-c: var(--st-yellow); }
+.spill-menu__item--red    { --mi-c: var(--st-red); }
+.spill-menu__item--green  { --mi-c: var(--st-green); }
+.spill-menu__item--grey   { --mi-c: var(--st-grey); }
+
+/* חלון טקסט קטן מעל מודל פתוח (סיבת תקועה, הערת קשר, תגובת לקוח) */
+.lprompt-layer { z-index: 72; align-items: center; padding: var(--s-4); }
+.lprompt-layer .modal { margin: 0; max-width: 560px; width: 100%; }
+.lprompt textarea { width: 100%; }
+.lprompt__quick { display: flex; flex-wrap: wrap; gap: var(--s-2); margin-top: var(--s-3); }
+.lprompt .modal__foot { flex-wrap: wrap; position: static; }
+
+/* הערת "ליצור קשר עם הלקוח" פעילה */
+.cnote {
+  display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; padding: var(--s-3) var(--s-4);
+  background: var(--st-orange-soft); border-inline-start: 6px solid var(--st-orange); border-radius: var(--r-md); color: var(--ink);
+}
+.cnote__icon { color: var(--st-orange-text); display: inline-flex; flex: none; }
+.cnote__icon .ico { width: 26px; height: 26px; }
+.cnote__txt { flex: 1 1 240px; min-width: 0; font-size: var(--fs-md); overflow-wrap: anywhere; }
+.cnote__txt small { display: block; color: var(--ink-secondary); font-size: var(--fs-xs); margin-top: 2px; }
+.cnote__btn { min-height: var(--touch); flex: none; }
+.cnote-current .flag-current__kind .ico { color: var(--st-orange-text); }
+
+/* תווית "לקוח חוזר" ליד שם ירוק (3+ ביקורים) */
+.tag-return {
+  display: inline-flex; align-items: center; height: 24px; padding: 0 8px; border-radius: var(--r-pill);
+  background: var(--st-green-soft); color: var(--st-green-text); border: 1px solid var(--st-green);
+  font-size: var(--fs-xs); font-weight: var(--fw-bold); white-space: nowrap; flex: none;
+}
+
+/* הגדרות > סנכרון */
+.set__explain { margin: 0 0 var(--s-3); font-size: var(--fs-md); color: var(--ink); background: var(--primary-soft); border-radius: var(--r-md); padding: var(--s-3) var(--s-4); }
+.set__adv { margin-top: var(--s-3); }
+.set__adv > summary { cursor: pointer; min-height: var(--touch); display: inline-flex; align-items: center; color: var(--ink-secondary); font-weight: var(--fw-semibold); }
+.set__adv[open] > summary { margin-bottom: var(--s-2); }
+.set__adv > summary { list-style: none; gap: 6px; }
+.set__adv > summary::-webkit-details-marker { display: none; }
+.set__adv > summary::after { content: "▾"; font-size: .85em; }
+.set__adv[open] > summary::after { content: "▴"; }
